@@ -1,0 +1,1173 @@
+import { useState } from 'react';
+import {
+	Link,
+	useNavigate,
+	useParams,
+	useSearchParams,
+} from 'react-router-dom';
+import toast from 'react-hot-toast';
+import { getApiError } from '../lib/api';
+import {
+	useAdBySlug,
+	useAds,
+	useBusinessBySlug,
+	useBusinesses,
+	useCategories,
+	useGlobalSearch,
+	usePlans,
+	useReviews,
+	useSellerPublic,
+} from '../hooks/queries';
+import {
+	useAddToWishlist,
+	useRemoveFromWishlist,
+	useOpenConversation,
+	useCreateReview,
+	useCreateReport,
+	useTrackBusinessClick,
+} from '../hooks/mutations';
+import { AdCard } from '../components/ads/AdCard';
+import { BusinessCard } from '../components/businesses/BusinessCard';
+import { Pagination } from '../components/ui/Pagination';
+import { PageLoader } from '../components/ui/Spinner';
+import { EmptyState } from '../components/ui/EmptyState';
+import { Price } from '../components/ui/Price';
+import { StatusPill } from '../components/ui/StatusPill';
+import { Stars } from '../components/ui/Stars';
+import { Avatar } from '../components/ui/Avatar';
+import { useSession } from '../hooks/useSession';
+import { formatDate, formatKz, fullName, timeAgo } from '../lib/format';
+import {
+	PROVINCES,
+	REPORT_REASONS,
+	type Province,
+	type ReportReason,
+	type ReportTarget,
+	type SearchItem,
+} from '../types/api';
+import { useAuthStore } from '../store/auth';
+import { useWishlistCheck } from '../hooks/queries';
+
+// ================= Anúncios (lista) =================
+
+export function AdsPage() {
+	const [searchParams, setSearchParams] = useSearchParams();
+	const { data: categories } = useCategories('AD');
+	const q = searchParams.get('q') ?? '';
+	const categoryIds = searchParams.get('categoryIds') ?? undefined;
+	const province = searchParams.get('province') ?? undefined;
+	const sortBy = searchParams.get('sortBy') ?? 'newest';
+	const minPrice = searchParams.get('minPrice')
+		? Number(searchParams.get('minPrice'))
+		: undefined;
+	const maxPrice = searchParams.get('maxPrice')
+		? Number(searchParams.get('maxPrice'))
+		: undefined;
+	const page = Math.max(1, Number(searchParams.get('page')) || 1);
+
+	const { data, isLoading } = useAds({
+		page,
+		limit: 15,
+		q: q || undefined,
+		categoryIds,
+		minPrice,
+		maxPrice,
+		sortBy: sortBy as 'newest',
+	});
+
+	const setParam = (key: string, value?: string) => {
+		const next = new URLSearchParams(searchParams);
+		if (!value) {
+			next.delete(key);
+		} else {
+			next.set(key, value);
+		}
+		next.delete('page');
+		setSearchParams(next);
+	};
+
+	return (
+		<div className="mx-auto max-w-6xl px-4 py-10">
+			<div className="mb-6 flex flex-wrap items-end justify-between gap-4">
+				<h1 className="font-display text-3xl font-black">Anúncios</h1>
+				<Link to="/area/anuncios/novo" className="btn-primary">
+					+ Publicar anúncio
+				</Link>
+			</div>
+
+			<form
+				className="mb-6 flex flex-wrap gap-3"
+				onSubmit={(e) => {
+					e.preventDefault();
+					setParam('q', q);
+				}}
+			>
+				<input
+					className="input max-w-xs"
+					placeholder="Pesquisar anúncios…"
+					value={q}
+					onChange={(e) => setParam('q', e.target.value || undefined)}
+				/>
+				<select
+					className="input max-w-[180px]"
+					value={categoryIds ?? ''}
+					onChange={(e) =>
+						setParam('categoryIds', e.target.value || undefined)
+					}
+				>
+					<option value="">Todas as categorias</option>
+					{(categories ?? []).map((c) => (
+						<option key={c.id} value={c.id}>
+							{c.name}
+						</option>
+					))}
+				</select>
+				<select
+					className="input max-w-[180px]"
+					value={province ?? ''}
+					onChange={(e) =>
+						setParam('province', e.target.value || undefined)
+					}
+				>
+					<option value="">Todas as províncias</option>
+					{PROVINCES.map((p) => (
+						<option key={p} value={p}>
+							{p.replace('_', ' ')}
+						</option>
+					))}
+				</select>
+				<select
+					className="input max-w-[180px]"
+					value={sortBy}
+					onChange={(e) => setParam('sortBy', e.target.value)}
+				>
+					<option value="newest">Mais recentes</option>
+					<option value="price_asc">Preço: menor → maior</option>
+					<option value="price_desc">Preço: maior → menor</option>
+				</select>
+			</form>
+
+			{isLoading ? (
+				<PageLoader />
+			) : (data?.items.length ?? 0) === 0 ? (
+				<EmptyState
+					title="Sem anúncios encontrados"
+					description="Tenta mudar os filtros ou pesquisa noutra província."
+				/>
+			) : (
+				<>
+					<div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-5">
+						{(data?.items ?? []).map((ad) => (
+							<AdCard key={ad.id} ad={ad} />
+						))}
+					</div>
+					<Pagination
+						page={page}
+						totalPages={data?.totalPages ?? 1}
+						basePath="/anuncios"
+					/>
+				</>
+			)}
+		</div>
+	);
+}
+
+// ================= Anúncio (detalhe) =================
+
+export function AdDetailPage() {
+	const { slug } = useParams();
+	const { data: ad, isLoading } = useAdBySlug(slug);
+	const navigate = useNavigate();
+	const { isAuthenticated } = useSession();
+	const openConversation = useOpenConversation();
+	const { data: wishlistSaved } = useWishlistCheck(ad?.id);
+	const user = useAuthStore((s) => s.user);
+
+	if (isLoading) {
+		return <PageLoader />;
+	}
+	if (!ad) {
+		return (
+			<EmptyState
+				title="Anúncio não encontrado"
+				action={
+					<Link to="/anuncios" className="btn-primary">
+						Ver anúncios
+					</Link>
+				}
+			/>
+		);
+	}
+
+	const isOwner = user?.id === ad.userId;
+
+	const contactSeller = () => {
+		if (!isAuthenticated) {
+			void navigate('/auth/entrar', {
+				state: { from: `/anuncios/${ad.slug}` },
+			});
+			return;
+		}
+		openConversation.mutate(
+			{ adId: ad.id },
+			{
+				onSuccess: (conv) => navigate(`/area/mensagens?id=${conv.id}`),
+				onError: (e) => toast.error(getMsg(e)),
+			},
+		);
+	};
+
+	return (
+		<div className="mx-auto max-w-6xl px-4 py-10">
+			<nav className="mb-5 text-sm text-ink/50">
+				<Link to="/anuncios" className="hover:underline">
+					Anúncios
+				</Link>{' '}
+				/ <span className="text-ink/80">{ad.title}</span>
+			</nav>
+			<div className="grid gap-6 lg:grid-cols-[1fr_360px]">
+				<div className="overflow-hidden rounded-2xl border border-ink/10 bg-white">
+					{ad.image ? (
+						<img
+							src={ad.image}
+							alt={ad.title}
+							className="aspect-video w-full object-cover"
+						/>
+					) : (
+						<div className="flex aspect-video items-center justify-center bg-snow-dark font-display text-4xl font-black text-ink/20">
+							CX
+						</div>
+					)}
+					<div className="grid grid-cols-3 gap-2 p-2">
+						{(ad.gallery ?? []).slice(0, 3).map((g) => (
+							<img
+								key={g.cloudinaryId}
+								src={g.url}
+								alt=""
+								className="aspect-square w-full rounded-lg object-cover"
+							/>
+						))}
+					</div>
+				</div>
+
+				<aside className="flex flex-col gap-4">
+					<div className="card p-5">
+						{ad.featured && (
+							<span className="tag tag-kwanza mb-3">
+								Destaque
+							</span>
+						)}
+						<div className="flex items-start justify-between gap-2">
+							<h1 className="font-display text-xl font-black leading-tight">
+								{ad.title}
+							</h1>
+							<div className="flex items-center gap-2">
+								{ad.verified && (
+									<span className="rounded-full bg-blue px-2 py-0.5 text-xs font-bold text-white">
+										✔
+									</span>
+								)}
+								<StatusPill status={ad.status} />
+							</div>
+						</div>
+						<div className="mt-4">
+							<Price value={ad.price} />
+						</div>
+						{ad.averageRating !== null && (
+							<p className="mt-3 text-sm text-ink/60">
+								<Stars value={ad.averageRating} /> ·{' '}
+								{ad.reviewCount} avaliações
+							</p>
+						)}
+						<p className="mt-3 font-mono text-xs text-ink/40">
+							Publicado {timeAgo(ad.createdAt)} · {ad.views}{' '}
+							visualizações
+						</p>
+					</div>
+
+					{!isOwner && (
+						<div className="card gap-2 p-4">
+							<button
+								className="btn-primary w-full"
+								onClick={contactSeller}
+								disabled={openConversation.isPending}
+							>
+								Mensagem para o vendedor
+							</button>
+							{isAuthenticated && user && (
+								<WishlistToggle
+									adId={ad.id}
+									saved={wishlistSaved ?? false}
+								/>
+							)}
+						</div>
+					)}
+
+					<SellerCard userId={ad.userId} />
+				</aside>
+			</div>
+
+			<section className="mt-8 grid gap-6 lg:grid-cols-[1fr_360px]">
+				<div className="card p-6">
+					<h2 className="font-display text-lg font-black">
+						Descrição
+					</h2>
+					<p className="mt-3 whitespace-pre-line text-sm leading-relaxed text-ink/70">
+						{ad.description}
+					</p>
+				</div>
+				<div className="card p-6">
+					<ReportForm
+						targetType="AD"
+						targetId={ad.id}
+						targetLabel={ad.title}
+					/>
+				</div>
+			</section>
+
+			<ReviewSection target={{ adId: ad.id }} />
+		</div>
+	);
+}
+
+// ================= Favorito =================
+
+function WishlistToggle({ adId, saved }: { adId: string; saved: boolean }) {
+	const add = useAddToWishlist();
+	const remove = useRemoveFromWishlist();
+	const [isSaved, setIsSaved] = useState(saved);
+
+	const toggle = () => {
+		const next = !isSaved;
+		setIsSaved(next);
+		(next ? add : remove).mutate(adId, {
+			onError: () => {
+				setIsSaved(!next);
+				toast.error('Não foi possível guardar.');
+			},
+			onSuccess: () =>
+				toast.success(
+					next ? 'Guardado nos favoritos' : 'Removido dos favoritos',
+				),
+		});
+	};
+
+	return (
+		<button
+			type="button"
+			className={isSaved ? 'btn-blue w-full' : 'btn-outline w-full'}
+			onClick={toggle}
+		>
+			{isSaved ? '★ Guardado' : '☆ Guardar'}
+		</button>
+	);
+}
+
+// ================= Cartão vendedor =================
+
+function SellerCard({ userId }: { userId: string }) {
+	const { data: seller } = useSellerPublic(userId);
+	const navigate = useNavigate();
+	const { isAuthenticated } = useSession();
+	const openConversation = useOpenConversation();
+
+	if (!seller) {
+		return null;
+	}
+
+	const messageSeller = () => {
+		if (!isAuthenticated) {
+			void navigate('/auth/entrar');
+			return;
+		}
+		openConversation.mutate(
+			{ type: 'AD', adId: undefined, businessId: undefined },
+			{
+				onError: (e) => toast.error(getMsg(e)),
+			},
+		);
+	};
+
+	return (
+		<div className="card flex items-center gap-3 p-4">
+			<Avatar
+				src={seller.image}
+				name={fullName(seller.name, seller.surname)}
+				size="lg"
+			/>
+			<div className="min-w-0 flex-1">
+				<p className="truncate text-sm font-bold">
+					{fullName(seller.name, seller.surname)}
+				</p>
+				<p className="text-xs text-ink/50">
+					Vendedor {seller.isVerified && '· Verificado'}
+				</p>
+				<a
+					href={`/busca?q=${encodeURIComponent(fullName(seller.name, seller.surname))}&type=USER`}
+					className="text-xs font-bold text-blue hover:underline"
+				>
+					Ver perfil
+				</a>
+			</div>
+			<button
+				className="btn-ghost"
+				title="Mensagem"
+				onClick={messageSeller}
+			>
+				✉
+			</button>
+		</div>
+	);
+}
+
+// ================= Empresas (lista) =================
+
+export function BusinessesPage() {
+	const [searchParams, setSearchParams] = useSearchParams();
+	const { data: categories } = useCategories('BUSINESS');
+	const q = searchParams.get('q') ?? '';
+	const categoryId = searchParams.get('categoryId') ?? undefined;
+	const province = searchParams.get('province') ?? undefined;
+	const page = Math.max(1, Number(searchParams.get('page')) || 1);
+
+	const { data, isLoading } = useBusinesses({
+		page,
+		limit: 12,
+		q: q || undefined,
+		categoryId,
+		province: province as Province | undefined,
+	});
+
+	const setParam = (key: string, value?: string) => {
+		const next = new URLSearchParams(searchParams);
+		if (!value) next.delete(key);
+		else next.set(key, value);
+		next.delete('page');
+		setSearchParams(next);
+	};
+
+	return (
+		<div className="mx-auto max-w-6xl px-4 py-10">
+			<div className="mb-6 flex flex-wrap items-end justify-between gap-4">
+				<h1 className="font-display text-3xl font-black">Empresas</h1>
+				<Link to="/auth/registar" className="btn-blue">
+					Registar a minha empresa
+				</Link>
+			</div>
+			<form className="mb-6 flex flex-wrap gap-3">
+				<input
+					className="input max-w-xs"
+					placeholder="Pesquisar empresas…"
+					value={q}
+					onChange={(e) => setParam('q', e.target.value || undefined)}
+				/>
+				<select
+					className="input max-w-[200px]"
+					value={categoryId ?? ''}
+					onChange={(e) =>
+						setParam('categoryId', e.target.value || undefined)
+					}
+				>
+					<option value="">Todas as categorias</option>
+					{(categories ?? []).map((c) => (
+						<option key={c.id} value={c.id}>
+							{c.name}
+						</option>
+					))}
+				</select>
+				<select
+					className="input max-w-[200px]"
+					value={province ?? ''}
+					onChange={(e) =>
+						setParam('province', e.target.value || undefined)
+					}
+				>
+					<option value="">Todas as províncias</option>
+					{PROVINCES.map((p) => (
+						<option key={p} value={p}>
+							{p.replace('_', ' ')}
+						</option>
+					))}
+				</select>
+			</form>
+			{isLoading ? (
+				<PageLoader />
+			) : (data?.items.length ?? 0) === 0 ? (
+				<EmptyState title="Sem empresas encontradas" />
+			) : (
+				<>
+					<div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+						{(data?.items ?? []).map((b) => (
+							<BusinessCard key={b.id} business={b} />
+						))}
+					</div>
+					<Pagination
+						page={page}
+						totalPages={data?.totalPages ?? 1}
+						basePath="/empresas"
+					/>
+				</>
+			)}
+		</div>
+	);
+}
+
+// ================= Empresa (detalhe) =================
+
+export function BusinessDetailPage() {
+	const { slug } = useParams();
+	const { data: business, isLoading } = useBusinessBySlug(slug);
+	const { user } = useSession();
+	const trackClick = useTrackBusinessClick();
+
+	if (isLoading) return <PageLoader />;
+	if (!business)
+		return (
+			<EmptyState
+				title="Empresa não encontrada"
+				action={
+					<Link to="/empresas" className="btn-blue">
+						Ver empresas
+					</Link>
+				}
+			/>
+		);
+
+	const isOwner = user?.id === business.owner.id;
+
+	const contact = (channel: 'phone' | 'whatsapp' | 'email' | 'website') => {
+		trackClick.mutate({ businessId: business.id, channel });
+		if (channel === 'phone' && business.phone)
+			window.location.href = `tel:${business.phone}`;
+		if (channel === 'whatsapp' && business.whatsapp)
+			window.open(
+				`https://wa.me/${business.whatsapp.replace(/\D/g, '')}`,
+				'_blank',
+			);
+		if (channel === 'email' && business.email)
+			window.location.href = `mailto:${business.email}`;
+		if (channel === 'website' && business.website)
+			window.open(business.website, '_blank');
+	};
+
+	return (
+		<div className="mx-auto max-w-6xl px-4 py-10">
+			<nav className="mb-5 text-sm text-ink/50">
+				<Link to="/empresas" className="hover:underline">
+					Empresas
+				</Link>{' '}
+				/ <span>{business.name}</span>
+			</nav>
+			<div className="overflow-hidden rounded-2xl border border-ink/10 bg-white">
+				<div className="relative h-64 bg-blue">
+					{business.coverUrl ? (
+						<img
+							src={business.coverUrl}
+							alt={business.name}
+							className="h-full w-full object-cover"
+						/>
+					) : (
+						<div className="flex h-full items-center justify-center bg-gradient-to-br from-blue to-blue-dark font-display text-4xl font-black text-white/30">
+							{business.name}
+						</div>
+					)}
+					<div className="absolute bottom-4 left-4 flex items-end gap-3">
+						{business.logoUrl ? (
+							<img
+								src={business.logoUrl}
+								alt={business.name}
+								className="h-16 w-16 rounded-2xl border-4 border-white bg-white object-cover"
+							/>
+						) : (
+							<span className="flex h-16 w-16 items-center justify-center rounded-2xl border-4 border-white bg-ink font-display text-lg font-black text-white">
+								{business.name.slice(0, 2).toUpperCase()}
+							</span>
+						)}
+						<div className="rounded-xl bg-white/90 px-3 py-2 backdrop-blur">
+							<h1 className="font-display text-lg font-black leading-tight">
+								{business.name}
+							</h1>
+							<p className="text-xs font-semibold text-blue">
+								{business.category.name} ·{' '}
+								{business.province.replace('_', ' ')}
+							</p>
+						</div>
+						{business.isVerified && (
+							<span className="tag tag-gold mb-8">
+								✔ VERIFICADA
+							</span>
+						)}
+					</div>
+				</div>
+
+				<div className="grid gap-6 p-6 lg:grid-cols-[1fr_320px]">
+					<div>
+						<h2 className="font-display text-lg font-black">
+							Sobre
+						</h2>
+						<p className="mt-3 whitespace-pre-line text-sm leading-relaxed text-ink/70">
+							{business.description}
+						</p>
+						{business.address && (
+							<p className="mt-3 text-sm text-ink/60">
+								📍 {business.address}
+							</p>
+						)}
+						<div className="mt-4 flex items-center gap-2">
+							<Stars value={business.averageRating} />
+							<span className="text-xs text-ink/50">
+								· {business.reviewCount} avaliações ·{' '}
+								{business.viewCount} visualizações
+							</span>
+						</div>
+						{business.gallery.length > 0 && (
+							<div className="mt-6 grid grid-cols-3 gap-2">
+								{business.gallery.map((g) => (
+									<img
+										key={g.cloudinaryId}
+										src={g.url}
+										alt=""
+										className="aspect-square w-full rounded-xl object-cover"
+									/>
+								))}
+							</div>
+						)}
+					</div>
+
+					<aside className="flex flex-col gap-3">
+						<div className="card p-4">
+							<h3 className="mb-3 font-display text-sm font-black">
+								Contactos
+							</h3>
+							{business.phone && (
+								<button
+									className="btn-outline w-full"
+									onClick={() => contact('phone')}
+								>
+									📞 Ligar
+								</button>
+							)}
+							{business.whatsapp && (
+								<button
+									className="btn-outline w-full"
+									onClick={() => contact('whatsapp')}
+								>
+									WhatsApp
+								</button>
+							)}
+							{business.email && (
+								<button
+									className="btn-outline w-full"
+									onClick={() => contact('email')}
+								>
+									✉ Email
+								</button>
+							)}
+							{business.website && (
+								<button
+									className="btn-outline w-full"
+									onClick={() => contact('website')}
+								>
+									🌐 Website
+								</button>
+							)}
+						</div>
+						{!isOwner && (
+							<Link
+								to={`/auth/entrar`}
+								className="btn-blue w-full"
+							>
+								Mensagem →
+							</Link>
+						)}
+						{isOwner && (
+							<Link
+								to={`/area/empresas/${business.id}/editar`}
+								className="btn-blue w-full"
+							>
+								Editar empresa
+							</Link>
+						)}
+						<Link
+							to={{
+								pathname: `/planos`,
+								search: `?business=${business.id}`,
+							}}
+							className={
+								isOwner
+									? 'btn-kwanza w-full'
+									: 'btn-ghost w-full'
+							}
+						>
+							{isOwner
+								? 'Assinar plano para esta empresa'
+								: 'Ver planos'}
+						</Link>
+					</aside>
+				</div>
+			</div>
+
+			<div className="mt-8 grid gap-6 lg:grid-cols-2">
+				<ReviewSection target={{ businessId: business.id }} />
+			</div>
+		</div>
+	);
+}
+
+// ================= Avaliações =================
+
+function ReviewSection({
+	target,
+}: {
+	target: { adId?: string; businessId?: string; revieweeId?: string };
+}) {
+	const { data } = useReviews(target);
+	const { isAuthenticated } = useSession();
+	const inputDisabled = !isAuthenticated;
+
+	return (
+		<section className="card p-6">
+			<h2 className="font-display text-lg font-black">Avaliações</h2>
+
+			{inputDisabled ? (
+				<p className="mt-3 text-sm text-ink/50">
+					<Link
+						to="/auth/entrar"
+						className="font-bold text-blue hover:underline"
+					>
+						Entra
+					</Link>{' '}
+					para avaliares.
+				</p>
+			) : (
+				<ReviewForm target={target} />
+			)}
+
+			<div className="mt-6 flex flex-col gap-4">
+				{(data?.items ?? []).length === 0 && (
+					<p className="text-sm text-ink/50">Ainda sem avaliações.</p>
+				)}
+				{(data?.items ?? []).map((rv) => (
+					<div
+						key={rv.id}
+						className="rounded-2xl border border-ink/10 bg-snow p-4"
+					>
+						<div className="flex items-center justify-between">
+							<div className="flex items-center gap-2">
+								<Avatar
+									src={rv.reviewer.image}
+									name={fullName(
+										rv.reviewer.name,
+										rv.reviewer.surname,
+									)}
+									size="sm"
+								/>
+								<div>
+									<p className="text-sm font-bold">
+										{fullName(
+											rv.reviewer.name,
+											rv.reviewer.surname,
+										)}
+									</p>
+									<p className="font-mono text-[10px] text-ink/40">
+										{formatDate(rv.createdAt)}
+									</p>
+								</div>
+							</div>
+							<Stars value={rv.rating} size={14} />
+						</div>
+						{rv.comment && (
+							<p className="mt-3 text-sm text-ink/70">
+								{rv.comment}
+							</p>
+						)}
+						{rv.response && (
+							<div className="mt-3 rounded-xl bg-white p-3 text-sm text-ink/60">
+								<span className="font-bold">Resposta: </span>
+								{rv.response}
+							</div>
+						)}
+					</div>
+				))}
+			</div>
+		</section>
+	);
+}
+
+function ReviewForm({
+	target,
+}: {
+	target: { adId?: string; businessId?: string; revieweeId?: string };
+}) {
+	const [rating, setRating] = useState(0);
+	const [comment, setComment] = useState('');
+	const createReview = useCreateReview();
+
+	const submit = (e: React.FormEvent) => {
+		e.preventDefault();
+		if (rating === 0) {
+			toast.error('Escolhe uma classificação em estrelas.');
+			return;
+		}
+		createReview.mutate(
+			{ ...target, rating, comment: comment || undefined },
+			{
+				onSuccess: () => {
+					toast.success('Avaliação publicada.');
+					setRating(0);
+					setComment('');
+				},
+				onError: (err) => toast.error(getMsg(err)),
+			},
+		);
+	};
+
+	return (
+		<form
+			onSubmit={submit}
+			className="mt-4 rounded-2xl border border-ink/10 bg-snow p-4"
+		>
+			<div className="flex items-center justify-between">
+				<p className="text-sm font-bold">Deixa a tua avaliação</p>
+				<div className="flex" onMouseLeave={() => {}}>
+					{[1, 2, 3, 4, 5].map((i) => (
+						<button
+							type="button"
+							key={i}
+							onClick={() => setRating(i)}
+							aria-label={`${i} estrelas`}
+						>
+							<svg
+								width="22"
+								height="22"
+								viewBox="0 0 24 24"
+								className={
+									i <= rating ? 'fill-kwanza' : 'fill-ink/15'
+								}
+							>
+								<path d="M12 2l2.9 6.3 6.9.8-5.1 4.7 1.4 6.8L12 17.4 5.9 20.6l1.4-6.8L2.2 9.1l6.9-.8L12 2z" />
+							</svg>
+						</button>
+					))}
+				</div>
+			</div>
+			<textarea
+				className="input mt-3 min-h-20"
+				placeholder="O que tens a dizer?"
+				value={comment}
+				onChange={(e) => setComment(e.target.value)}
+			/>
+			<button
+				className="btn-primary mt-3"
+				disabled={createReview.isPending}
+			>
+				Publicar avaliação
+			</button>
+		</form>
+	);
+}
+
+// ================= Denunciar =================
+
+export function ReportForm({
+	targetType,
+	targetId,
+	targetLabel,
+}: {
+	targetType: ReportTarget;
+	targetId: string;
+	targetLabel: string;
+}) {
+	const [open, setOpen] = useState(false);
+	const [reason, setReason] = useState<ReportReason>('OTHER');
+	const [description, setDescription] = useState('');
+	const createReport = useCreateReport();
+
+	if (!open) {
+		return (
+			<button
+				className="btn-ghost w-full text-red"
+				onClick={() => setOpen(true)}
+			>
+				⚑ Denunciar
+			</button>
+		);
+	}
+
+	const submit = (e: React.FormEvent) => {
+		e.preventDefault();
+		createReport.mutate(
+			{
+				targetType,
+				targetId,
+				reason,
+				description: description || undefined,
+			},
+			{
+				onSuccess: () => {
+					toast.success('Denúncia enviada. Obrigado.');
+					setOpen(false);
+					setDescription('');
+				},
+				onError: (err) => toast.error(getMsg(err)),
+			},
+		);
+	};
+
+	return (
+		<form onSubmit={submit} className="flex flex-col gap-3">
+			<h3 className="font-display text-sm font-black">
+				Denunciar {targetLabel}
+			</h3>
+			<select
+				className="input"
+				value={reason}
+				onChange={(e) => setReason(e.target.value as ReportReason)}
+			>
+				{REPORT_REASONS.map((r) => (
+					<option key={r} value={r}>
+						{r.replace('_', ' ')}
+					</option>
+				))}
+			</select>
+			<textarea
+				className="input min-h-20"
+				placeholder="Detalha o motivo…"
+				value={description}
+				onChange={(e) => setDescription(e.target.value)}
+			/>
+			<div className="flex gap-2">
+				<button
+					className="btn-primary"
+					disabled={createReport.isPending}
+				>
+					Enviar denúncia
+				</button>
+				<button
+					type="button"
+					className="btn-ghost"
+					onClick={() => setOpen(false)}
+				>
+					Cancelar
+				</button>
+			</div>
+		</form>
+	);
+}
+
+// ================= Busca =================
+
+export function SearchPage() {
+	const [searchParams] = useSearchParams();
+	const q = searchParams.get('q') ?? '';
+	const { data, isLoading } = useGlobalSearch({ q, page: 1, limit: 20 });
+	const navigate = useNavigate();
+
+	return (
+		<div className="mx-auto max-w-4xl px-4 py-10">
+			<h1 className="font-display text-3xl font-black">Pesquisa</h1>
+			<form
+				className="mt-4 flex gap-2"
+				onSubmit={(e) => {
+					e.preventDefault();
+					void navigate(`/busca?q=${encodeURIComponent(q)}`);
+				}}
+			>
+				<input
+					className="input"
+					placeholder="O que procuras hoje?"
+					value={q}
+					disabled
+				/>
+				<button className="btn-primary">Buscar</button>
+			</form>
+
+			{isLoading ? (
+				<PageLoader />
+			) : q ? (
+				<div className="mt-8 flex flex-col gap-3">
+					<p className="text-sm text-ink/50">
+						{data?.total ?? 0} resultado(s) para «<b>{q}</b>»
+					</p>
+					{(data?.items ?? []).length === 0 && (
+						<EmptyState
+							title="Nada encontrado"
+							description="Tenta outra palavra ou explora os anúncios."
+						/>
+					)}
+					{(data?.items ?? []).map((item: SearchItem) => {
+						if (item.type === 'AD')
+							return <AdCard key={item.id} ad={item} />;
+						if (item.type === 'BUSINESS')
+							return (
+								<BusinessCard key={item.id} business={item} />
+							);
+						return (
+							<div
+								key={item.id}
+								className="card flex items-center gap-3 p-4"
+							>
+								<Avatar
+									src={item.image}
+									name={item.name}
+									size="md"
+								/>
+								<div>
+									<p className="text-sm font-bold">
+										{item.name} {item.surname}
+									</p>
+									<p className="text-xs text-ink/50">
+										{item.isVerified
+											? 'Verificado'
+											: 'Utilizador'}{' '}
+										· confiança {item.trustScore}
+									</p>
+								</div>
+							</div>
+						);
+					})}
+				</div>
+			) : (
+				<p className="mt-8 text-sm text-ink/50">
+					Digita um termo para pesquisar anúncios, empresas e
+					utilizadores.
+				</p>
+			)}
+		</div>
+	);
+}
+
+// ================= Planos =================
+
+export function PlansPage() {
+	const { data, isLoading } = usePlans();
+	const [searchParams] = useSearchParams();
+	const businessId = searchParams.get('business') ?? undefined;
+
+	return (
+		<div className="mx-auto max-w-6xl px-4 py-12">
+			<div className="mx-auto mb-10 max-w-xl text-center">
+				<span className="tag tag-kwanza">Planos</span>
+				<h1 className="mt-3 font-display text-3xl font-black">
+					Paga pouco, vende muito.
+				</h1>
+				<p className="mt-2 text-ink/60">
+					Escolhe o plano certo e mostra o teu negócio num instante. O
+					pagamento é confirmado pelos nossos moderadores.
+				</p>
+			</div>
+
+			{isLoading ? (
+				<PageLoader />
+			) : (
+				<div className="grid gap-5 md:grid-cols-3">
+					{(data?.plans ?? []).map((plan) => (
+						<div
+							key={plan.id}
+							className="card overflow-hidden"
+							style={{ padding: 0 }}
+						>
+							<div className="bg-ink p-6 text-snow">
+								<h2 className="font-display text-lg font-black">
+									{plan.name}
+								</h2>
+								<p className="mt-1 text-sm text-snow/60">
+									{plan.description}
+								</p>
+								<div className="mt-4 flex items-baseline gap-1">
+									<span className="price-tag !bg-kwanza !text-ink">
+										{formatKz(plan.price)}
+									</span>
+									<span className="font-mono text-xs text-snow/50">
+										/ {plan.durationDays} dias
+									</span>
+								</div>
+							</div>
+							<ul className="flex flex-1 flex-col gap-2 p-6 text-sm">
+								{(plan.benefits ?? []).map((b) => (
+									<li
+										key={b}
+										className="flex items-center gap-2"
+									>
+										<span className="text-kwanza">✔</span>{' '}
+										{b}
+									</li>
+								))}
+								<li className="flex items-center gap-2">
+									<span className="text-kwanza">✔</span> Até{' '}
+									{plan.businessVisibilityLimit} empresas em
+									destaque
+								</li>
+								<li className="flex items-center gap-2">
+									<span className="text-kwanza">✔</span> Até{' '}
+									{plan.featuredAdsLimit} anúncios em destaque
+								</li>
+							</ul>
+							<div className="p-6 pt-0">
+								<Link
+									to={
+										businessId
+											? `/area/empresas/${businessId}/subscricao?plan=${plan.id}`
+											: '/area'
+									}
+									className="btn-primary w-full"
+									style={{ background: 'var(--color-red)' }}
+								>
+									Quero este plano
+								</Link>
+							</div>
+						</div>
+					))}
+				</div>
+			)}
+
+			<div className="mt-10 rounded-2xl border-2 border-dashed border-ink/20 p-6">
+				<h3 className="font-display text-sm font-black">
+					Transferências bancárias
+				</h3>
+				<div className="mt-3 flex flex-wrap gap-3">
+					{(data?.platformAccounts ?? []).map((acc, i) => (
+						<div
+							key={i}
+							className="flex-1 min-w-[240px] rounded-xl bg-snow p-4 font-mono text-xs"
+						>
+							<p className="font-bold text-blue">
+								{acc.bankName}
+							</p>
+							<p>{acc.bankHolder}</p>
+							<p className="text-ink/70">{acc.bankIban}</p>
+						</div>
+					))}
+				</div>
+			</div>
+		</div>
+	);
+}
+
+// ================= 404 =================
+
+export function NotFoundPage() {
+	return (
+		<div className="mx-auto flex min-h-[60vh] max-w-6xl flex-col items-center justify-center px-4 text-center">
+			<p className="font-mono text-6xl font-black text-red">404</p>
+			<h1 className="mt-4 font-display text-2xl font-black">
+				Ninguém está deste lado.
+			</h1>
+			<p className="mt-2 text-ink/60">
+				A página que procuras não existe ou foi movida.
+			</p>
+			<div className="mt-6 flex gap-3">
+				<Link to="/" className="btn-primary">
+					Ir para o início
+				</Link>
+				<Link to="/anuncios" className="btn-outline">
+					Ver anúncios
+				</Link>
+			</div>
+		</div>
+	);
+}
+
+function getMsg(err: unknown): string {
+	return getApiError(err, 'Erro. Tenta novamente.');
+}
