@@ -42,7 +42,6 @@ import { formatDate, formatKz, fullName, timeAgo } from '../lib/format';
 import {
 	PROVINCES,
 	REPORT_REASONS,
-	type Province,
 	type ReportReason,
 	type ReportTarget,
 	type SearchItem,
@@ -81,8 +80,6 @@ export function AdsPage() {
 	const q = searchParams.get('q') ?? '';
 	const selectedCategoryIds =
 		searchParams.get('categoryIds')?.split(',').filter(Boolean) ?? [];
-	const selectedProvinces =
-		searchParams.get('provinces')?.split(',').filter(Boolean) ?? [];
 	const sortBy = searchParams.get('sortBy') ?? 'newest';
 	const onlyFeatured = searchParams.get('featured') === 'true';
 	const minPrice = searchParams.get('minPrice')
@@ -110,10 +107,6 @@ export function AdsPage() {
 		categoryIds:
 			selectedCategoryIds.length > 0
 				? selectedCategoryIds.join(',')
-				: undefined,
-		province:
-			selectedProvinces.length === 1
-				? (selectedProvinces[0] as Province)
 				: undefined,
 		featured: onlyFeatured || undefined,
 		minPrice,
@@ -195,15 +188,6 @@ export function AdsPage() {
 							}
 						/>
 					)}
-					<FilterPills
-						label="Províncias"
-						items={PROVINCES.map((p) => ({
-							id: p,
-							name: PROVINCE_LABELS[p] ?? p,
-						}))}
-						selected={selectedProvinces}
-						onToggle={(id) => toggleArrayParam('provinces', id)}
-					/>
 					<div className="flex gap-2">
 						<button
 							type="button"
@@ -214,7 +198,6 @@ export function AdsPage() {
 						</button>
 						{(q ||
 							selectedCategoryIds.length > 0 ||
-							selectedProvinces.length > 0 ||
 							onlyFeatured ||
 							sortBy !== 'newest') && (
 							<button
@@ -252,7 +235,6 @@ export function AdsPage() {
 						</button>
 						{(q ||
 							selectedCategoryIds.length > 0 ||
-							selectedProvinces.length > 0 ||
 							onlyFeatured ||
 							sortBy !== 'newest') && (
 							<button
@@ -559,12 +541,6 @@ function SellerCard({ userId }: { userId: string }) {
 				<p className="text-xs text-ink/50">
 					Vendedor {seller.isVerified && '· Verificado'}
 				</p>
-				<a
-					href={`/busca?q=${encodeURIComponent(fullName(seller.name, seller.surname))}&type=USER`}
-					className="text-xs font-bold text-blue hover:underline"
-				>
-					Ver perfil
-				</a>
 			</div>
 			<button
 				className="btn-ghost"
@@ -1270,7 +1246,6 @@ const SEARCH_TYPES: { id: string; label: string; type?: SearchType }[] = [
 	{ id: 'todos', label: 'Todos' },
 	{ id: 'ads', label: 'Anúncios', type: 'AD' },
 	{ id: 'businesses', label: 'Empresas', type: 'BUSINESS' },
-	{ id: 'users', label: 'Utilizadores', type: 'USER' },
 ];
 
 export function SearchPage() {
@@ -1278,11 +1253,13 @@ export function SearchPage() {
 	const [searchParams, setSearchParams] = useSearchParams();
 	const navigate = useNavigate();
 	const q = searchParams.get('q') ?? '';
-	const type = searchParams.get('type') as SearchType | null;
+	const typeParam = searchParams.get('type');
+	const type: SearchType | null =
+		typeParam === 'AD' || typeParam === 'BUSINESS' ? typeParam : null;
 	const categoryId = searchParams.get('categoryId') ?? undefined;
 	const province = searchParams.get('province') ?? undefined;
 	const { data: adCategories = [] } = useCategories('AD');
-	const { data: bizCategories = [] } = useCategories('BIZ');
+	const { data: bizCategories = [] } = useCategories('BUSINESS');
 	const categoryOptions = [...adCategories, ...bizCategories];
 	const { data, isLoading } = useGlobalSearch({
 		q,
@@ -1336,7 +1313,7 @@ export function SearchPage() {
 			</form>
 
 			<div className="mt-8 flex flex-col gap-6 lg:flex-row">
-				<aside className="nice-scroll order-1 flex flex-col gap-5 self-start rounded-2xl border border-ink/10 bg-white p-4 lg:sticky lg:top-20 lg:w-64 lg:shrink-0 lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto">
+				<aside className="nice-scroll flex flex-col gap-5 self-start rounded-2xl border border-ink/10 bg-white p-4 lg:sticky lg:top-20 lg:w-64 lg:shrink-0 lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto">
 					<div>
 						<p className="mb-2 text-xs font-bold uppercase tracking-widest text-ink/50">
 							Tipo
@@ -1423,44 +1400,18 @@ export function SearchPage() {
 										return (
 											<AdCard key={item.id} ad={item} />
 										);
-									if (item.type === 'BUSINESS')
-										return (
-											<BusinessCard
-												key={item.id}
-												business={item}
-											/>
-										);
 									return (
-										<div
+										<BusinessCard
 											key={item.id}
-											className="card flex items-center gap-3 p-4"
-										>
-											<Avatar
-												src={item.image}
-												name={item.name}
-												size="md"
-											/>
-											<div>
-												<p className="text-sm font-bold">
-													{item.name} {item.surname}
-												</p>
-												<p className="text-xs text-ink/50">
-													{item.isVerified
-														? 'Verificado'
-														: 'Utilizador'}{' '}
-													· confiança{' '}
-													{item.trustScore}
-												</p>
-											</div>
-										</div>
+											business={item}
+										/>
 									);
 								})}
 							</div>
 						</>
 					) : (
 						<p className="text-sm text-ink/50">
-							Digita um termo para pesquisar anúncios, empresas e
-							utilizadores.
+							Digita um termo para pesquisar anúncios e empresas.
 						</p>
 					)}
 				</div>

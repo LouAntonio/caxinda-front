@@ -444,7 +444,7 @@ export interface BusinessAnalytics {
 
 // ---------------- Search ----------------
 
-export type SearchType = 'AD' | 'BUSINESS' | 'USER';
+export type SearchType = 'AD' | 'BUSINESS';
 
 export type SearchItem =
 	| (AdListItem & {
@@ -456,10 +456,6 @@ export type SearchItem =
 			type: 'BUSINESS';
 			relevance: number;
 			owner: PublicUser;
-	  })
-	| (PublicUser & {
-			type: 'USER';
-			relevance: number;
 	  });
 
 // ---------------- Media (Cloudinary) ----------------
