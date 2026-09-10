@@ -36,6 +36,7 @@ import { Price } from '../components/ui/Price';
 import { StatusPill } from '../components/ui/StatusPill';
 import { Stars } from '../components/ui/Stars';
 import { Avatar } from '../components/ui/Avatar';
+import { FilterPills } from '../components/ui/FilterPills';
 import { useSession } from '../hooks/useSession';
 import { formatDate, formatKz, fullName, timeAgo } from '../lib/format';
 import {
@@ -49,6 +50,27 @@ import {
 import { useAuthStore } from '../store/auth';
 import { useWishlistCheck } from '../hooks/queries';
 
+const PROVINCE_LABELS: Record<string, string> = {
+	BENGO: 'Bengo',
+	BENGUELA: 'Benguela',
+	BIÉ: 'Bié',
+	CABINDA: 'Cabinda',
+	CUANDO_CUBANGO: 'Cuando-Cubango',
+	CUANZA_NORTE: 'Cuanza Norte',
+	CUANZA_SUL: 'Cuanza Sul',
+	CUNENE: 'Cunene',
+	HUAMBO: 'Huambo',
+	HUÍLA: 'Huíla',
+	LUANDA: 'Luanda',
+	LUNDA_NORTE: 'Lunda Norte',
+	LUNDA_SUL: 'Lunda Sul',
+	MALANJE: 'Malanje',
+	MOXICO: 'Moxico',
+	NAMIBE: 'Namibe',
+	UÍGE: 'Uíge',
+	ZAIRE: 'Zaire',
+};
+
 // ================= Anúncios (lista) =================
 
 export function AdsPage() {
@@ -56,9 +78,12 @@ export function AdsPage() {
 	const [searchParams, setSearchParams] = useSearchParams();
 	const { data: categories } = useCategories('AD');
 	const q = searchParams.get('q') ?? '';
-	const categoryIds = searchParams.get('categoryIds') ?? undefined;
-	const province = searchParams.get('province') ?? undefined;
+	const selectedCategoryIds =
+		searchParams.get('categoryIds')?.split(',').filter(Boolean) ?? [];
+	const selectedProvinces =
+		searchParams.get('provinces')?.split(',').filter(Boolean) ?? [];
 	const sortBy = searchParams.get('sortBy') ?? 'newest';
+	const onlyFeatured = searchParams.get('featured') === 'true';
 	const minPrice = searchParams.get('minPrice')
 		? Number(searchParams.get('minPrice'))
 		: undefined;
@@ -66,12 +91,30 @@ export function AdsPage() {
 		? Number(searchParams.get('maxPrice'))
 		: undefined;
 	const page = Math.max(1, Number(searchParams.get('page')) || 1);
+	const [localQ, setLocalQ] = useState(q);
+
+	const applySearch = () => {
+		setParam('q', localQ || undefined);
+	};
+
+	const clearFilters = () => {
+		setLocalQ('');
+		setSearchParams(new URLSearchParams());
+	};
 
 	const { data, isLoading } = useAds({
 		page,
 		limit: 15,
 		q: q || undefined,
-		categoryIds,
+		categoryIds:
+			selectedCategoryIds.length > 0
+				? selectedCategoryIds.join(',')
+				: undefined,
+		province:
+			selectedProvinces.length === 1
+				? (selectedProvinces[0] as Province)
+				: undefined,
+		featured: onlyFeatured || undefined,
 		minPrice,
 		maxPrice,
 		sortBy: sortBy as 'newest',
@@ -88,6 +131,21 @@ export function AdsPage() {
 		setSearchParams(next);
 	};
 
+	const toggleArrayParam = (key: string, id: string) => {
+		const current = searchParams.get(key)?.split(',').filter(Boolean) ?? [];
+		const next = current.includes(id)
+			? current.filter((v) => v !== id)
+			: [...current, id];
+		const nextParams = new URLSearchParams(searchParams);
+		if (next.length === 0) {
+			nextParams.delete(key);
+		} else {
+			nextParams.set(key, next.join(','));
+		}
+		nextParams.delete('page');
+		setSearchParams(nextParams);
+	};
+
 	return (
 		<div className="mx-auto max-w-6xl px-4 py-10">
 			<div className="mb-6 flex flex-wrap items-end justify-between gap-4">
@@ -97,79 +155,166 @@ export function AdsPage() {
 				</Link>
 			</div>
 
-			<form
-				className="mb-6 flex flex-wrap gap-3"
-				onSubmit={(e) => {
-					e.preventDefault();
-					setParam('q', q);
-				}}
-			>
-				<input
-					className="input max-w-xs"
-					placeholder="Pesquisar anúncios…"
-					value={q}
-					onChange={(e) => setParam('q', e.target.value || undefined)}
-				/>
-				<select
-					className="input max-w-[180px]"
-					value={categoryIds ?? ''}
-					onChange={(e) =>
-						setParam('categoryIds', e.target.value || undefined)
-					}
-				>
-					<option value="">Todas as categorias</option>
-					{(categories ?? []).map((c) => (
-						<option key={c.id} value={c.id}>
-							{c.name}
-						</option>
-					))}
-				</select>
-				<select
-					className="input max-w-[180px]"
-					value={province ?? ''}
-					onChange={(e) =>
-						setParam('province', e.target.value || undefined)
-					}
-				>
-					<option value="">Todas as províncias</option>
-					{PROVINCES.map((p) => (
-						<option key={p} value={p}>
-							{p.replace('_', ' ')}
-						</option>
-					))}
-				</select>
-				<select
-					className="input max-w-[180px]"
-					value={sortBy}
-					onChange={(e) => setParam('sortBy', e.target.value)}
-				>
-					<option value="newest">Mais recentes</option>
-					<option value="price_asc">Preço: menor → maior</option>
-					<option value="price_desc">Preço: maior → menor</option>
-				</select>
-			</form>
-
-			{isLoading ? (
-				<PageLoader />
-			) : (data?.items.length ?? 0) === 0 ? (
-				<EmptyState
-					title="Sem anúncios encontrados"
-					description="Tenta mudar os filtros ou pesquisa noutra província."
-				/>
-			) : (
-				<>
-					<div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-5">
-						{(data?.items ?? []).map((ad) => (
-							<AdCard key={ad.id} ad={ad} />
-						))}
-					</div>
-					<Pagination
-						page={page}
-						totalPages={data?.totalPages ?? 1}
-						basePath="/anuncios"
+			<div className="flex gap-6">
+				<aside className="sticky top-20 hidden w-64 shrink-0 flex-col gap-5 self-start rounded-2xl border border-ink/10 bg-white p-4 lg:flex lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto">
+					<input
+						className="input"
+						placeholder="Pesquisar anúncios…"
+						value={localQ}
+						onChange={(e) => setLocalQ(e.target.value)}
+						onKeyDown={(e) => {
+							if (e.key === 'Enter') {
+								e.preventDefault();
+								applySearch();
+							}
+						}}
 					/>
-				</>
-			)}
+					<button
+						type="button"
+						onClick={() =>
+							setParam(
+								'featured',
+								onlyFeatured ? undefined : 'true',
+							)
+						}
+						className={`w-full rounded-xl border-2 px-3 py-2 text-xs font-bold transition ${
+							onlyFeatured
+								? 'border-kwanza bg-kwanza/15 text-ink'
+								: 'border-ink/15 text-ink/50 hover:border-ink/30'
+						}`}
+					>
+						★ Apenas destaque
+					</button>
+					{(categories ?? []).length > 0 && (
+						<FilterPills
+							label="Categorias"
+							items={(categories ?? []).map((c) => ({
+								id: c.id,
+								name: c.name,
+								count: c.adCount,
+							}))}
+							selected={selectedCategoryIds}
+							onToggle={(id) =>
+								toggleArrayParam('categoryIds', id)
+							}
+						/>
+					)}
+					<FilterPills
+						label="Províncias"
+						items={PROVINCES.map((p) => ({
+							id: p,
+							name: PROVINCE_LABELS[p] ?? p,
+						}))}
+						selected={selectedProvinces}
+						onToggle={(id) => toggleArrayParam('provinces', id)}
+					/>
+					<select
+						className="input"
+						value={sortBy}
+						onChange={(e) => setParam('sortBy', e.target.value)}
+					>
+						<option value="newest">Mais recentes</option>
+						<option value="price_asc">Preço: menor → maior</option>
+						<option value="price_desc">Preço: maior → menor</option>
+					</select>
+					<div className="flex gap-2">
+						<button
+							type="button"
+							onClick={applySearch}
+							className="flex-1 rounded-xl bg-blue px-3 py-2 text-xs font-bold text-white transition hover:opacity-90"
+						>
+							Pesquisar
+						</button>
+						{(q ||
+							selectedCategoryIds.length > 0 ||
+							selectedProvinces.length > 0 ||
+							onlyFeatured ||
+							sortBy !== 'newest') && (
+							<button
+								type="button"
+								onClick={clearFilters}
+								className="flex items-center justify-center rounded-xl border-2 border-ink/15 px-3 py-2 text-xs text-ink/50 transition hover:border-red/30 hover:text-red"
+								title="Limpar filtros"
+							>
+								✕
+							</button>
+						)}
+					</div>
+				</aside>
+
+				<div className="min-w-0 flex-1">
+					<div className="mb-4 flex flex-wrap items-center gap-2 lg:hidden">
+						<input
+							className="input flex-1"
+							placeholder="Pesquisar anúncios…"
+							value={localQ}
+							onChange={(e) => setLocalQ(e.target.value)}
+							onKeyDown={(e) => {
+								if (e.key === 'Enter') {
+									e.preventDefault();
+									applySearch();
+								}
+							}}
+						/>
+						<button
+							type="button"
+							onClick={applySearch}
+							className="shrink-0 rounded-xl bg-blue px-3 py-2 text-xs font-bold text-white transition hover:opacity-90"
+						>
+							Pesquisar
+						</button>
+						{(q ||
+							selectedCategoryIds.length > 0 ||
+							selectedProvinces.length > 0 ||
+							onlyFeatured ||
+							sortBy !== 'newest') && (
+							<button
+								type="button"
+								onClick={clearFilters}
+								className="flex shrink-0 items-center justify-center rounded-xl border-2 border-ink/15 px-3 py-2 text-xs text-ink/50 transition hover:border-red/30 hover:text-red"
+								title="Limpar filtros"
+							>
+								✕
+							</button>
+						)}
+						<select
+							className="input max-w-[180px]"
+							value={sortBy}
+							onChange={(e) => setParam('sortBy', e.target.value)}
+						>
+							<option value="newest">Mais recentes</option>
+							<option value="price_asc">
+								Preço: menor → maior
+							</option>
+							<option value="price_desc">
+								Preço: maior → menor
+							</option>
+						</select>
+					</div>
+
+					{isLoading ? (
+						<PageLoader />
+					) : (data?.items.length ?? 0) === 0 ? (
+						<EmptyState
+							title="Sem anúncios encontrados"
+							description="Tenta mudar os filtros ou pesquisa noutra província."
+						/>
+					) : (
+						<>
+							<div className="grid grid-cols-2 gap-4 md:grid-cols-3">
+								{(data?.items ?? []).map((ad) => (
+									<AdCard key={ad.id} ad={ad} />
+								))}
+							</div>
+							<Pagination
+								page={page}
+								totalPages={data?.totalPages ?? 1}
+								basePath="/anuncios"
+							/>
+						</>
+					)}
+				</div>
+			</div>
 		</div>
 	);
 }
@@ -439,16 +584,38 @@ export function BusinessesPage() {
 	const [searchParams, setSearchParams] = useSearchParams();
 	const { data: categories } = useCategories('BUSINESS');
 	const q = searchParams.get('q') ?? '';
-	const categoryId = searchParams.get('categoryId') ?? undefined;
-	const province = searchParams.get('province') ?? undefined;
+	const selectedCategoryIds =
+		searchParams.get('categoryIds')?.split(',').filter(Boolean) ?? [];
+	const selectedProvinces =
+		searchParams.get('provinces')?.split(',').filter(Boolean) ?? [];
+	const sortBy = searchParams.get('sortBy') ?? 'newest';
+	const onlyFeatured = searchParams.get('featured') === 'true';
 	const page = Math.max(1, Number(searchParams.get('page')) || 1);
+	const [localQ, setLocalQ] = useState(q);
+
+	const applySearch = () => {
+		setParam('q', localQ || undefined);
+	};
+
+	const clearFilters = () => {
+		setLocalQ('');
+		setSearchParams(new URLSearchParams());
+	};
 
 	const { data, isLoading } = useBusinesses({
 		page,
 		limit: 12,
 		q: q || undefined,
-		categoryId,
-		province: province as Province | undefined,
+		categoryIds:
+			selectedCategoryIds.length > 0
+				? selectedCategoryIds.join(',')
+				: undefined,
+		provinces:
+			selectedProvinces.length > 0
+				? selectedProvinces.join(',')
+				: undefined,
+		featured: onlyFeatured || undefined,
+		sortBy: sortBy as 'newest',
 	});
 
 	const setParam = (key: string, value?: string) => {
@@ -459,6 +626,21 @@ export function BusinessesPage() {
 		setSearchParams(next);
 	};
 
+	const toggleArrayParam = (key: string, id: string) => {
+		const current = searchParams.get(key)?.split(',').filter(Boolean) ?? [];
+		const next = current.includes(id)
+			? current.filter((v) => v !== id)
+			: [...current, id];
+		const nextParams = new URLSearchParams(searchParams);
+		if (next.length === 0) {
+			nextParams.delete(key);
+		} else {
+			nextParams.set(key, next.join(','));
+		}
+		nextParams.delete('page');
+		setSearchParams(nextParams);
+	};
+
 	return (
 		<div className="mx-auto max-w-6xl px-4 py-10">
 			<div className="mb-6 flex flex-wrap items-end justify-between gap-4">
@@ -467,60 +649,162 @@ export function BusinessesPage() {
 					Registar a minha empresa
 				</Link>
 			</div>
-			<form className="mb-6 flex flex-wrap gap-3">
-				<input
-					className="input max-w-xs"
-					placeholder="Pesquisar empresas…"
-					value={q}
-					onChange={(e) => setParam('q', e.target.value || undefined)}
-				/>
-				<select
-					className="input max-w-[200px]"
-					value={categoryId ?? ''}
-					onChange={(e) =>
-						setParam('categoryId', e.target.value || undefined)
-					}
-				>
-					<option value="">Todas as categorias</option>
-					{(categories ?? []).map((c) => (
-						<option key={c.id} value={c.id}>
-							{c.name}
-						</option>
-					))}
-				</select>
-				<select
-					className="input max-w-[200px]"
-					value={province ?? ''}
-					onChange={(e) =>
-						setParam('province', e.target.value || undefined)
-					}
-				>
-					<option value="">Todas as províncias</option>
-					{PROVINCES.map((p) => (
-						<option key={p} value={p}>
-							{p.replace('_', ' ')}
-						</option>
-					))}
-				</select>
-			</form>
-			{isLoading ? (
-				<PageLoader />
-			) : (data?.items.length ?? 0) === 0 ? (
-				<EmptyState title="Sem empresas encontradas" />
-			) : (
-				<>
-					<div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-						{(data?.items ?? []).map((b) => (
-							<BusinessCard key={b.id} business={b} />
-						))}
-					</div>
-					<Pagination
-						page={page}
-						totalPages={data?.totalPages ?? 1}
-						basePath="/empresas"
+
+			<div className="flex gap-6">
+				<aside className="sticky top-20 hidden w-64 shrink-0 flex-col gap-5 self-start rounded-2xl border border-ink/10 bg-white p-4 lg:flex lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto">
+					<input
+						className="input"
+						placeholder="Pesquisar empresas…"
+						value={localQ}
+						onChange={(e) => setLocalQ(e.target.value)}
+						onKeyDown={(e) => {
+							if (e.key === 'Enter') {
+								e.preventDefault();
+								applySearch();
+							}
+						}}
 					/>
-				</>
-			)}
+					<button
+						type="button"
+						onClick={() =>
+							setParam(
+								'featured',
+								onlyFeatured ? undefined : 'true',
+							)
+						}
+						className={`w-full rounded-xl border-2 px-3 py-2 text-xs font-bold transition ${
+							onlyFeatured
+								? 'border-kwanza bg-kwanza/15 text-ink'
+								: 'border-ink/15 text-ink/50 hover:border-ink/30'
+						}`}
+					>
+						★ Apenas destaque
+					</button>
+					{(categories ?? []).length > 0 && (
+						<FilterPills
+							label="Categorias"
+							items={(categories ?? []).map((c) => ({
+								id: c.id,
+								name: c.name,
+								count: c.businessCount,
+							}))}
+							selected={selectedCategoryIds}
+							onToggle={(id) =>
+								toggleArrayParam('categoryIds', id)
+							}
+						/>
+					)}
+					<FilterPills
+						label="Províncias"
+						items={PROVINCES.map((p) => ({
+							id: p,
+							name: PROVINCE_LABELS[p] ?? p,
+						}))}
+						selected={selectedProvinces}
+						onToggle={(id) => toggleArrayParam('provinces', id)}
+					/>
+					<select
+						className="input"
+						value={sortBy}
+						onChange={(e) => setParam('sortBy', e.target.value)}
+					>
+						<option value="newest">Mais recentes</option>
+						<option value="oldest">Mais antigas</option>
+						<option value="name_asc">Nome: A → Z</option>
+						<option value="name_desc">Nome: Z → A</option>
+					</select>
+					<div className="flex gap-2">
+						<button
+							type="button"
+							onClick={applySearch}
+							className="flex-1 rounded-xl bg-blue px-3 py-2 text-xs font-bold text-white transition hover:opacity-90"
+						>
+							Pesquisar
+						</button>
+						{(q ||
+							selectedCategoryIds.length > 0 ||
+							selectedProvinces.length > 0 ||
+							onlyFeatured ||
+							sortBy !== 'newest') && (
+							<button
+								type="button"
+								onClick={clearFilters}
+								className="flex items-center justify-center rounded-xl border-2 border-ink/15 px-3 py-2 text-xs text-ink/50 transition hover:border-red/30 hover:text-red"
+								title="Limpar filtros"
+							>
+								✕
+							</button>
+						)}
+					</div>
+				</aside>
+
+				<div className="min-w-0 flex-1">
+					<div className="mb-4 flex flex-wrap items-center gap-2 lg:hidden">
+						<input
+							className="input flex-1"
+							placeholder="Pesquisar empresas…"
+							value={localQ}
+							onChange={(e) => setLocalQ(e.target.value)}
+							onKeyDown={(e) => {
+								if (e.key === 'Enter') {
+									e.preventDefault();
+									applySearch();
+								}
+							}}
+						/>
+						<button
+							type="button"
+							onClick={applySearch}
+							className="shrink-0 rounded-xl bg-blue px-3 py-2 text-xs font-bold text-white transition hover:opacity-90"
+						>
+							Pesquisar
+						</button>
+						{(q ||
+							selectedCategoryIds.length > 0 ||
+							selectedProvinces.length > 0 ||
+							onlyFeatured ||
+							sortBy !== 'newest') && (
+							<button
+								type="button"
+								onClick={clearFilters}
+								className="flex shrink-0 items-center justify-center rounded-xl border-2 border-ink/15 px-3 py-2 text-xs text-ink/50 transition hover:border-red/30 hover:text-red"
+								title="Limpar filtros"
+							>
+								✕
+							</button>
+						)}
+						<select
+							className="input max-w-[180px]"
+							value={sortBy}
+							onChange={(e) => setParam('sortBy', e.target.value)}
+						>
+							<option value="newest">Mais recentes</option>
+							<option value="oldest">Mais antigas</option>
+							<option value="name_asc">Nome: A → Z</option>
+							<option value="name_desc">Nome: Z → A</option>
+						</select>
+					</div>
+
+					{isLoading ? (
+						<PageLoader />
+					) : (data?.items.length ?? 0) === 0 ? (
+						<EmptyState title="Sem empresas encontradas" />
+					) : (
+						<>
+							<div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3">
+								{(data?.items ?? []).map((b) => (
+									<BusinessCard key={b.id} business={b} />
+								))}
+							</div>
+							<Pagination
+								page={page}
+								totalPages={data?.totalPages ?? 1}
+								basePath="/empresas"
+							/>
+						</>
+					)}
+				</div>
+			</div>
 		</div>
 	);
 }

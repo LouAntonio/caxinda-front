@@ -220,7 +220,10 @@ export interface BusinessQueryParams {
 	sortBy?: 'newest' | 'oldest' | 'name_asc' | 'name_desc';
 	q?: string;
 	province?: Province;
+	provinces?: string;
 	categoryId?: string;
+	categoryIds?: string;
+	featured?: boolean;
 	ownerId?: string;
 }
 

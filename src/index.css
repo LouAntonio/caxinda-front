@@ -59,7 +59,7 @@
 	}
 
 	.input {
-		@apply w-full rounded-xl border-2 border-ink/15 bg-white px-3.5 py-2.5 text-sm font-medium text-ink placeholder:font-normal placeholder:text-ink/40 focus:border-blue focus:outline-none;
+		@apply w-full rounded-xl border-2 border-ink/15 bg-white px-3.5 py-2.5 text-sm font-medium text-ink placeholder:font-normal placeholder:text-ink/40 focus:border-ink/30 focus:outline-none;
 	}
 	.label {
 		@apply mb-1.5 block text-xs font-bold tracking-wide text-ink/70;

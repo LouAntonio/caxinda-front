@@ -10,6 +10,10 @@ import { GOOGLE_CLIENT_ID } from './lib/env';
 
 const root = document.getElementById('root')!;
 
+if ('scrollRestoration' in history) {
+	history.scrollRestoration = 'manual';
+}
+
 const providers = (
 	<StrictMode>
 		<QueryClientProvider client={queryClient}>

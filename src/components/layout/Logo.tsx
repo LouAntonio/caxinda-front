@@ -23,8 +23,8 @@ export function Logo({ compact = false, variant = 'default' }: LogoProps) {
 				alt="Caxinda Divulga"
 				className={
 					compact
-						? 'h-9 w-9 rounded-xl object-contain'
-						: 'h-9 w-auto object-contain'
+						? 'h-14 w-14 rounded-xl object-contain'
+						: 'h-14 w-auto object-contain'
 				}
 			/>
 		</Link>
