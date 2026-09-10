@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Logo } from './Logo';
 import { Avatar } from '../ui/Avatar';
 import { Spinner } from '../ui/Spinner';
@@ -56,15 +56,15 @@ export function Header() {
 					/>
 				</form>
 				<nav className="hidden items-center gap-4 text-sm font-bold text-ink/70 lg:flex">
-					<a href="/anuncios" className="hover:text-red">
+					<Link to="/anuncios" className="hover:text-red">
 						Anúncios
-					</a>
-					<a href="/empresas" className="hover:text-blue">
+					</Link>
+					<Link to="/empresas" className="hover:text-blue">
 						Empresas
-					</a>
-					<a href="/planos" className="hover:text-ink">
+					</Link>
+					<Link to="/planos" className="hover:text-ink">
 						Planos
-					</a>
+					</Link>
 				</nav>
 
 				<div className="flex items-center gap-2">
@@ -75,15 +75,15 @@ export function Header() {
 					) : isAuthenticated && user ? (
 						<div className="relative" ref={menuRef}>
 							{user.role !== 'USER' && (
-								<a
-									href="/admin"
+								<Link
+									to="/admin"
 									className="btn-blue mr-1 hidden sm:inline-flex"
 								>
 									Admin
-								</a>
+								</Link>
 							)}
-							<a
-								href="/area/mensagens"
+							<Link
+								to="/area/mensagens"
 								className="relative mr-1 hidden items-center rounded-xl p-2 text-sm font-bold text-ink/70 hover:bg-ink/5 sm:flex"
 								aria-label="Mensagens"
 							>
@@ -93,7 +93,7 @@ export function Header() {
 										{totalUnread}
 									</span>
 								)}
-							</a>
+							</Link>
 							<button
 								type="button"
 								className="flex items-center gap-2 rounded-xl p-1.5 hover:bg-ink/5"
@@ -116,49 +116,49 @@ export function Header() {
 										</p>
 									</div>
 									<div className="flex flex-col py-1 text-sm font-semibold">
-										<a
-											href="/area"
+										<Link
+											to="/area"
 											className="px-4 py-2 hover:bg-snow"
 										>
 											Minha conta
-										</a>
-										<a
-											href="/area/anuncios"
+										</Link>
+										<Link
+											to="/area/anuncios"
 											className="px-4 py-2 hover:bg-snow"
 										>
 											Meus anúncios
-										</a>
-										<a
-											href="/area/empresas"
+										</Link>
+										<Link
+											to="/area/empresas"
 											className="px-4 py-2 hover:bg-snow"
 										>
 											Minhas empresas
-										</a>
-										<a
-											href="/area/favoritos"
+										</Link>
+										<Link
+											to="/area/favoritos"
 											className="px-4 py-2 hover:bg-snow"
 										>
 											Favoritos
-										</a>
-										<a
-											href="/area/mensagens"
+										</Link>
+										<Link
+											to="/area/mensagens"
 											className="px-4 py-2 hover:bg-snow"
 										>
 											Mensagens
-										</a>
-										<a
-											href="/area/definicoes"
+										</Link>
+										<Link
+											to="/area/definicoes"
 											className="px-4 py-2 hover:bg-snow"
 										>
 											Definições
-										</a>
+										</Link>
 										{user.role !== 'USER' && (
-											<a
-												href="/admin"
+											<Link
+												to="/admin"
 												className="px-4 py-2 hover:bg-snow"
 											>
 												Painel admin
-											</a>
+											</Link>
 										)}
 										<button
 											type="button"
@@ -178,15 +178,15 @@ export function Header() {
 						</div>
 					) : (
 						<>
-							<a
-								href="/auth/entrar"
+							<Link
+								to="/auth/entrar"
 								className="btn-ghost hidden sm:inline-flex"
 							>
 								Entrar
-							</a>
-							<a href="/auth/registar" className="btn-primary">
+							</Link>
+							<Link to="/auth/registar" className="btn-primary">
 								Começar
-							</a>
+							</Link>
 						</>
 					)}
 				</div>

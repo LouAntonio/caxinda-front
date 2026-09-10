@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import {
 	useCategories,
 	useAds,
@@ -54,15 +55,15 @@ export default function LandingPage() {
 							país.
 						</p>
 						<div className="mt-8 flex flex-wrap gap-3">
-							<a href="/anuncios" className="btn-primary">
+							<Link to="/anuncios" className="btn-primary">
 								Explorar anúncios
-							</a>
-							<a
-								href="/auth/registar"
+							</Link>
+							<Link
+								to="/auth/registar"
 								className="btn-outline !border-snow/30 !text-snow hover:!border-snow/60"
 							>
 								Criar conta grátis
-							</a>
+							</Link>
 						</div>
 					</div>
 					<div className="relative grid gap-4">
@@ -106,25 +107,25 @@ export default function LandingPage() {
 					<h2 className="font-display text-2xl font-black">
 						Navega por categoria
 					</h2>
-					<a
-						href="/anuncios"
+					<Link
+						to="/anuncios"
 						className="text-sm font-bold text-red hover:underline"
 					>
 						Ver tudo →
-					</a>
+					</Link>
 				</div>
 				<div className="flex flex-wrap gap-3">
 					{(categories ?? []).map((cat) => (
-						<a
+						<Link
 							key={cat.id}
-							href={`/anuncios?categoryIds=${cat.id}`}
+							to={`/anuncios?categoryIds=${cat.id}`}
 							className="rounded-2xl border-2 border-ink/10 bg-white px-4 py-3 text-sm font-bold transition hover:-translate-y-0.5 hover:border-red hover:text-red"
 						>
 							{cat.name}
 							<span className="ml-2 font-mono text-xs text-ink/40">
 								{cat.adCount}
 							</span>
-						</a>
+						</Link>
 					))}
 				</div>
 			</section>
@@ -136,12 +137,12 @@ export default function LandingPage() {
 						<h2 className="font-display text-2xl font-black">
 							Em destaque
 						</h2>
-						<a
-							href="/anuncios"
+						<Link
+							to="/anuncios"
 							className="text-sm font-bold text-red hover:underline"
 						>
 							Ver todos →
-						</a>
+						</Link>
 					</div>
 					{adsLoading ? (
 						<PageLoader />
@@ -198,12 +199,12 @@ export default function LandingPage() {
 						<h2 className="font-display text-2xl font-black">
 							Empresas recém-chegadas
 						</h2>
-						<a
-							href="/empresas"
+						<Link
+							to="/empresas"
 							className="text-sm font-bold text-blue hover:underline"
 						>
 							Ver todas →
-						</a>
+						</Link>
 					</div>
 					{businessesLoading ? (
 						<PageLoader />
@@ -229,15 +230,15 @@ export default function LandingPage() {
 						dias.
 					</p>
 					<div className="mt-8 flex justify-center gap-3">
-						<a href="/auth/registar" className="btn-kwanza">
+						<Link to="/auth/registar" className="btn-kwanza">
 							Começar hoje — é grátis
-						</a>
-						<a
-							href="/planos"
+						</Link>
+						<Link
+							to="/planos"
 							className="btn-outline !border-white/40 !text-white hover:!border-white/80"
 						>
 							Ver planos
-						</a>
+						</Link>
 					</div>
 				</div>
 			</section>

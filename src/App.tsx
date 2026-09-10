@@ -21,6 +21,33 @@ const lazyComponent = (loader: () => Promise<{ default: ComponentType }>) => {
 };
 
 const LandingPage = lazyComponent(() => import('./pages/LandingPage'));
+const { SobrePage, TermosPage, PoliticasPage, CookiesPage, ContactosPage } = {
+	SobrePage: lazyComponent(() =>
+		import('./pages/InstitutionalPages').then((m) => ({
+			default: m.SobrePage,
+		})),
+	),
+	TermosPage: lazyComponent(() =>
+		import('./pages/InstitutionalPages').then((m) => ({
+			default: m.TermosPage,
+		})),
+	),
+	PoliticasPage: lazyComponent(() =>
+		import('./pages/InstitutionalPages').then((m) => ({
+			default: m.PoliticasPage,
+		})),
+	),
+	CookiesPage: lazyComponent(() =>
+		import('./pages/InstitutionalPages').then((m) => ({
+			default: m.CookiesPage,
+		})),
+	),
+	ContactosPage: lazyComponent(() =>
+		import('./pages/InstitutionalPages').then((m) => ({
+			default: m.ContactosPage,
+		})),
+	),
+};
 const {
 	AdsPage,
 	AdDetailPage,
@@ -232,6 +259,11 @@ const router = createBrowserRouter([
 			{ path: 'empresas/:slug', element: <BusinessDetailPage /> },
 			{ path: 'busca', element: <SearchPage /> },
 			{ path: 'planos', element: <PlansPage /> },
+			{ path: 'sobre', element: <SobrePage /> },
+			{ path: 'termos', element: <TermosPage /> },
+			{ path: 'politicas', element: <PoliticasPage /> },
+			{ path: 'cookies', element: <CookiesPage /> },
+			{ path: 'contactos', element: <ContactosPage /> },
 			{
 				path: 'area',
 				element: (

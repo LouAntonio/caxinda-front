@@ -1,11 +1,10 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
 	Link,
 	useLocation,
 	useNavigate,
 	useSearchParams,
 } from 'react-router-dom';
-import { GoogleLogin } from '@react-oauth/google';
 import toast from 'react-hot-toast';
 import {
 	useForgetPassword,
@@ -22,32 +21,93 @@ import { GOOGLE_CLIENT_ID } from '../lib/env';
 import { getApiError } from '../lib/api';
 import { ButtonLoader } from '../components/ui/Spinner';
 import { Spinner } from '../components/ui/Spinner';
+import { PasswordInput } from '../components/ui/PasswordInput';
+
+type GoogleAccountsId = {
+	initialize: (config: {
+		client_id: string;
+		ux_mode: 'popup';
+		auto_select?: boolean;
+		callback: (response: { credential?: string }) => void;
+	}) => void;
+	renderButton: (
+		element: HTMLElement,
+		options: {
+			theme?: string;
+			size?: string;
+			shape?: string;
+			text?: string;
+			width?: number;
+		},
+	) => void;
+};
+
+type GoogleAccountsWindow = Window & {
+	google?: {
+		accounts?: {
+			id?: GoogleAccountsId;
+		};
+	};
+};
 
 function GoogleButton({
 	onSuccess,
 }: {
 	onSuccess: (credential: string) => void;
 }) {
-	if (!GOOGLE_CLIENT_ID) {
-		return null;
-	}
+	const containerRef = useRef<HTMLDivElement>(null);
+	const renderedRef = useRef(false);
+	const onSuccessRef = useRef(onSuccess);
 
-	return (
-		<GoogleLogin
-			onSuccess={(response) => {
-				if (response.credential) {
-					onSuccess(response.credential);
-				}
-			}}
-			onError={() =>
-				toast.error('O login Google falhou. Tenta novamente.')
+	useEffect(() => {
+		onSuccessRef.current = onSuccess;
+	}, [onSuccess]);
+
+	useEffect(() => {
+		if (!GOOGLE_CLIENT_ID || !containerRef.current) return;
+
+		const container = containerRef.current;
+		const render = () => {
+			const id = (window as GoogleAccountsWindow).google?.accounts?.id;
+			if (!id || renderedRef.current) return;
+			id.initialize({
+				client_id: GOOGLE_CLIENT_ID,
+				ux_mode: 'popup',
+				auto_select: false,
+				callback: (response) => {
+					if (response.credential) {
+						onSuccessRef.current(response.credential);
+					} else {
+						toast.error('O login Google falhou. Tenta novamente.');
+					}
+				},
+			});
+			id.renderButton(container, {
+				theme: 'outline',
+				size: 'large',
+				shape: 'rectangular',
+				text: 'continue_with',
+				width: 320,
+			});
+			renderedRef.current = true;
+		};
+
+		render();
+
+		if (renderedRef.current) return;
+
+		const timer = window.setInterval(() => {
+			const id = (window as GoogleAccountsWindow).google?.accounts?.id;
+			if (id && !renderedRef.current) {
+				window.clearInterval(timer);
+				render();
 			}
-			useOneTap={false}
-			theme="outline"
-			shape="rectangular"
-			text="continue_with"
-		/>
-	);
+		}, 300);
+
+		return () => window.clearInterval(timer);
+	}, []);
+
+	return <div ref={containerRef} className="flex justify-center" />;
 }
 
 function Divider() {
@@ -130,10 +190,8 @@ export function AuthLoginPage() {
 					<label className="label" htmlFor="password">
 						Palavra-passe
 					</label>
-					<input
+					<PasswordInput
 						id="password"
-						type="password"
-						className="input"
 						value={password}
 						onChange={(e) => setPassword(e.target.value)}
 						required
@@ -186,6 +244,10 @@ export function AuthRegisterPage() {
 	const [surname, setSurname] = useState('');
 	const [email, setEmail] = useState('');
 	const [password, setPassword] = useState('');
+	const [confirmPassword, setConfirmPassword] = useState('');
+
+	const passwordsDontMatch =
+		confirmPassword.length > 0 && password !== confirmPassword;
 
 	return (
 		<div>
@@ -215,6 +277,10 @@ export function AuthRegisterPage() {
 				className="flex flex-col gap-4"
 				onSubmit={(e) => {
 					e.preventDefault();
+					if (passwordsDontMatch) {
+						toast.error('As palavras-passe não coincidem.');
+						return;
+					}
 					signUp.mutate(
 						{ name, surname, email, password },
 						{
@@ -278,19 +344,37 @@ export function AuthRegisterPage() {
 					<label className="label" htmlFor="rg-password">
 						Palavra-passe
 					</label>
-					<input
+					<PasswordInput
 						id="rg-password"
-						type="password"
-						className="input"
 						minLength={8}
 						value={password}
 						onChange={(e) => setPassword(e.target.value)}
 						required
 						autoComplete="new-password"
+						aria-invalid={passwordsDontMatch || undefined}
 					/>
 					<p className="mt-1 text-xs text-ink/40">
 						Mínimo 8 caracteres.
 					</p>
+				</div>
+				<div>
+					<label className="label" htmlFor="rg-confirm">
+						Confirmar palavra-passe
+					</label>
+					<PasswordInput
+						id="rg-confirm"
+						minLength={8}
+						value={confirmPassword}
+						onChange={(e) => setConfirmPassword(e.target.value)}
+						required
+						autoComplete="new-password"
+						aria-invalid={passwordsDontMatch || undefined}
+					/>
+					{passwordsDontMatch && (
+						<p className="mt-1 text-xs font-bold text-red">
+							As palavras-passe não coincidem.
+						</p>
+					)}
 				</div>
 				<button
 					className="btn-primary w-full"
@@ -551,10 +635,8 @@ export function AuthResetPage() {
 					<label className="label" htmlFor="rs-password">
 						Nova palavra-passe
 					</label>
-					<input
+					<PasswordInput
 						id="rs-password"
-						type="password"
-						className="input"
 						minLength={8}
 						value={password}
 						onChange={(e) => setPassword(e.target.value)}
@@ -566,10 +648,8 @@ export function AuthResetPage() {
 					<label className="label" htmlFor="rs-confirm">
 						Confirmar
 					</label>
-					<input
+					<PasswordInput
 						id="rs-confirm"
-						type="password"
-						className="input"
 						minLength={8}
 						value={confirm}
 						onChange={(e) => setConfirm(e.target.value)}

@@ -55,6 +55,7 @@ import { ButtonLoader } from '../components/ui/Spinner';
 import { Price } from '../components/ui/Price';
 import { StatusPill } from '../components/ui/StatusPill';
 import { Avatar } from '../components/ui/Avatar';
+import { PasswordInput } from '../components/ui/PasswordInput';
 import { ConfirmButton } from '../components/ui/ConfirmButton';
 import { formatDate, formatDateTime, formatKz, fullName } from '../lib/format';
 import type { MediaAsset, Province } from '../types/api';
@@ -1597,7 +1598,7 @@ export function SettingsPage() {
 		surname: '',
 		phone: '',
 	});
-	const [pw, setPw] = useState({ current: '', next: '' });
+	const [pw, setPw] = useState({ current: '', next: '', confirm: '' });
 	const [newEmail, setNewEmail] = useState('');
 	const updateProfile = useUpdateProfile();
 	const changePassword = useChangePassword();
@@ -1722,9 +1723,7 @@ export function SettingsPage() {
 						<div className="grid gap-4 sm:grid-cols-2">
 							<div>
 								<label className="label">Atual</label>
-								<input
-									className="input"
-									type="password"
+								<PasswordInput
 									value={pw.current}
 									onChange={(e) =>
 										setPw({
@@ -1732,23 +1731,57 @@ export function SettingsPage() {
 											current: e.target.value,
 										})
 									}
+									autoComplete="current-password"
 								/>
 							</div>
 							<div>
 								<label className="label">Nova</label>
-								<input
-									className="input"
-									type="password"
+								<PasswordInput
+									minLength={8}
 									value={pw.next}
 									onChange={(e) =>
 										setPw({ ...pw, next: e.target.value })
 									}
+									autoComplete="new-password"
 								/>
+							</div>
+							<div className="sm:col-span-2">
+								<label className="label">
+									Confirmar nova palavra-passe
+								</label>
+								<PasswordInput
+									minLength={8}
+									value={pw.confirm}
+									onChange={(e) =>
+										setPw({
+											...pw,
+											confirm: e.target.value,
+										})
+									}
+									autoComplete="new-password"
+									aria-invalid={
+										(pw.confirm.length > 0 &&
+											pw.confirm !== pw.next) ||
+										undefined
+									}
+								/>
+								{pw.confirm.length > 0 &&
+									pw.confirm !== pw.next && (
+										<p className="mt-1 text-xs font-bold text-red">
+											As palavras-passe não coincidem.
+										</p>
+									)}
 							</div>
 						</div>
 						<button
 							className="btn-blue max-w-fit"
-							onClick={() =>
+							onClick={() => {
+								if (pw.next !== pw.confirm) {
+									toast.error(
+										'As palavras-passe não coincidem.',
+									);
+									return;
+								}
 								changePassword.mutate(
 									{
 										currentPassword: pw.current,
@@ -1759,13 +1792,17 @@ export function SettingsPage() {
 											toast.success(
 												'Palavra-passe alterada.',
 											);
-											setPw({ current: '', next: '' });
+											setPw({
+												current: '',
+												next: '',
+												confirm: '',
+											});
 										},
 										onError: (err) =>
 											toast.error(getApiError(err)),
 									},
-								)
-							}
+								);
+							}}
 						>
 							Alterar
 						</button>

@@ -1,17 +1,32 @@
-export function Logo({ compact = false }: { compact?: boolean }) {
+import { Link } from 'react-router-dom';
+
+interface LogoProps {
+	compact?: boolean;
+	variant?: 'default' | 'dark';
+}
+
+export function Logo({ compact = false, variant = 'default' }: LogoProps) {
+	const src = compact
+		? '/images/logo/icon.png'
+		: variant === 'dark'
+			? '/images/logo/logoWhite.png'
+			: '/images/logo/logo.png';
+
 	return (
-		<a href="/" className="flex items-center gap-2.5">
-			<span className="flex h-9 w-9 items-center justify-center rounded-xl bg-ink font-display text-sm font-black text-snow">
-				C<span className="text-kwanza">X</span>
-			</span>
-			{!compact && (
-				<span className="font-display text-sm font-black leading-tight tracking-tight">
-					Caxinda
-					<span className="block text-[10px] font-bold uppercase tracking-[0.2em] text-red">
-						Divulga
-					</span>
-				</span>
-			)}
-		</a>
+		<Link
+			to="/"
+			aria-label="Caxinda Divulga — página inicial"
+			className="flex items-center"
+		>
+			<img
+				src={src}
+				alt="Caxinda Divulga"
+				className={
+					compact
+						? 'h-9 w-9 rounded-xl object-contain'
+						: 'h-9 w-auto object-contain'
+				}
+			/>
+		</Link>
 	);
 }
