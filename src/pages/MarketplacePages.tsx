@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { usePageTitle } from '../hooks/usePageTitle';
 import {
 	Link,
 	useNavigate,
@@ -29,7 +30,7 @@ import {
 import { AdCard } from '../components/ads/AdCard';
 import { BusinessCard } from '../components/businesses/BusinessCard';
 import { Pagination } from '../components/ui/Pagination';
-import { PageLoader } from '../components/ui/Spinner';
+import { ButtonLoader, PageLoader } from '../components/ui/Spinner';
 import { EmptyState } from '../components/ui/EmptyState';
 import { Price } from '../components/ui/Price';
 import { StatusPill } from '../components/ui/StatusPill';
@@ -51,6 +52,7 @@ import { useWishlistCheck } from '../hooks/queries';
 // ================= Anúncios (lista) =================
 
 export function AdsPage() {
+	usePageTitle('Anúncios');
 	const [searchParams, setSearchParams] = useSearchParams();
 	const { data: categories } = useCategories('AD');
 	const q = searchParams.get('q') ?? '';
@@ -176,6 +178,7 @@ export function AdsPage() {
 
 export function AdDetailPage() {
 	const { slug } = useParams();
+	usePageTitle('Anúncio');
 	const { data: ad, isLoading } = useAdBySlug(slug);
 	const navigate = useNavigate();
 	const { isAuthenticated } = useSession();
@@ -208,13 +211,13 @@ export function AdDetailPage() {
 			});
 			return;
 		}
-		openConversation.mutate(
-			{ adId: ad.id },
-			{
-				onSuccess: (conv) => navigate(`/area/mensagens?id=${conv.id}`),
-				onError: (e) => toast.error(getMsg(e)),
-			},
-		);
+		void toast
+			.promise(openConversation.mutateAsync({ adId: ad.id }), {
+				loading: 'A abrir conversa…',
+				success: 'Conversa aberta.',
+				error: (err) => getApiError(err),
+			})
+			.then((conv) => navigate(`/area/mensagens?id=${conv.id}`));
 	};
 
 	return (
@@ -292,6 +295,7 @@ export function AdDetailPage() {
 								onClick={contactSeller}
 								disabled={openConversation.isPending}
 							>
+								{openConversation.isPending && <ButtonLoader />}{' '}
 								Mensagem para o vendedor
 							</button>
 							{isAuthenticated && user && (
@@ -340,15 +344,17 @@ function WishlistToggle({ adId, saved }: { adId: string; saved: boolean }) {
 	const toggle = () => {
 		const next = !isSaved;
 		setIsSaved(next);
-		(next ? add : remove).mutate(adId, {
-			onError: () => {
+		void toast.promise((next ? add : remove).mutateAsync(adId), {
+			loading: next
+				? 'A adicionar aos favoritos…'
+				: 'A remover dos favoritos…',
+			success: next
+				? 'Adicionado aos favoritos.'
+				: 'Removido dos favoritos.',
+			error: () => {
 				setIsSaved(!next);
-				toast.error('Não foi possível guardar.');
+				return 'Não foi possível guardar.';
 			},
-			onSuccess: () =>
-				toast.success(
-					next ? 'Guardado nos favoritos' : 'Removido dos favoritos',
-				),
 		});
 	};
 
@@ -380,10 +386,16 @@ function SellerCard({ userId }: { userId: string }) {
 			void navigate('/auth/entrar');
 			return;
 		}
-		openConversation.mutate(
-			{ type: 'AD', adId: undefined, businessId: undefined },
+		void toast.promise(
+			openConversation.mutateAsync({
+				type: 'AD',
+				adId: undefined,
+				businessId: undefined,
+			}),
 			{
-				onError: (e) => toast.error(getMsg(e)),
+				loading: 'A abrir conversa…',
+				success: 'Conversa aberta.',
+				error: (err) => getApiError(err),
 			},
 		);
 	};
@@ -423,6 +435,7 @@ function SellerCard({ userId }: { userId: string }) {
 // ================= Empresas (lista) =================
 
 export function BusinessesPage() {
+	usePageTitle('Empresas');
 	const [searchParams, setSearchParams] = useSearchParams();
 	const { data: categories } = useCategories('BUSINESS');
 	const q = searchParams.get('q') ?? '';
@@ -515,6 +528,7 @@ export function BusinessesPage() {
 // ================= Empresa (detalhe) =================
 
 export function BusinessDetailPage() {
+	usePageTitle('Empresa');
 	const { slug } = useParams();
 	const { data: business, isLoading } = useBusinessBySlug(slug);
 	const { user } = useSession();
@@ -809,17 +823,23 @@ function ReviewForm({
 			toast.error('Escolhe uma classificação em estrelas.');
 			return;
 		}
-		createReview.mutate(
-			{ ...target, rating, comment: comment || undefined },
-			{
-				onSuccess: () => {
-					toast.success('Avaliação publicada.');
-					setRating(0);
-					setComment('');
+		void toast
+			.promise(
+				createReview.mutateAsync({
+					...target,
+					rating,
+					comment: comment || undefined,
+				}),
+				{
+					loading: 'A publicar avaliação…',
+					success: 'Avaliação publicada.',
+					error: (err) => getApiError(err),
 				},
-				onError: (err) => toast.error(getMsg(err)),
-			},
-		);
+			)
+			.then(() => {
+				setRating(0);
+				setComment('');
+			});
 	};
 
 	return (
@@ -861,7 +881,7 @@ function ReviewForm({
 				className="btn-primary mt-3"
 				disabled={createReview.isPending}
 			>
-				Publicar avaliação
+				{createReview.isPending && <ButtonLoader />} Publicar avaliação
 			</button>
 		</form>
 	);
@@ -896,22 +916,24 @@ export function ReportForm({
 
 	const submit = (e: React.FormEvent) => {
 		e.preventDefault();
-		createReport.mutate(
-			{
-				targetType,
-				targetId,
-				reason,
-				description: description || undefined,
-			},
-			{
-				onSuccess: () => {
-					toast.success('Denúncia enviada. Obrigado.');
-					setOpen(false);
-					setDescription('');
+		void toast
+			.promise(
+				createReport.mutateAsync({
+					targetType,
+					targetId,
+					reason,
+					description: description || undefined,
+				}),
+				{
+					loading: 'A enviar denúncia…',
+					success: 'Denúncia enviada. Obrigado.',
+					error: (err) => getApiError(err),
 				},
-				onError: (err) => toast.error(getMsg(err)),
-			},
-		);
+			)
+			.then(() => {
+				setOpen(false);
+				setDescription('');
+			});
 	};
 
 	return (
@@ -941,7 +963,7 @@ export function ReportForm({
 					className="btn-primary"
 					disabled={createReport.isPending}
 				>
-					Enviar denúncia
+					{createReport.isPending && <ButtonLoader />} Enviar denúncia
 				</button>
 				<button
 					type="button"
@@ -958,6 +980,7 @@ export function ReportForm({
 // ================= Busca =================
 
 export function SearchPage() {
+	usePageTitle('Pesquisa');
 	const [searchParams] = useSearchParams();
 	const q = searchParams.get('q') ?? '';
 	const { data, isLoading } = useGlobalSearch({ q, page: 1, limit: 20 });
@@ -1040,6 +1063,7 @@ export function SearchPage() {
 // ================= Planos =================
 
 export function PlansPage() {
+	usePageTitle('Planos');
 	const { data, isLoading } = usePlans();
 	const [searchParams] = useSearchParams();
 	const businessId = searchParams.get('business') ?? undefined;
@@ -1147,6 +1171,7 @@ export function PlansPage() {
 // ================= 404 =================
 
 export function NotFoundPage() {
+	usePageTitle('Não encontrado');
 	return (
 		<div className="mx-auto flex min-h-[60vh] max-w-6xl flex-col items-center justify-center px-4 text-center">
 			<p className="font-mono text-6xl font-black text-red">404</p>
@@ -1166,8 +1191,4 @@ export function NotFoundPage() {
 			</div>
 		</div>
 	);
-}
-
-function getMsg(err: unknown): string {
-	return getApiError(err, 'Erro. Tenta novamente.');
 }

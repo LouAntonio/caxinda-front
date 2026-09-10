@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { usePageTitle } from '../hooks/usePageTitle';
 
 function PageShell({
 	title,
@@ -32,6 +33,7 @@ function H2({ children }: { children: ReactNode }) {
 }
 
 export function SobrePage() {
+	usePageTitle('Sobre');
 	return (
 		<PageShell
 			title="Sobre nós"
@@ -69,6 +71,7 @@ export function SobrePage() {
 }
 
 export function TermosPage() {
+	usePageTitle('Termos e Condições');
 	return (
 		<PageShell
 			title="Termos e condições"
@@ -125,6 +128,7 @@ export function TermosPage() {
 }
 
 export function PoliticasPage() {
+	usePageTitle('Política de Privacidade');
 	return (
 		<PageShell
 			title="Política de privacidade"
@@ -178,6 +182,7 @@ export function PoliticasPage() {
 }
 
 export function CookiesPage() {
+	usePageTitle('Política de Cookies');
 	return (
 		<PageShell
 			title="Política de cookies"
@@ -218,6 +223,7 @@ export function CookiesPage() {
 }
 
 export function ContactosPage() {
+	usePageTitle('Contactos');
 	return (
 		<PageShell
 			title="Contactos"

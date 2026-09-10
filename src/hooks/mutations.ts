@@ -133,7 +133,7 @@ export function useMagicLinkRequest() {
 			email: string;
 			callbackURL?: string;
 		}) => {
-			const res = await http.post('/auth/magic-link/email', payload);
+			const res = await http.post('/auth/magic-link/request', payload);
 			return res.data;
 		},
 	});
@@ -165,7 +165,7 @@ export function useGoogleSignIn() {
 	return useMutation({
 		mutationFn: async (credentialIdToken: string) => {
 			const res = await http.post<GoogleAuthResult>('/auth/google', {
-				credentialIdToken,
+				credential: credentialIdToken,
 			});
 			return res.data;
 		},
@@ -231,11 +231,24 @@ export function useRevokeSession() {
 
 export function useUnlinkAccount() {
 	return useMutation({
-		mutationFn: async (providerId: string) => {
-			const res = await http.delete('/auth/unlink-account', {
-				params: { providerId },
+		mutationFn: async () => {
+			const res = await http.post('/auth/unlink-google');
+			return res.data;
+		},
+	});
+}
+
+export function useLinkGoogle() {
+	const queryClient = useQueryClient();
+	return useMutation({
+		mutationFn: async (credential: string) => {
+			const res = await http.post('/auth/link-google', {
+				credential,
 			});
 			return res.data;
+		},
+		onSuccess: () => {
+			void queryClient.invalidateQueries({ queryKey: ['me'] });
 		},
 	});
 }

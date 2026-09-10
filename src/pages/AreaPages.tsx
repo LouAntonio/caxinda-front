@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { usePageTitle } from '../hooks/usePageTitle';
 import {
 	Link,
 	useNavigate,
@@ -37,6 +38,7 @@ import {
 	useSubmitKyc,
 	useSubmitPaymentProof,
 	useUnlinkAccount,
+	useLinkGoogle,
 	useUpdateAd,
 	useUpdateBusiness,
 	useUpdateProfile,
@@ -57,6 +59,7 @@ import { StatusPill } from '../components/ui/StatusPill';
 import { Avatar } from '../components/ui/Avatar';
 import { PasswordInput } from '../components/ui/PasswordInput';
 import { ConfirmButton } from '../components/ui/ConfirmButton';
+import { GoogleButton } from '../components/ui/GoogleButton';
 import { formatDate, formatDateTime, formatKz, fullName } from '../lib/format';
 import type { MediaAsset, Province } from '../types/api';
 import { PROVINCES } from '../types/api';
@@ -70,6 +73,7 @@ function Title({ children }: { children: React.ReactNode }) {
 // ================= Dashboard =================
 
 export function AreaDashboardPage() {
+	usePageTitle('Painel');
 	const { user } = useSession();
 	const { data: ads } = useAds({
 		page: 1,
@@ -219,6 +223,7 @@ function StatCard({
 // ================= Meus anúncios =================
 
 export function MyAdsPage() {
+	usePageTitle('Os meus anúncios');
 	const { user } = useSession();
 	const { data, isLoading } = useAds({
 		page: 1,
@@ -282,9 +287,10 @@ function DeleteAdButton({ id, title }: { id: string; title: string }) {
 			confirmLabel="Apagar"
 			busy={deleteAd.isPending}
 			onConfirm={() =>
-				deleteAd.mutate(id, {
-					onSuccess: () => toast.success('Anúncio apagado.'),
-					onError: (e) => toast.error(getApiError(e)),
+				void toast.promise(deleteAd.mutateAsync(id), {
+					loading: 'A apagar…',
+					success: 'Anúncio apagado.',
+					error: (e) => getApiError(e),
 				})
 			}
 		>
@@ -305,9 +311,13 @@ function VisibilityToggle({ id, current }: { id: string; current: string }) {
 			}
 			title={current === 'VISIBLE' ? 'Ocultar' : 'Mostrar'}
 			onClick={() =>
-				setVisibility.mutate(
-					{ id, visibility: next },
-					{ onError: (e) => toast.error(getApiError(e)) },
+				void toast.promise(
+					setVisibility.mutateAsync({ id, visibility: next }),
+					{
+						loading: 'A alterar…',
+						success: 'Visibilidade atualizada.',
+						error: (e) => getApiError(e),
+					},
 				)
 			}
 		>
@@ -319,6 +329,7 @@ function VisibilityToggle({ id, current }: { id: string; current: string }) {
 // ================= Anúncio (criar/editar) =================
 
 export function AdFormPage() {
+	usePageTitle('Anúncio');
 	const { id } = useParams();
 	const editing = Boolean(id);
 	const { data: ad, isLoading } = useAd(id);
@@ -373,18 +384,22 @@ export function AdFormPage() {
 			...(gallery.length ? { gallery } : {}),
 		};
 		const mutation = editing ? updateAd : createAd;
-		mutation.mutate(
-			(editing ? { id: id!, ...payload } : payload) as never,
-			{
-				onSuccess: () => {
-					toast.success(
-						editing ? 'Anúncio atualizado.' : 'Anúncio publicado.',
-					);
-					void navigate('/area/anuncios');
+		void toast
+			.promise(
+				(mutation.mutateAsync as (input: unknown) => Promise<unknown>)(
+					editing ? { id: id!, ...payload } : payload,
+				),
+				{
+					loading: 'A guardar…',
+					success: editing
+						? 'Anúncio atualizado.'
+						: 'Anúncio publicado.',
+					error: (err) => getApiError(err),
 				},
-				onError: (err) => toast.error(getApiError(err)),
-			},
-		);
+			)
+			.then(() => {
+				void navigate('/area/anuncios');
+			});
 	};
 
 	const onFile = async (file: File, target: 'main' | 'gallery') => {
@@ -554,6 +569,7 @@ function FilePicker({
 // ================= Minhas empresas =================
 
 export function MyBusinessesPage() {
+	usePageTitle('As minhas empresas');
 	const { user } = useSession();
 	const { data, isLoading } = useBusinesses({
 		page: 1,
@@ -619,9 +635,10 @@ function DeleteBusinessButton({ id, name }: { id: string; name: string }) {
 			confirmLabel="Apagar"
 			busy={deleteBusiness.isPending}
 			onConfirm={() =>
-				deleteBusiness.mutate(id, {
-					onSuccess: () => toast.success('Empresa apagada.'),
-					onError: (e) => toast.error(getApiError(e)),
+				void toast.promise(deleteBusiness.mutateAsync(id), {
+					loading: 'A apagar…',
+					success: 'Empresa apagada.',
+					error: (e) => getApiError(e),
 				})
 			}
 		>
@@ -637,9 +654,13 @@ function StatusToggle({ id, current }: { id: string; current: string }) {
 		<button
 			className="btn-ghost"
 			onClick={() =>
-				setStatus.mutate(
-					{ id, status: next },
-					{ onError: (e) => toast.error(getApiError(e)) },
+				void toast.promise(
+					setStatus.mutateAsync({ id, status: next }),
+					{
+						loading: 'A alterar…',
+						success: 'Estado atualizado.',
+						error: (e) => getApiError(e),
+					},
 				)
 			}
 		>
@@ -651,6 +672,7 @@ function StatusToggle({ id, current }: { id: string; current: string }) {
 // ================= Empresa (criar/editar) =================
 
 export function BusinessFormPage() {
+	usePageTitle('Empresa');
 	const { id } = useParams();
 	const editing = Boolean(id);
 	const { data: business, isLoading } = useBusiness(id);
@@ -710,18 +732,22 @@ export function BusinessFormPage() {
 				: {}),
 		};
 		const mutation = editing ? updateBusiness : createBusiness;
-		mutation.mutate(
-			(editing ? { id: id!, ...payload } : payload) as never,
-			{
-				onSuccess: () => {
-					toast.success(
-						editing ? 'Empresa atualizada.' : 'Empresa registada.',
-					);
-					void navigate('/area/empresas');
+		void toast
+			.promise(
+				(mutation.mutateAsync as (input: unknown) => Promise<unknown>)(
+					editing ? { id: id!, ...payload } : payload,
+				),
+				{
+					loading: 'A guardar…',
+					success: editing
+						? 'Empresa atualizada.'
+						: 'Empresa registada.',
+					error: (err) => getApiError(err),
 				},
-				onError: (err) => toast.error(getApiError(err)),
-			},
-		);
+			)
+			.then(() => {
+				void navigate('/area/empresas');
+			});
 	};
 
 	return (
@@ -896,6 +922,7 @@ export function BusinessFormPage() {
 // ================= Subscrever empresa =================
 
 export function SubscribePage() {
+	usePageTitle('Subscrição');
 	const { id } = useParams();
 	const [searchParams] = useSearchParams();
 	const navigate = useNavigate();
@@ -958,20 +985,22 @@ export function SubscribePage() {
 				className="btn-primary"
 				disabled={!selectedPlan || createPayment.isPending}
 				onClick={() =>
-					createPayment.mutate(
-						{ businessId: id!, planId: selectedPlan, autoRenew },
-						{
-							onSuccess: (payment) => {
-								toast.success(
-									'Pedido criado. Envia o comprovativo.',
-								);
-								void navigate(
-									`/area/pagamentos?pay=${payment.id}`,
-								);
+					void toast
+						.promise(
+							createPayment.mutateAsync({
+								businessId: id!,
+								planId: selectedPlan,
+								autoRenew,
+							}),
+							{
+								loading: 'A criar pedido…',
+								success: 'Pedido criado. Envia o comprovativo.',
+								error: (err) => getApiError(err),
 							},
-							onError: (err) => toast.error(getApiError(err)),
-						},
-					)
+						)
+						.then((payment) => {
+							void navigate(`/area/pagamentos?pay=${payment.id}`);
+						})
 				}
 			>
 				{createPayment.isPending && <ButtonLoader />} Criar pedido de
@@ -984,6 +1013,7 @@ export function SubscribePage() {
 // ================= Favoritos =================
 
 export function WishlistPage() {
+	usePageTitle('Favoritos');
 	const { data, isLoading } = useWishlist(1);
 	return (
 		<div>
@@ -1009,6 +1039,7 @@ export function WishlistPage() {
 // ================= Mensagens =================
 
 export function MessagesPage() {
+	usePageTitle('Mensagens');
 	const [searchParams] = useSearchParams();
 	const [activeId, setActiveId] = useState<string | null>(
 		searchParams.get('id'),
@@ -1023,21 +1054,23 @@ export function MessagesPage() {
 	const send = useSendMessage();
 	const markRead = useMarkConversationRead();
 	const [text, setText] = useState('');
-	const chatStore = useChatStore();
+	const setOpenConversation = useChatStore((s) => s.setOpenConversation);
+	const clearUnread = useChatStore((s) => s.clearUnread);
 	const scrollRef = useRef<HTMLDivElement>(null);
-	const typing = activeId
-		? chatStore.typingByConversation[activeId]
-		: undefined;
+	const typing = useChatStore((s) =>
+		activeId ? s.typingByConversation[activeId] : undefined,
+	);
+	const presence = useChatStore((s) => s.presence);
 
 	useEffect(() => {
-		chatStore.setOpenConversation(activeId);
-		return () => chatStore.setOpenConversation(null);
-	}, [activeId, chatStore]);
+		setOpenConversation(activeId);
+		return () => setOpenConversation(null);
+	}, [activeId, setOpenConversation]);
 
 	useEffect(() => {
 		if (activeId) {
 			markRead.mutate(activeId);
-			chatStore.clearUnread(activeId);
+			clearUnread(activeId);
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [activeId]);
@@ -1096,9 +1129,7 @@ export function MessagesPage() {
 									size="sm"
 									online={
 										c.other !== 'SUPPORT_AGENT'
-											? chatStore.presence[
-													c.other?.id ?? ''
-												]
+											? presence[c.other?.id ?? '']
 											: undefined
 									}
 								/>
@@ -1189,22 +1220,24 @@ export function MessagesPage() {
 									onSubmit={(e) => {
 										e.preventDefault();
 										if (!text.trim()) return;
-										send.mutate(
-											{
-												conversationId: activeId,
-												content: text,
-											},
-											{
-												onSuccess: () => {
-													setText('');
-													void refetch();
-												},
-												onError: (err) =>
-													toast.error(
+										void toast
+											.promise(
+												send.mutateAsync({
+													conversationId: activeId,
+													content: text,
+												}),
+												{
+													loading: 'A enviar…',
+													success:
+														'Mensagem enviada.',
+													error: (err) =>
 														getApiError(err),
-													),
-											},
-										);
+												},
+											)
+											.then(() => {
+												setText('');
+												void refetch();
+											});
 									}}
 								>
 									<div className="flex gap-2">
@@ -1275,6 +1308,7 @@ function MessageBubble({
 // ================= Pagamentos =================
 
 export function PaymentsPage() {
+	usePageTitle('Pagamentos');
 	const [, setSearchParams] = useSearchParams();
 	const { data: payments, isLoading } = useMyPayments();
 	const submitProof = useSubmitPaymentProof();
@@ -1288,17 +1322,23 @@ export function PaymentsPage() {
 			toast.error('Anexa o comprovativo.');
 			return;
 		}
-		submitProof.mutate(
-			{ id, proofUrl: proof.url, proofId: proof.cloudinaryId },
-			{
-				onSuccess: () => {
-					toast.success('Comprovativo enviado. Fica em análise.');
-					setProof(null);
-					setSearchParams({});
+		void toast
+			.promise(
+				submitProof.mutateAsync({
+					id,
+					proofUrl: proof.url,
+					proofId: proof.cloudinaryId,
+				}),
+				{
+					loading: 'A enviar…',
+					success: 'Comprovativo enviado. Fica em análise.',
+					error: (err) => getApiError(err),
 				},
-				onError: (err) => toast.error(getApiError(err)),
-			},
-		);
+			)
+			.then(() => {
+				setProof(null);
+				setSearchParams({});
+			});
 	};
 
 	return (
@@ -1388,10 +1428,16 @@ export function PaymentsPage() {
 										message="O pedido de pagamento será cancelado."
 										confirmLabel="Cancelar"
 										onConfirm={() =>
-											cancelPayment.mutate(p.id, {
-												onError: (e) =>
-													toast.error(getApiError(e)),
-											})
+											void toast.promise(
+												cancelPayment.mutateAsync(p.id),
+												{
+													loading: 'A cancelar…',
+													success:
+														'Pedido cancelado.',
+													error: (e) =>
+														getApiError(e),
+												},
+											)
 										}
 									>
 										<button className="btn-ghost !text-red">
@@ -1443,6 +1489,7 @@ export function PaymentsPage() {
 // ================= KYC =================
 
 export function KycPage() {
+	usePageTitle('Verificação');
 	const { data: kyc } = useMyKyc();
 	const submitKyc = useSubmitKyc();
 	const upload = useUpload('kyc');
@@ -1457,20 +1504,18 @@ export function KycPage() {
 			toast.error('Envia a frente e o verso do BI e uma selfie.');
 			return;
 		}
-		submitKyc.mutate(
-			{
+		void toast.promise(
+			submitKyc.mutateAsync({
 				biFrontUrl: biFront.url,
 				biFrontId: biFront.cloudinaryId,
 				biBackUrl: biBack.url,
 				biBackId: biBack.cloudinaryId,
 				selfies: [selfie],
-			},
+			}),
 			{
-				onSuccess: () =>
-					toast.success(
-						'Documentos enviados. A análise leva até 48h.',
-					),
-				onError: (err) => toast.error(getApiError(err)),
+				loading: 'A enviar…',
+				success: 'Documentos enviados. A análise leva até 48h.',
+				error: (err) => getApiError(err),
 			},
 		);
 	};
@@ -1592,6 +1637,7 @@ function KycSlot({
 // ================= Definições =================
 
 export function SettingsPage() {
+	usePageTitle('Definições');
 	const { user } = useSession();
 	const [profile, setProfile] = useState({
 		name: '',
@@ -1605,8 +1651,18 @@ export function SettingsPage() {
 	const changeEmail = useChangeEmail();
 	const revokeSession = useRevokeSession();
 	const unlinkGoogle = useUnlinkAccount();
+	const linkGoogle = useLinkGoogle();
+	const sessionToken = useAuthStore((state) => state.sessionToken);
 	const [sessions, setSessions] = useState<
-		{ id: string; provider: string; token: string; createdAt: string }[]
+		{
+			id: string;
+			token?: string;
+			provider: string;
+			createdAt?: string;
+			expiresAt?: string;
+			device?: string;
+			current?: boolean;
+		}[]
 	>([]);
 	const [showSessions, setShowSessions] = useState(false);
 
@@ -1634,9 +1690,12 @@ export function SettingsPage() {
 				setSessions(
 					items.map((s: any) => ({
 						id: s.id ?? s.token ?? '-',
-						provider: s.ipAddress ?? 'Sessão',
 						token: s.token,
+						provider: s.ipAddress ?? 'Sessão',
 						createdAt: s.createdAt,
+						expiresAt: s.expiresAt,
+						device: s.userAgent ?? undefined,
+						current: Boolean(s.token) && s.token === sessionToken,
 					})),
 				);
 			})
@@ -1696,17 +1755,16 @@ export function SettingsPage() {
 					<button
 						className="btn-primary max-w-fit"
 						onClick={() =>
-							updateProfile.mutate(
-								{
+							void toast.promise(
+								updateProfile.mutateAsync({
 									name: profile.name,
 									surname: profile.surname,
 									phone: profile.phone || undefined,
-								},
+								}),
 								{
-									onSuccess: () =>
-										toast.success('Perfil atualizado.'),
-									onError: (err) =>
-										toast.error(getApiError(err)),
+									loading: 'A guardar…',
+									success: 'Perfil atualizado.',
+									error: (err) => getApiError(err),
 								},
 							)
 						}
@@ -1782,26 +1840,25 @@ export function SettingsPage() {
 									);
 									return;
 								}
-								changePassword.mutate(
-									{
-										currentPassword: pw.current,
-										newPassword: pw.next,
-									},
-									{
-										onSuccess: () => {
-											toast.success(
-												'Palavra-passe alterada.',
-											);
-											setPw({
-												current: '',
-												next: '',
-												confirm: '',
-											});
+								void toast
+									.promise(
+										changePassword.mutateAsync({
+											currentPassword: pw.current,
+											newPassword: pw.next,
+										}),
+										{
+											loading: 'A alterar…',
+											success: 'Palavra-passe alterada.',
+											error: (err) => getApiError(err),
 										},
-										onError: (err) =>
-											toast.error(getApiError(err)),
-									},
-								);
+									)
+									.then(() =>
+										setPw({
+											current: '',
+											next: '',
+											confirm: '',
+										}),
+									);
 							}}
 						>
 							Alterar
@@ -1822,14 +1879,15 @@ export function SettingsPage() {
 						<button
 							className="btn-blue"
 							onClick={() =>
-								changeEmail.mutate(newEmail, {
-									onSuccess: () =>
-										toast.success(
+								void toast.promise(
+									changeEmail.mutateAsync(newEmail),
+									{
+										loading: 'A enviar…',
+										success:
 											'Pedido enviado. Confirma o novo email.',
-										),
-									onError: (err) =>
-										toast.error(getApiError(err)),
-								})
+										error: (err) => getApiError(err),
+									},
+								)
 							}
 						>
 							Atualizar
@@ -1841,7 +1899,7 @@ export function SettingsPage() {
 					<h2 className="font-display text-sm font-black">
 						Contas e sessões
 					</h2>
-					{isGoogle && (
+					{isGoogle ? (
 						<div className="flex items-center justify-between rounded-xl bg-snow p-3">
 							<span className="text-sm font-bold">
 								Ligado com Google
@@ -1850,20 +1908,45 @@ export function SettingsPage() {
 								className="btn-ghost !text-red"
 								disabled={!hasPassword}
 								onClick={() =>
-									unlinkGoogle.mutate('google', {
-										onSuccess: () =>
-											toast.success(
-												'Conta Google desligada.',
-											),
-										onError: (err) =>
-											toast.error(getApiError(err)),
-									})
+									void toast.promise(
+										unlinkGoogle.mutateAsync(),
+										{
+											loading: 'A desligar…',
+											success: 'Conta Google desligada.',
+											error: (err) => getApiError(err),
+										},
+									)
 								}
 							>
 								{!hasPassword
 									? 'Define password primeiro'
 									: 'Desligar'}
 							</button>
+						</div>
+					) : (
+						<div className="flex flex-col gap-2 rounded-xl bg-snow p-3">
+							<span className="text-sm font-bold">
+								Ligar com Google
+							</span>
+							<p className="text-xs text-ink/50">
+								Associa a tua conta Google para entrares sem
+								palavra-passe.
+							</p>
+							<div className="flex">
+								<GoogleButton
+									width={240}
+									onSuccess={(credential) =>
+										void toast.promise(
+											linkGoogle.mutateAsync(credential),
+											{
+												loading: 'A ligar…',
+												success: 'Conta Google ligada.',
+												error: (e) => getApiError(e),
+											},
+										)
+									}
+								/>
+							</div>
 						</div>
 					)}
 					{!showSessions ? (
@@ -1878,35 +1961,66 @@ export function SettingsPage() {
 							{sessions.map((s) => (
 								<div
 									key={s.id}
-									className="flex items-center justify-between rounded-xl bg-snow px-3 py-2 text-sm"
+									className="rounded-xl bg-snow px-3 py-2 text-sm"
 								>
-									<span className="font-bold">
-										{s.provider}
-									</span>
-									<span className="font-mono text-xs text-ink/50">
-										{formatDateTime(s.createdAt)}
-									</span>
-									<button
-										className="btn-ghost !text-red"
-										onClick={() =>
-											revokeSession.mutate(s.token, {
-												onSuccess: () => {
-													toast.success(
-														'Sessão terminada.',
-													);
-													loadSessions();
-												},
-												onError: (err) =>
-													toast.error(
-														getApiError(err),
-													),
-											})
-										}
-									>
-										Terminar
-									</button>
+									<div className="flex items-center justify-between gap-2">
+										<span className="min-w-0 truncate font-bold">
+											{s.device || s.provider}
+											{s.current && (
+												<span className="ml-2 rounded-full bg-kwanza px-2 py-0.5 font-mono text-[10px] font-bold text-ink">
+													atual
+												</span>
+											)}
+										</span>
+										<button
+											className="btn-ghost !text-red"
+											disabled={s.current}
+											onClick={() =>
+												void toast
+													.promise(
+														revokeSession.mutateAsync(
+															s.token ?? '',
+														),
+														{
+															loading:
+																'A terminar…',
+															success:
+																'Sessão terminada.',
+															error: (err) =>
+																getApiError(
+																	err,
+																),
+														},
+													)
+													.then(loadSessions)
+											}
+										>
+											{s.current ? 'Esta' : 'Terminar'}
+										</button>
+									</div>
+									{s.device && s.provider !== s.device && (
+										<p className="mt-1 font-mono text-xs text-ink/50">
+											IP: {s.provider}
+										</p>
+									)}
+									<p className="mt-1 font-mono text-xs text-ink/50">
+										Criada:{' '}
+										{s.createdAt
+											? formatDateTime(s.createdAt)
+											: '—'}{' '}
+										· Expira:{' '}
+										{s.expiresAt
+											? formatDateTime(s.expiresAt)
+											: '—'}
+									</p>
 								</div>
 							))}
+							<button
+								className="btn-outline max-w-fit"
+								onClick={loadSessions}
+							>
+								Atualizar
+							</button>
 						</div>
 					)}
 				</section>

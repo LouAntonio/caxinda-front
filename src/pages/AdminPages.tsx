@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
+import { usePageTitle } from '../hooks/usePageTitle';
 import {
 	useAdminConversations,
 	useAdminKycList,
@@ -51,6 +52,7 @@ function Title({ children }: { children: React.ReactNode }) {
 // ================= Dashboard =================
 
 export function AdminDashboardPage() {
+	usePageTitle('Administração');
 	const { data: analytics } = usePlatformAnalytics('30d');
 	const { data: reports } = useAdminReports({ status: 'PENDING', limit: 5 });
 	const { data: kycs } = useAdminKycList({ status: 'PENDING', limit: 5 });
@@ -212,6 +214,7 @@ function Row({
 // ================= Anúncios =================
 
 export function AdminAdsPage() {
+	usePageTitle('Gerir anúncios');
 	const [q, setQ] = useState('');
 	const { data, isLoading } = useAdminAds(
 		q ? { q, limit: 25 } : { limit: 25 },
@@ -289,9 +292,10 @@ function AdModerateActions({
 		verified?: boolean;
 		status?: 'ACTIVE' | 'REJECTED';
 	}) =>
-		moderate.mutate(payload, {
-			onSuccess: () => toast.success('Anúncio atualizado.'),
-			onError: (e) => toast.error(getApiError(e)),
+		void toast.promise(moderate.mutateAsync(payload), {
+			loading: 'A moderar anúncio…',
+			success: 'Anúncio atualizado.',
+			error: (err) => getApiError(err),
 		});
 
 	return (
@@ -318,9 +322,16 @@ function AdModerateActions({
 			<button
 				className="btn-ghost"
 				onClick={() =>
-					(ad.visibility === 'VISIBLE' ? unfeature : feature).mutate(
-						ad.id,
-						{ onError: (e) => toast.error(getApiError(e)) },
+					void toast.promise(
+						(ad.visibility === 'VISIBLE'
+							? unfeature
+							: feature
+						).mutateAsync(ad.id),
+						{
+							loading: 'A alterar destaque…',
+							success: 'Feito.',
+							error: (err) => getApiError(err),
+						},
 					)
 				}
 			>
@@ -333,6 +344,7 @@ function AdModerateActions({
 // ================= Empresas =================
 
 export function AdminBusinessesPage() {
+	usePageTitle('Gerir empresas');
 	const { data, isLoading } = useBusinesses({ page: 1, limit: 50 });
 	const moderate = useModerateBusiness();
 	return (
@@ -382,17 +394,18 @@ export function AdminBusinessesPage() {
 									<button
 										className="btn-blue"
 										onClick={() =>
-											moderate.mutate(
-												{ id: b.id, isVerified: true },
+											void toast.promise(
+												moderate.mutateAsync({
+													id: b.id,
+													isVerified: true,
+												}),
 												{
-													onSuccess: () =>
-														toast.success(
-															'Empresa verificada.',
-														),
-													onError: (e) =>
-														toast.error(
-															getApiError(e),
-														),
+													loading:
+														'A verificar empresa…',
+													success:
+														'Empresa verificada.',
+													error: (err) =>
+														getApiError(err),
 												},
 											)
 										}
@@ -403,21 +416,19 @@ export function AdminBusinessesPage() {
 								<button
 									className="btn-ghost"
 									onClick={() =>
-										moderate.mutate(
-											{
+										void toast.promise(
+											moderate.mutateAsync({
 												id: b.id,
 												status:
 													b.status === 'SHOW'
 														? 'HIDE'
 														: 'SHOW',
-											},
+											}),
 											{
-												onSuccess: () =>
-													toast.success(
-														'Estado alterado.',
-													),
-												onError: (e) =>
-													toast.error(getApiError(e)),
+												loading: 'A alterar estado…',
+												success: 'Estado alterado.',
+												error: (err) =>
+													getApiError(err),
 											},
 										)
 									}
@@ -438,6 +449,7 @@ export function AdminBusinessesPage() {
 // ================= Utilizadores =================
 
 export function AdminUsersPage() {
+	usePageTitle('Gerir utilizadores');
 	const [searchValue, setSearchValue] = useState('');
 	const [searchField, setSearchField] = useState<'email' | 'name'>('email');
 	const { data, isLoading } = useAdminUsers({
@@ -525,12 +537,15 @@ function UserActions({
 				className="input !w-auto !py-1 text-sm"
 				value={user.role}
 				onChange={(e) =>
-					setRole.mutate(
-						{ id: user.id, role: e.target.value as Role },
+					void toast.promise(
+						setRole.mutateAsync({
+							id: user.id,
+							role: e.target.value as Role,
+						}),
 						{
-							onSuccess: () =>
-								toast.success('Função atualizada.'),
-							onError: (err) => toast.error(getApiError(err)),
+							loading: 'A atualizar função…',
+							success: 'Função atualizada.',
+							error: (err) => getApiError(err),
 						},
 					)
 				}
@@ -547,8 +562,10 @@ function UserActions({
 				<button
 					className="btn-ghost !text-green-700"
 					onClick={() =>
-						unban.mutate(user.id, {
-							onError: (e) => toast.error(getApiError(e)),
+						void toast.promise(unban.mutateAsync(user.id), {
+							loading: 'A desbanir utilizador…',
+							success: 'Utilizador desbanido.',
+							error: (err) => getApiError(err),
 						})
 					}
 				>
@@ -560,9 +577,16 @@ function UserActions({
 					message="O utilizador deixa de poder aceder à plataforma."
 					confirmLabel="Banir"
 					onConfirm={() =>
-						ban.mutate(
-							{ id: user.id, reason: 'Banido por um moderador' },
-							{ onError: (e) => toast.error(getApiError(e)) },
+						void toast.promise(
+							ban.mutateAsync({
+								id: user.id,
+								reason: 'Banido por um moderador',
+							}),
+							{
+								loading: 'A banir utilizador…',
+								success: 'Utilizador banido.',
+								error: (err) => getApiError(err),
+							},
 						)
 					}
 				>
@@ -576,6 +600,7 @@ function UserActions({
 // ================= Utilizador (detalhe) =================
 
 export function AdminUserPage() {
+	usePageTitle('Utilizador');
 	const { id } = useParams();
 	const { data: user, isLoading } = useAdminUser(id);
 
@@ -649,6 +674,7 @@ function Info({ k, v }: { k: string; v: string }) {
 // ================= Pagamentos =================
 
 export function AdminPaymentsPage() {
+	usePageTitle('Gerir pagamentos');
 	const { data, isLoading } = useAdminPayments({ limit: 50 });
 	const review = useReviewPayment();
 
@@ -693,20 +719,18 @@ export function AdminPaymentsPage() {
 									<button
 										className="btn-primary"
 										onClick={() =>
-											review.mutate(
-												{
+											void toast.promise(
+												review.mutateAsync({
 													id: p.id,
 													status: 'APPROVED',
-												},
+												}),
 												{
-													onSuccess: () =>
-														toast.success(
-															'Pagamento aprovado. Subscrição ativada.',
-														),
-													onError: (e) =>
-														toast.error(
-															getApiError(e),
-														),
+													loading:
+														'A aprovar pagamento…',
+													success:
+														'Pagamento aprovado. Subscrição ativada.',
+													error: (err) =>
+														getApiError(err),
 												},
 											)
 										}
@@ -716,17 +740,19 @@ export function AdminPaymentsPage() {
 									<button
 										className="btn-ghost !text-red"
 										onClick={() =>
-											review.mutate(
-												{
+											void toast.promise(
+												review.mutateAsync({
 													id: p.id,
 													status: 'REJECTED',
 													note: 'Comprovativo inválido.',
-												},
+												}),
 												{
-													onError: (e) =>
-														toast.error(
-															getApiError(e),
-														),
+													loading:
+														'A rejeitar pagamento…',
+													success:
+														'Pagamento rejeitado.',
+													error: (err) =>
+														getApiError(err),
 												},
 											)
 										}
@@ -736,13 +762,18 @@ export function AdminPaymentsPage() {
 									<button
 										className="btn-ghost"
 										onClick={() =>
-											review.mutate(
-												{ id: p.id, status: 'PENDING' },
+											void toast.promise(
+												review.mutateAsync({
+													id: p.id,
+													status: 'PENDING',
+												}),
 												{
-													onError: (e) =>
-														toast.error(
-															getApiError(e),
-														),
+													loading:
+														'A devolver pagamento…',
+													success:
+														'Pagamento devolvido.',
+													error: (err) =>
+														getApiError(err),
 												},
 											)
 										}
@@ -755,11 +786,17 @@ export function AdminPaymentsPage() {
 								<button
 									className="btn-ghost !text-red"
 									onClick={() =>
-										review.mutate(
-											{ id: p.id, status: 'CANCELLED' },
+										void toast.promise(
+											review.mutateAsync({
+												id: p.id,
+												status: 'CANCELLED',
+											}),
 											{
-												onError: (e) =>
-													toast.error(getApiError(e)),
+												loading:
+													'A cancelar pagamento…',
+												success: 'Pagamento cancelado.',
+												error: (err) =>
+													getApiError(err),
 											},
 										)
 									}
@@ -778,6 +815,7 @@ export function AdminPaymentsPage() {
 // ================= Denúncias =================
 
 export function AdminReportsPage() {
+	usePageTitle('Denúncias');
 	const { data, isLoading } = useAdminReports({ limit: 50 });
 	const moderate = useModerateReport();
 
@@ -819,16 +857,18 @@ export function AdminReportsPage() {
 									<button
 										className="btn-primary"
 										onClick={() =>
-											moderate.mutate(
-												{
+											void toast.promise(
+												moderate.mutateAsync({
 													id: r.id,
 													status: 'RESOLVED',
-												},
+												}),
 												{
-													onError: (e) =>
-														toast.error(
-															getApiError(e),
-														),
+													loading:
+														'A resolver denúncia…',
+													success:
+														'Denúncia resolvida.',
+													error: (err) =>
+														getApiError(err),
 												},
 											)
 										}
@@ -838,16 +878,18 @@ export function AdminReportsPage() {
 									<button
 										className="btn-ghost"
 										onClick={() =>
-											moderate.mutate(
-												{
+											void toast.promise(
+												moderate.mutateAsync({
 													id: r.id,
 													status: 'DISMISSED',
-												},
+												}),
 												{
-													onError: (e) =>
-														toast.error(
-															getApiError(e),
-														),
+													loading:
+														'A arquivar denúncia…',
+													success:
+														'Denúncia arquivada.',
+													error: (err) =>
+														getApiError(err),
 												},
 											)
 										}
@@ -867,6 +909,7 @@ export function AdminReportsPage() {
 // ================= KYC =================
 
 export function AdminKycPage() {
+	usePageTitle('Verificações');
 	const { data, isLoading } = useAdminKycList({ limit: 50 });
 	const review = useReviewKyc();
 
@@ -914,20 +957,18 @@ export function AdminKycPage() {
 									<button
 										className="btn-primary"
 										onClick={() =>
-											review.mutate(
-												{
+											void toast.promise(
+												review.mutateAsync({
 													id: k.id,
 													status: 'APPROVED',
-												},
+												}),
 												{
-													onSuccess: () =>
-														toast.success(
-															'Utilizador verificado.',
-														),
-													onError: (e) =>
-														toast.error(
-															getApiError(e),
-														),
+													loading:
+														'A verificar utilizador…',
+													success:
+														'Utilizador verificado.',
+													error: (err) =>
+														getApiError(err),
 												},
 											)
 										}
@@ -937,18 +978,20 @@ export function AdminKycPage() {
 									<button
 										className="btn-ghost !text-red"
 										onClick={() =>
-											review.mutate(
-												{
+											void toast.promise(
+												review.mutateAsync({
 													id: k.id,
 													status: 'REJECTED',
 													rejectionReason:
 														'Documentos ilegíveis.',
-												},
+												}),
 												{
-													onError: (e) =>
-														toast.error(
-															getApiError(e),
-														),
+													loading:
+														'A rejeitar verificação…',
+													success:
+														'Verificação rejeitada.',
+													error: (err) =>
+														getApiError(err),
 												},
 											)
 										}
@@ -968,6 +1011,7 @@ export function AdminKycPage() {
 // ================= Suporte =================
 
 export function AdminSupportPage() {
+	usePageTitle('Suporte');
 	const { data, isLoading } = useAdminConversations();
 	const claim = useClaimConversation();
 	const release = useReleaseConversation();
@@ -1019,10 +1063,17 @@ export function AdminSupportPage() {
 									<button
 										className="btn-blue"
 										onClick={() =>
-											claim.mutate(c.id, {
-												onError: (e) =>
-													toast.error(getApiError(e)),
-											})
+											void toast.promise(
+												claim.mutateAsync(c.id),
+												{
+													loading:
+														'A assumir conversa…',
+													success:
+														'Conversa assumida.',
+													error: (err) =>
+														getApiError(err),
+												},
+											)
 										}
 									>
 										Assumir
@@ -1032,10 +1083,17 @@ export function AdminSupportPage() {
 									<button
 										className="btn-ghost"
 										onClick={() =>
-											release.mutate(c.id, {
-												onError: (e) =>
-													toast.error(getApiError(e)),
-											})
+											void toast.promise(
+												release.mutateAsync(c.id),
+												{
+													loading:
+														'A libertar conversa…',
+													success:
+														'Conversa libertada.',
+													error: (err) =>
+														getApiError(err),
+												},
+											)
 										}
 									>
 										Libertar
@@ -1046,16 +1104,18 @@ export function AdminSupportPage() {
 										<button
 											className="btn-kwanza"
 											onClick={() =>
-												resolve.mutate(
-													{
+												void toast.promise(
+													resolve.mutateAsync({
 														id: c.id,
 														status: 'RESOLVED',
-													},
+													}),
 													{
-														onError: (e) =>
-															toast.error(
-																getApiError(e),
-															),
+														loading:
+															'A resolver conversa…',
+														success:
+															'Conversa resolvida.',
+														error: (err) =>
+															getApiError(err),
 													},
 												)
 											}
@@ -1075,6 +1135,7 @@ export function AdminSupportPage() {
 // ================= Categorias =================
 
 export function AdminCategoriesPage() {
+	usePageTitle('Categorias');
 	const { data: categories, isLoading } = useCategories();
 	const create = useCreateCategory();
 	const update = useUpdateCategory();
@@ -1090,16 +1151,18 @@ export function AdminCategoriesPage() {
 				onSubmit={(e) => {
 					e.preventDefault();
 					if (!name.trim()) return;
-					create.mutate(
-						{ name: name.trim(), type },
-						{
-							onSuccess: () => {
-								toast.success('Categoria criada.');
-								setName('');
+					void toast
+						.promise(
+							create.mutateAsync({ name: name.trim(), type }),
+							{
+								loading: 'A criar categoria…',
+								success: 'Categoria criada.',
+								error: (err) => getApiError(err),
 							},
-							onError: (err) => toast.error(getApiError(err)),
-						},
-					);
+						)
+						.then(() => {
+							setName('');
+						});
 				}}
 			>
 				<label className="label">Nova categoria</label>
@@ -1146,11 +1209,15 @@ export function AdminCategoriesPage() {
 							</div>
 							<button
 								onClick={() =>
-									update.mutate(
-										{ id: c.id, name: c.name },
+									void toast.promise(
+										update.mutateAsync({
+											id: c.id,
+											name: c.name,
+										}),
 										{
-											onError: (e) =>
-												toast.error(getApiError(e)),
+											loading: 'A renomear categoria…',
+											success: 'Categoria renomeada.',
+											error: (err) => getApiError(err),
 										},
 									)
 								}
@@ -1163,11 +1230,10 @@ export function AdminCategoriesPage() {
 								message={`«${c.name}» será removida.`}
 								confirmLabel="Apagar"
 								onConfirm={() =>
-									del.mutate(c.id, {
-										onSuccess: () =>
-											toast.success('Categoria apagada.'),
-										onError: (e) =>
-											toast.error(getApiError(e)),
+									void toast.promise(del.mutateAsync(c.id), {
+										loading: 'A apagar categoria…',
+										success: 'Categoria apagada.',
+										error: (err) => getApiError(err),
 									})
 								}
 							>
@@ -1186,6 +1252,7 @@ export function AdminCategoriesPage() {
 // ================= Analíticas =================
 
 export function AdminAnalyticsPage() {
+	usePageTitle('Analíticas');
 	const { data } = usePlatformAnalytics('30d');
 	const max = Math.max(1, ...(data?.daily ?? []).map((d) => d.views));
 

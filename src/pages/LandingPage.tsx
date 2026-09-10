@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { usePageTitle } from '../hooks/usePageTitle';
 import {
 	useCategories,
 	useAds,
@@ -17,6 +18,7 @@ const STATS = [
 ];
 
 export default function LandingPage() {
+	usePageTitle('Caxinda Divulga');
 	const { data: categories } = useCategories();
 	const { data: ads, isLoading: adsLoading } = useAds({
 		limit: 8,

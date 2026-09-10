@@ -1,14 +1,15 @@
-import { useEffect } from 'react';
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { Header } from './Header';
 import { Footer } from './Footer';
 import { useSocketEvents } from '../../hooks/useSocketEvents';
 import { useSession } from '../../hooks/useSession';
+import { useScrollToTop } from '../../hooks/useScrollToTop';
 import { PageLoader } from '../ui/Spinner';
 import type { Role } from '../../types/api';
 
 export function AppLayout() {
 	useSocketEvents();
+	useScrollToTop();
 	return (
 		<div className="flex min-h-screen flex-col">
 			<Header />
@@ -35,6 +36,18 @@ export function RequireAuth({ children }: { children: React.ReactNode }) {
 	return <>{children}</>;
 }
 
+export function RequireGuest({ children }: { children: React.ReactNode }) {
+	const { isAuthenticated, isLoading } = useSession();
+
+	if (isLoading) {
+		return <PageLoader />;
+	}
+	if (isAuthenticated) {
+		return <Navigate to="/" replace />;
+	}
+	return <>{children}</>;
+}
+
 export function RequireRole({
 	roles,
 	children,
@@ -54,11 +67,4 @@ export function RequireRole({
 		return <Navigate to="/area" replace />;
 	}
 	return <>{children}</>;
-}
-
-export function useScrollToTop() {
-	const { pathname } = useLocation();
-	useEffect(() => {
-		window.scrollTo(0, 0);
-	}, [pathname]);
 }

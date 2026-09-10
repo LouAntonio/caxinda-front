@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
+import { usePageTitle } from '../hooks/usePageTitle';
 import {
 	Link,
 	useLocation,
@@ -17,98 +18,11 @@ import {
 	useSignUpEmail,
 	useVerifyEmail,
 } from '../hooks/mutations';
-import { GOOGLE_CLIENT_ID } from '../lib/env';
 import { getApiError } from '../lib/api';
 import { ButtonLoader } from '../components/ui/Spinner';
 import { Spinner } from '../components/ui/Spinner';
 import { PasswordInput } from '../components/ui/PasswordInput';
-
-type GoogleAccountsId = {
-	initialize: (config: {
-		client_id: string;
-		ux_mode: 'popup';
-		auto_select?: boolean;
-		callback: (response: { credential?: string }) => void;
-	}) => void;
-	renderButton: (
-		element: HTMLElement,
-		options: {
-			theme?: string;
-			size?: string;
-			shape?: string;
-			text?: string;
-			width?: number;
-		},
-	) => void;
-};
-
-type GoogleAccountsWindow = Window & {
-	google?: {
-		accounts?: {
-			id?: GoogleAccountsId;
-		};
-	};
-};
-
-function GoogleButton({
-	onSuccess,
-}: {
-	onSuccess: (credential: string) => void;
-}) {
-	const containerRef = useRef<HTMLDivElement>(null);
-	const renderedRef = useRef(false);
-	const onSuccessRef = useRef(onSuccess);
-
-	useEffect(() => {
-		onSuccessRef.current = onSuccess;
-	}, [onSuccess]);
-
-	useEffect(() => {
-		if (!GOOGLE_CLIENT_ID || !containerRef.current) return;
-
-		const container = containerRef.current;
-		const render = () => {
-			const id = (window as GoogleAccountsWindow).google?.accounts?.id;
-			if (!id || renderedRef.current) return;
-			id.initialize({
-				client_id: GOOGLE_CLIENT_ID,
-				ux_mode: 'popup',
-				auto_select: false,
-				callback: (response) => {
-					if (response.credential) {
-						onSuccessRef.current(response.credential);
-					} else {
-						toast.error('O login Google falhou. Tenta novamente.');
-					}
-				},
-			});
-			id.renderButton(container, {
-				theme: 'outline',
-				size: 'large',
-				shape: 'rectangular',
-				text: 'continue_with',
-				width: 320,
-			});
-			renderedRef.current = true;
-		};
-
-		render();
-
-		if (renderedRef.current) return;
-
-		const timer = window.setInterval(() => {
-			const id = (window as GoogleAccountsWindow).google?.accounts?.id;
-			if (id && !renderedRef.current) {
-				window.clearInterval(timer);
-				render();
-			}
-		}, 300);
-
-		return () => window.clearInterval(timer);
-	}, []);
-
-	return <div ref={containerRef} className="flex justify-center" />;
-}
+import { GoogleButton } from '../components/ui/GoogleButton';
 
 function Divider() {
 	return (
@@ -123,6 +37,7 @@ function Divider() {
 // ================= Entrar =================
 
 export function AuthLoginPage() {
+	usePageTitle('Entrar');
 	const navigate = useNavigate();
 	const location = useLocation();
 	const from = (location.state as { from?: string } | null)?.from ?? '/';
@@ -140,36 +55,33 @@ export function AuthLoginPage() {
 				Bem-vindo de volta à tua vitrine digital.
 			</p>
 
-			{GOOGLE_CLIENT_ID && (
-				<>
-					<div className="mt-6">
-						<GoogleButton
-							onSuccess={(credential) =>
-								google.mutate(credential, {
-									onSuccess: done,
-									onError: (e) => toast.error(getApiError(e)),
-								})
-							}
-						/>
-					</div>
-					<Divider />
-				</>
-			)}
+			<div className="mt-6">
+				<GoogleButton
+					onSuccess={(credential) =>
+						void toast
+							.promise(google.mutateAsync(credential), {
+								loading: 'A entrar com Google…',
+								success: 'Sessão iniciada.',
+								error: (err) => getApiError(err),
+							})
+							.then(done)
+					}
+				/>
+			</div>
+			<Divider />
 
 			<form
 				className="flex flex-col gap-4"
 				onSubmit={(e) => {
 					e.preventDefault();
-					login.mutate(
-						{ email, password },
-						{
-							onSuccess: done,
-							onError: (err) =>
-								toast.error(
-									getApiError(err, 'Credenciais inválidas.'),
-								),
-						},
-					);
+					void toast
+						.promise(login.mutateAsync({ email, password }), {
+							loading: 'A entrar…',
+							success: 'Sessão iniciada.',
+							error: (err) =>
+								getApiError(err, 'Credenciais inválidas.'),
+						})
+						.then(done);
 				}}
 			>
 				<div>
@@ -236,6 +148,7 @@ export function AuthLoginPage() {
 // ================= Registar =================
 
 export function AuthRegisterPage() {
+	usePageTitle('Criar conta');
 	const navigate = useNavigate();
 	const signUp = useSignUpEmail();
 	const sendVerification = useSendVerificationEmail();
@@ -256,22 +169,20 @@ export function AuthRegisterPage() {
 				Grátis. O teu negócio online em minutos.
 			</p>
 
-			{GOOGLE_CLIENT_ID && (
-				<>
-					<div className="mt-6">
-						<GoogleButton
-							onSuccess={(credential) =>
-								google.mutate(credential, {
-									onSuccess: () =>
-										navigate('/', { replace: true }),
-									onError: (e) => toast.error(getApiError(e)),
-								})
-							}
-						/>
-					</div>
-					<Divider />
-				</>
-			)}
+			<div className="mt-6">
+				<GoogleButton
+					onSuccess={(credential) =>
+						void toast
+							.promise(google.mutateAsync(credential), {
+								loading: 'A entrar com Google…',
+								success: 'Sessão iniciada.',
+								error: (err) => getApiError(err),
+							})
+							.then(() => navigate('/', { replace: true }))
+					}
+				/>
+			</div>
+			<Divider />
 
 			<form
 				className="flex flex-col gap-4"
@@ -281,23 +192,28 @@ export function AuthRegisterPage() {
 						toast.error('As palavras-passe não coincidem.');
 						return;
 					}
-					signUp.mutate(
-						{ name, surname, email, password },
-						{
-							onSuccess: () => {
-								toast.success(
+					void toast
+						.promise(
+							signUp.mutateAsync({
+								name,
+								surname,
+								email,
+								password,
+							}),
+							{
+								loading: 'A criar conta…',
+								success:
 									'Conta criada! Verifica o teu email para terminares o registo.',
-								);
-								sendVerification.mutate({
-									email,
-									callbackURL:
-										window.location.origin +
-										'/auth/verificar',
-								});
+								error: (err) => getApiError(err),
 							},
-							onError: (err) => toast.error(getApiError(err)),
-						},
-					);
+						)
+						.then(() => {
+							sendVerification.mutate({
+								email,
+								callbackURL:
+									window.location.origin + '/auth/verificar',
+							});
+						});
 				}}
 			>
 				<div className="grid grid-cols-2 gap-3">
@@ -400,6 +316,7 @@ export function AuthRegisterPage() {
 // ================= Link mágico =================
 
 export function AuthMagicPage() {
+	usePageTitle('Entrar por link mágico');
 	const [email, setEmail] = useState('');
 	const magic = useMagicLinkRequest();
 
@@ -416,19 +333,17 @@ export function AuthMagicPage() {
 				className="mt-6 flex flex-col gap-4"
 				onSubmit={(e) => {
 					e.preventDefault();
-					magic.mutate(
-						{
+					void toast.promise(
+						magic.mutateAsync({
 							email,
 							callbackURL:
 								window.location.origin +
 								'/auth/verificar?tipo=magic',
-						},
+						}),
 						{
-							onSuccess: () =>
-								toast.success(
-									'Link enviado! Verifica o teu email.',
-								),
-							onError: (err) => toast.error(getApiError(err)),
+							loading: 'A enviar o link…',
+							success: 'Link enviado! Verifica o teu email.',
+							error: (err) => getApiError(err),
 						},
 					);
 				}}
@@ -470,6 +385,7 @@ export function AuthMagicPage() {
 // ================= Verificar (email / link mágico) =================
 
 export function AuthVerifyPage() {
+	usePageTitle('Verificar');
 	const [searchParams] = useSearchParams();
 	const navigate = useNavigate();
 	const tipo = searchParams.get('tipo') ?? 'email';
@@ -482,30 +398,33 @@ export function AuthVerifyPage() {
 	if (!sentRequest && token) {
 		setSentRequest(true);
 		const mutation = tipo === 'magic' ? magicVerify : emailVerify;
-		(
-			mutation.mutate as (
-				arg: unknown,
-				opts?: {
-					onSuccess?: () => void;
-					onError?: (err: unknown) => void;
+		const arg = tipo === 'magic' ? token : { token };
+		void toast
+			.promise(
+				(mutation.mutateAsync as (input: unknown) => Promise<unknown>)(
+					arg,
+				),
+				{
+					loading: 'A confirmar…',
+					success:
+						tipo === 'magic'
+							? 'Sessão iniciada!'
+							: 'Email confirmado.',
+					error: (err) =>
+						getApiError(err, 'Link inválido ou expirado.'),
 				},
-			) => void
-		)(tipo === 'magic' ? token : { token }, {
-			onSuccess: () => {
+			)
+			.then(() => {
 				setMessage(
-					tipo === 'magic' ? 'Sessão iniciada!' : 'Email confirmado.',
-				);
-				toast.success(
 					tipo === 'magic' ? 'Sessão iniciada!' : 'Email confirmado.',
 				);
 				if (tipo === 'magic') {
 					setTimeout(() => navigate('/', { replace: true }), 900);
 				}
-			},
-			onError: (err: unknown) => {
+			})
+			.catch((err: unknown) => {
 				setMessage(getApiError(err, 'Link inválido ou expirado.'));
-			},
-		});
+			});
 	}
 
 	return (
@@ -525,6 +444,7 @@ export function AuthVerifyPage() {
 // ================= Esqueci a password =================
 
 export function AuthForgotPage() {
+	usePageTitle('Recuperar conta');
 	const [email, setEmail] = useState('');
 	const forgot = useForgetPassword();
 
@@ -541,16 +461,16 @@ export function AuthForgotPage() {
 				className="mt-6 flex flex-col gap-4"
 				onSubmit={(e) => {
 					e.preventDefault();
-					forgot.mutate(
-						{
+					void toast.promise(
+						forgot.mutateAsync({
 							email,
 							redirectTo:
 								window.location.origin + '/auth/redefinir',
-						},
+						}),
 						{
-							onSuccess: () =>
-								toast.success('Email de recuperação enviado.'),
-							onError: (err) => toast.error(getApiError(err)),
+							loading: 'A enviar o email…',
+							success: 'Email de recuperação enviado.',
+							error: (err) => getApiError(err),
 						},
 					);
 				}}
@@ -592,6 +512,7 @@ export function AuthForgotPage() {
 // ================= Redefinir password =================
 
 export function AuthResetPage() {
+	usePageTitle('Definir nova palavra-passe');
 	const [searchParams] = useSearchParams();
 	const token = searchParams.get('token') ?? '';
 	const navigate = useNavigate();
@@ -615,20 +536,21 @@ export function AuthResetPage() {
 						toast.error('As palavras-passe não coincidem.');
 						return;
 					}
-					reset.mutate(
-						{ newPassword: password, token },
-						{
-							onSuccess: () => {
-								toast.success(
-									'Palavra-passe atualizada. Entra já.',
-								);
-								void navigate('/auth/entrar', {
-									replace: true,
-								});
+					void toast
+						.promise(
+							reset.mutateAsync({
+								newPassword: password,
+								token,
+							}),
+							{
+								loading: 'A atualizar…',
+								success: 'Palavra-passe atualizada. Entra já.',
+								error: (err) => getApiError(err),
 							},
-							onError: (err) => toast.error(getApiError(err)),
-						},
-					);
+						)
+						.then(() =>
+							navigate('/auth/entrar', { replace: true }),
+						);
 				}}
 			>
 				<div>

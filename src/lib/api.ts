@@ -20,9 +20,12 @@ http.interceptors.response.use(
 	(response) => response,
 	(error: AxiosError) => {
 		if (error.response?.status === 401) {
-			const auth = useAuthStore.getState();
-			if (auth.sessionToken) {
-				auth.logout();
+			const url = error.config?.url ?? '';
+			if (url.endsWith('/users/me')) {
+				const auth = useAuthStore.getState();
+				if (auth.sessionToken) {
+					auth.logout();
+				}
 			}
 		}
 		return Promise.reject(error);

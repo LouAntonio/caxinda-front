@@ -1,7 +1,9 @@
 import { Link, Outlet } from 'react-router-dom';
 import { Logo } from './Logo';
+import { useScrollToTop } from '../../hooks/useScrollToTop';
 
 export function AuthLayout() {
+	useScrollToTop();
 	return (
 		<div className="flex min-h-screen flex-col bg-snow">
 			<div className="border-b border-ink/10 bg-white/50">

@@ -3,6 +3,7 @@ import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import {
 	AppLayout,
 	RequireAuth,
+	RequireGuest,
 	RequireRole,
 } from './components/layout/AppLayout';
 import { AuthLayout } from './components/layout/AuthLayout';
@@ -318,7 +319,11 @@ const router = createBrowserRouter([
 		],
 	},
 	{
-		element: <AuthLayout />,
+		element: (
+			<RequireGuest>
+				<AuthLayout />
+			</RequireGuest>
+		),
 		children: [
 			{ path: 'auth/entrar', element: <AuthLoginPage /> },
 			{ path: 'auth/registar', element: <AuthRegisterPage /> },
