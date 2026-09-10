@@ -93,4 +93,24 @@
 	.text-balance {
 		text-wrap: balance;
 	}
+	.nice-scroll {
+		scrollbar-width: thin;
+		scrollbar-color: rgba(14, 23, 51, 0.25) transparent;
+	}
+	.nice-scroll::-webkit-scrollbar {
+		width: 7px;
+	}
+	.nice-scroll::-webkit-scrollbar-track {
+		background: transparent;
+	}
+	.nice-scroll::-webkit-scrollbar-thumb {
+		border-radius: 9999px;
+		border: 2px solid transparent;
+		background-color: rgba(14, 23, 51, 0.25);
+		background-clip: content-box;
+	}
+	.nice-scroll::-webkit-scrollbar-thumb:hover {
+		background-color: rgba(14, 23, 51, 0.45);
+		background-clip: content-box;
+	}
 }

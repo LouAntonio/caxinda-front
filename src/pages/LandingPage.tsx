@@ -111,12 +111,12 @@ export default function LandingPage() {
 				</div>
 			</section>
 
-			{/* Empresas recém-chegadas */}
+			{/* Empresas em destaque */}
 			<section className="bg-white py-14">
 				<div className="mx-auto max-w-6xl px-4">
 					<div className="mb-6 flex items-end justify-between">
 						<h2 className="font-display text-2xl font-black">
-							Empresas recém-chegadas
+							Empresas em destaque
 						</h2>
 						<Link
 							to="/empresas"

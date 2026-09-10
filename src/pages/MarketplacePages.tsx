@@ -46,6 +46,7 @@ import {
 	type ReportReason,
 	type ReportTarget,
 	type SearchItem,
+	type SearchType,
 } from '../types/api';
 import { useAuthStore } from '../store/auth';
 import { useWishlistCheck } from '../hooks/queries';
@@ -148,15 +149,10 @@ export function AdsPage() {
 
 	return (
 		<div className="mx-auto max-w-6xl px-4 py-10">
-			<div className="mb-6 flex flex-wrap items-end justify-between gap-4">
-				<h1 className="font-display text-3xl font-black">Anúncios</h1>
-				<Link to="/area/anuncios/novo" className="btn-primary">
-					+ Publicar anúncio
-				</Link>
-			</div>
+			<h1 className="mb-6 font-display text-3xl font-black">Anúncios</h1>
 
 			<div className="flex gap-6">
-				<aside className="sticky top-20 hidden w-64 shrink-0 flex-col gap-5 self-start rounded-2xl border border-ink/10 bg-white p-4 lg:flex lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto">
+				<aside className="nice-scroll sticky top-20 hidden w-64 shrink-0 flex-col gap-5 self-start rounded-2xl border border-ink/10 bg-white p-4 lg:flex lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto">
 					<input
 						className="input"
 						placeholder="Pesquisar anúncios…"
@@ -208,15 +204,6 @@ export function AdsPage() {
 						selected={selectedProvinces}
 						onToggle={(id) => toggleArrayParam('provinces', id)}
 					/>
-					<select
-						className="input"
-						value={sortBy}
-						onChange={(e) => setParam('sortBy', e.target.value)}
-					>
-						<option value="newest">Mais recentes</option>
-						<option value="price_asc">Preço: menor → maior</option>
-						<option value="price_desc">Preço: maior → menor</option>
-					</select>
 					<div className="flex gap-2">
 						<button
 							type="button"
@@ -277,8 +264,21 @@ export function AdsPage() {
 								✕
 							</button>
 						)}
+					</div>
+
+					<div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+						<p className="text-sm font-medium text-ink/50">
+							A mostrar{' '}
+							<span className="font-bold text-ink">
+								{data?.items.length ?? 0}
+							</span>{' '}
+							anúncios de{' '}
+							<span className="font-bold text-ink">
+								{data?.total ?? 0}
+							</span>
+						</p>
 						<select
-							className="input max-w-[180px]"
+							className="input max-w-[200px]"
 							value={sortBy}
 							onChange={(e) => setParam('sortBy', e.target.value)}
 						>
@@ -651,7 +651,7 @@ export function BusinessesPage() {
 			</div>
 
 			<div className="flex gap-6">
-				<aside className="sticky top-20 hidden w-64 shrink-0 flex-col gap-5 self-start rounded-2xl border border-ink/10 bg-white p-4 lg:flex lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto">
+				<aside className="nice-scroll sticky top-20 hidden w-64 shrink-0 flex-col gap-5 self-start rounded-2xl border border-ink/10 bg-white p-4 lg:flex lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto">
 					<input
 						className="input"
 						placeholder="Pesquisar empresas…"
@@ -703,16 +703,6 @@ export function BusinessesPage() {
 						selected={selectedProvinces}
 						onToggle={(id) => toggleArrayParam('provinces', id)}
 					/>
-					<select
-						className="input"
-						value={sortBy}
-						onChange={(e) => setParam('sortBy', e.target.value)}
-					>
-						<option value="newest">Mais recentes</option>
-						<option value="oldest">Mais antigas</option>
-						<option value="name_asc">Nome: A → Z</option>
-						<option value="name_desc">Nome: Z → A</option>
-					</select>
 					<div className="flex gap-2">
 						<button
 							type="button"
@@ -773,8 +763,21 @@ export function BusinessesPage() {
 								✕
 							</button>
 						)}
+					</div>
+
+					<div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+						<p className="text-sm font-medium text-ink/50">
+							A mostrar{' '}
+							<span className="font-bold text-ink">
+								{data?.items.length ?? 0}
+							</span>{' '}
+							empresas de{' '}
+							<span className="font-bold text-ink">
+								{data?.total ?? 0}
+							</span>
+						</p>
 						<select
-							className="input max-w-[180px]"
+							className="input max-w-[200px]"
 							value={sortBy}
 							onChange={(e) => setParam('sortBy', e.target.value)}
 						>
@@ -1263,83 +1266,205 @@ export function ReportForm({
 
 // ================= Busca =================
 
+const SEARCH_TYPES: { id: string; label: string; type?: SearchType }[] = [
+	{ id: 'todos', label: 'Todos' },
+	{ id: 'ads', label: 'Anúncios', type: 'AD' },
+	{ id: 'businesses', label: 'Empresas', type: 'BUSINESS' },
+	{ id: 'users', label: 'Utilizadores', type: 'USER' },
+];
+
 export function SearchPage() {
 	usePageTitle('Pesquisa');
-	const [searchParams] = useSearchParams();
-	const q = searchParams.get('q') ?? '';
-	const { data, isLoading } = useGlobalSearch({ q, page: 1, limit: 20 });
+	const [searchParams, setSearchParams] = useSearchParams();
 	const navigate = useNavigate();
+	const q = searchParams.get('q') ?? '';
+	const type = searchParams.get('type') as SearchType | null;
+	const categoryId = searchParams.get('categoryId') ?? undefined;
+	const province = searchParams.get('province') ?? undefined;
+	const { data: adCategories = [] } = useCategories('AD');
+	const { data: bizCategories = [] } = useCategories('BIZ');
+	const categoryOptions = [...adCategories, ...bizCategories];
+	const { data, isLoading } = useGlobalSearch({
+		q,
+		type: type ?? undefined,
+		categoryId,
+		province,
+		page: 1,
+		limit: 20,
+	});
+	const activeType = SEARCH_TYPES.find((t) => t.type === type)?.id ?? 'todos';
+
+	const setParam = (key: string, value?: string) => {
+		const next = new URLSearchParams(searchParams);
+		if (!value || value === 'todos') {
+			next.delete(key);
+		} else {
+			next.set(key, value);
+		}
+		setSearchParams(next);
+	};
+
+	const clearFilters = () => {
+		setSearchParams(new URLSearchParams());
+	};
 
 	return (
-		<div className="mx-auto max-w-4xl px-4 py-10">
+		<div className="mx-auto max-w-6xl px-4 py-10">
 			<h1 className="font-display text-3xl font-black">Pesquisa</h1>
 			<form
 				className="mt-4 flex gap-2"
 				onSubmit={(e) => {
 					e.preventDefault();
-					void navigate(`/busca?q=${encodeURIComponent(q)}`);
+					void navigate(
+						`/busca?q=${encodeURIComponent(q)}${type ? `&type=${type}` : ''}`,
+					);
 				}}
 			>
 				<input
 					className="input"
 					placeholder="O que procuras hoje?"
 					value={q}
-					disabled
+					onChange={(e) =>
+						setSearchParams((prev) => {
+							const next = new URLSearchParams(prev);
+							next.set('q', e.target.value);
+							return next;
+						})
+					}
 				/>
 				<button className="btn-primary">Buscar</button>
 			</form>
 
-			{isLoading ? (
-				<PageLoader />
-			) : q ? (
-				<div className="mt-8 flex flex-col gap-3">
-					<p className="text-sm text-ink/50">
-						{data?.total ?? 0} resultado(s) para «<b>{q}</b>»
-					</p>
-					{(data?.items ?? []).length === 0 && (
-						<EmptyState
-							title="Nada encontrado"
-							description="Tenta outra palavra ou explora os anúncios."
-						/>
-					)}
-					{(data?.items ?? []).map((item: SearchItem) => {
-						if (item.type === 'AD')
-							return <AdCard key={item.id} ad={item} />;
-						if (item.type === 'BUSINESS')
-							return (
-								<BusinessCard key={item.id} business={item} />
-							);
-						return (
-							<div
-								key={item.id}
-								className="card flex items-center gap-3 p-4"
-							>
-								<Avatar
-									src={item.image}
-									name={item.name}
-									size="md"
+			<div className="mt-8 flex flex-col gap-6 lg:flex-row">
+				<aside className="nice-scroll order-1 flex flex-col gap-5 self-start rounded-2xl border border-ink/10 bg-white p-4 lg:sticky lg:top-20 lg:w-64 lg:shrink-0 lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto">
+					<div>
+						<p className="mb-2 text-xs font-bold uppercase tracking-widest text-ink/50">
+							Tipo
+						</p>
+						<div className="flex flex-wrap gap-1.5">
+							{SEARCH_TYPES.map((t) => (
+								<button
+									key={t.id}
+									type="button"
+									onClick={() => setParam('type', t.type)}
+									className={`rounded-full px-3 py-1.5 text-xs font-bold transition ${
+										activeType === t.id
+											? 'bg-ink text-white'
+											: 'bg-ink/5 text-ink/70 hover:bg-ink/10'
+									}`}
+								>
+									{t.label}
+								</button>
+							))}
+						</div>
+					</div>
+
+					{type !== 'BUSINESS' &&
+						(categoryOptions.length > 0 ||
+							adCategories.length > 0) && (
+							<FilterPills
+								label="Categorias"
+								items={categoryOptions.map((c) => ({
+									id: c.id,
+									name: c.name,
+								}))}
+								selected={categoryId ? [categoryId] : []}
+								onToggle={(id) =>
+									setParam(
+										'categoryId',
+										categoryId === id ? undefined : id,
+									)
+								}
+							/>
+						)}
+
+					<FilterPills
+						label="Províncias"
+						items={PROVINCES.map((p) => ({
+							id: p,
+							name: PROVINCE_LABELS[p] ?? p,
+						}))}
+						selected={province ? [province] : []}
+						onToggle={(id) =>
+							setParam(
+								'province',
+								province === id ? undefined : id,
+							)
+						}
+					/>
+
+					<button
+						type="button"
+						onClick={clearFilters}
+						className="flex w-full items-center justify-center gap-1.5 rounded-xl border border-ink/15 px-3 py-2 text-xs font-bold text-ink/60 transition hover:border-red hover:text-red"
+					>
+						✕ Limpar filtros
+					</button>
+				</aside>
+
+				<div className="min-w-0 flex-1">
+					{isLoading ? (
+						<PageLoader />
+					) : q ? (
+						<>
+							<p className="mb-4 text-sm text-ink/50">
+								{data?.total ?? 0} resultado(s) para «<b>{q}</b>
+								»
+							</p>
+							{(data?.items ?? []).length === 0 && (
+								<EmptyState
+									title="Nada encontrado"
+									description="Tenta outra palavra ou remove alguns filtros."
 								/>
-								<div>
-									<p className="text-sm font-bold">
-										{item.name} {item.surname}
-									</p>
-									<p className="text-xs text-ink/50">
-										{item.isVerified
-											? 'Verificado'
-											: 'Utilizador'}{' '}
-										· confiança {item.trustScore}
-									</p>
-								</div>
+							)}
+							<div className="grid gap-3">
+								{(data?.items ?? []).map((item: SearchItem) => {
+									if (item.type === 'AD')
+										return (
+											<AdCard key={item.id} ad={item} />
+										);
+									if (item.type === 'BUSINESS')
+										return (
+											<BusinessCard
+												key={item.id}
+												business={item}
+											/>
+										);
+									return (
+										<div
+											key={item.id}
+											className="card flex items-center gap-3 p-4"
+										>
+											<Avatar
+												src={item.image}
+												name={item.name}
+												size="md"
+											/>
+											<div>
+												<p className="text-sm font-bold">
+													{item.name} {item.surname}
+												</p>
+												<p className="text-xs text-ink/50">
+													{item.isVerified
+														? 'Verificado'
+														: 'Utilizador'}{' '}
+													· confiança{' '}
+													{item.trustScore}
+												</p>
+											</div>
+										</div>
+									);
+								})}
 							</div>
-						);
-					})}
+						</>
+					) : (
+						<p className="text-sm text-ink/50">
+							Digita um termo para pesquisar anúncios, empresas e
+							utilizadores.
+						</p>
+					)}
 				</div>
-			) : (
-				<p className="mt-8 text-sm text-ink/50">
-					Digita um termo para pesquisar anúncios, empresas e
-					utilizadores.
-				</p>
-			)}
+			</div>
 		</div>
 	);
 }
@@ -1351,104 +1476,207 @@ export function PlansPage() {
 	const { data, isLoading } = usePlans();
 	const [searchParams] = useSearchParams();
 	const businessId = searchParams.get('business') ?? undefined;
+	const plans = data?.plans ?? [];
+	const recommendedId = plans.length >= 2 ? plans[1].id : plans[0]?.id;
 
 	return (
-		<div className="mx-auto max-w-6xl px-4 py-12">
-			<div className="mx-auto mb-10 max-w-xl text-center">
-				<span className="tag tag-kwanza">Planos</span>
-				<h1 className="mt-3 font-display text-3xl font-black">
-					Paga pouco, vende muito.
-				</h1>
-				<p className="mt-2 text-ink/60">
-					Escolhe o plano certo e mostra o teu negócio num instante. O
-					pagamento é confirmado pelos nossos moderadores.
-				</p>
-			</div>
-
-			{isLoading ? (
-				<PageLoader />
-			) : (
-				<div className="grid gap-5 md:grid-cols-3">
-					{(data?.plans ?? []).map((plan) => (
-						<div
-							key={plan.id}
-							className="card overflow-hidden"
-							style={{ padding: 0 }}
+		<>
+			<section className="relative overflow-hidden bg-ink text-snow">
+				<div className="mx-auto flex max-w-6xl items-stretch px-4 py-14 md:py-16">
+					<div className="flex-1 text-center">
+						<span
+							className="inline-block bg-kwanza px-3 py-1 font-mono text-xs font-bold uppercase tracking-widest text-ink"
+							style={{
+								clipPath:
+									'polygon(0 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%)',
+							}}
 						>
-							<div className="bg-ink p-6 text-snow">
-								<h2 className="font-display text-lg font-black">
-									{plan.name}
-								</h2>
-								<p className="mt-1 text-sm text-snow/60">
-									{plan.description}
-								</p>
-								<div className="mt-4 flex items-baseline gap-1">
-									<span className="price-tag !bg-kwanza !text-ink">
-										{formatKz(plan.price)}
-									</span>
-									<span className="font-mono text-xs text-snow/50">
-										/ {plan.durationDays} dias
-									</span>
-								</div>
-							</div>
-							<ul className="flex flex-1 flex-col gap-2 p-6 text-sm">
-								{(plan.benefits ?? []).map((b) => (
-									<li
-										key={b}
-										className="flex items-center gap-2"
-									>
-										<span className="text-kwanza">✔</span>{' '}
-										{b}
-									</li>
-								))}
-								<li className="flex items-center gap-2">
-									<span className="text-kwanza">✔</span> Até{' '}
-									{plan.businessVisibilityLimit} empresas em
-									destaque
-								</li>
-								<li className="flex items-center gap-2">
-									<span className="text-kwanza">✔</span> Até{' '}
-									{plan.featuredAdsLimit} anúncios em destaque
-								</li>
-							</ul>
-							<div className="p-6 pt-0">
-								<Link
-									to={
-										businessId
-											? `/area/empresas/${businessId}/subscricao?plan=${plan.id}`
-											: '/area'
-									}
-									className="btn-primary w-full"
-									style={{ background: 'var(--color-red)' }}
+							Planos
+						</span>
+						<h1 className="mt-3 font-display text-3xl font-black md:text-4xl">
+							Paga pouco, vende muito.
+						</h1>
+						<p className="mx-auto mt-2 max-w-2xl text-snow/70">
+							Escolhe o plano certo e mostra o teu negócio num
+							instante. O pagamento é confirmado pelos nossos
+							moderadores.
+						</p>
+					</div>
+					<div
+						className="hidden items-center pl-10 md:flex"
+						aria-hidden
+					>
+						<span className="price-tag text-2xl">AO</span>
+					</div>
+				</div>
+			</section>
+
+			<div className="mx-auto max-w-6xl px-4 py-12">
+				{isLoading ? (
+					<PageLoader />
+				) : (
+					<div className="grid gap-5 md:grid-cols-3">
+						{plans.map((plan) => {
+							const isRec = plan.id === recommendedId;
+							return (
+								<div
+									key={plan.id}
+									className={`kwanza-glow overflow-hidden border ${
+										isRec
+											? 'border-kwanza'
+											: 'border-ink/10'
+									} rounded-2xl bg-white`}
+									style={{ padding: 0 }}
 								>
-									Quero este plano
-								</Link>
-							</div>
-						</div>
-					))}
-				</div>
-			)}
+									{isRec && (
+										<div
+											className="bg-kwanza px-4 py-1.5 font-mono text-xs font-bold text-ink"
+											style={{
+												clipPath:
+													'polygon(0 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%)',
+												paddingRight: '20px',
+											}}
+										>
+											★ Recomendado
+										</div>
+									)}
+									<div className="bg-ink p-6 text-snow">
+										<h2 className="font-display text-lg font-black">
+											{plan.name}
+										</h2>
+										<p className="mt-1 text-sm text-snow/60">
+											{plan.description}
+										</p>
+										<div className="mt-4 flex items-baseline gap-1">
+											<span className="price-tag !bg-kwanza !text-ink">
+												{formatKz(plan.price)}
+											</span>
+											<span className="font-mono text-xs text-snow/50">
+												/ {plan.durationDays} dias
+											</span>
+										</div>
+									</div>
+									<ul className="flex flex-1 flex-col gap-2 p-6 text-sm">
+										{(plan.benefits ?? []).map((b) => (
+											<li
+												key={b}
+												className="flex items-center gap-2"
+											>
+												<span className="text-kwanza">
+													✔
+												</span>{' '}
+												{b}
+											</li>
+										))}
+										<li className="flex items-center gap-2">
+											<span className="text-kwanza">
+												✔
+											</span>{' '}
+											Até {plan.businessVisibilityLimit}{' '}
+											empresas em destaque
+										</li>
+										<li className="flex items-center gap-2">
+											<span className="text-kwanza">
+												✔
+											</span>{' '}
+											Até {plan.featuredAdsLimit} anúncios
+											em destaque
+										</li>
+									</ul>
+									<div className="p-6 pt-0">
+										<Link
+											to={
+												businessId
+													? `/area/empresas/${businessId}/subscricao?plan=${plan.id}`
+													: '/area'
+											}
+											className={`w-full ${
+												isRec
+													? 'btn-primary'
+													: 'btn-outline'
+											}`}
+											style={
+												isRec
+													? {
+															background:
+																'var(--color-red)',
+														}
+													: undefined
+											}
+										>
+											Quero este plano
+										</Link>
+									</div>
+								</div>
+							);
+						})}
+					</div>
+				)}
 
-			<div className="mt-10 rounded-2xl border-2 border-dashed border-ink/20 p-6">
-				<h3 className="font-display text-sm font-black">
-					Transferências bancárias
-				</h3>
-				<div className="mt-3 flex flex-wrap gap-3">
-					{(data?.platformAccounts ?? []).map((acc, i) => (
-						<div
-							key={i}
-							className="flex-1 min-w-[240px] rounded-xl bg-snow p-4 font-mono text-xs"
-						>
-							<p className="font-bold text-blue">
-								{acc.bankName}
+				<div className="mt-12 rounded-2xl border border-ink/10 bg-white p-6">
+					<h3 className="font-display text-lg font-black">
+						Transferências bancárias
+					</h3>
+					<p className="mt-1 text-sm text-ink/60">
+						Faz a transferência para uma das contas abaixo e envia o
+						comprovativo na área pessoal. O plano é ativado após
+						verificação.
+					</p>
+					<div className="mt-4 flex flex-wrap gap-3">
+						{(data?.platformAccounts ?? []).map((acc, i) => (
+							<div
+								key={i}
+								className="flex-1 min-w-[240px] rounded-xl bg-snow p-4 font-mono text-xs"
+							>
+								<p className="font-bold text-blue">
+									{acc.bankName}
+								</p>
+								<p>{acc.bankHolder}</p>
+								<p className="text-ink/70">{acc.bankIban}</p>
+							</div>
+						))}
+					</div>
+				</div>
+
+				<div className="mt-10 mx-auto max-w-2xl space-y-3">
+					<h2 className="font-display text-xl font-black text-center">
+						Perguntas frequentes
+					</h2>
+					<div className="space-y-2 text-sm text-ink/70">
+						<div className="rounded-xl bg-white border border-ink/10 p-4">
+							<p className="font-bold text-ink">
+								Como funciona o pagamento?
 							</p>
-							<p>{acc.bankHolder}</p>
-							<p className="text-ink/70">{acc.bankIban}</p>
+							<p className="mt-1">
+								Escolhes o plano, fazes a transferência para uma
+								das contas e envias o comprovativo. A equipa
+								verifica e ativa o plano em até 1 dia útil.
+							</p>
 						</div>
-					))}
+						<div className="rounded-xl bg-white border border-ink/10 p-4">
+							<p className="font-bold text-ink">
+								Posso mudar de plano depois?
+							</p>
+							<p className="mt-1">
+								Sim. Ao subscrever um novo plano, podes escolher
+								pagamento proporcional ao tempo restante do
+								anterior.
+							</p>
+						</div>
+						<div className="rounded-xl bg-white border border-ink/10 p-4">
+							<p className="font-bold text-ink">
+								O que acontece se o plano expirar?
+							</p>
+							<p className="mt-1">
+								O teu negócio continua visível, mas perde os
+								benefícios de destaque. Podes renovar ou
+								subscrever outro plano a qualquer momento.
+							</p>
+						</div>
+					</div>
 				</div>
 			</div>
-		</div>
+		</>
 	);
 }
 
