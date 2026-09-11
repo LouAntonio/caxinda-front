@@ -4,6 +4,7 @@ import { timeAgo } from '../../lib/format';
 import { Price } from '../ui/Price';
 import { StatusPill } from '../ui/StatusPill';
 import { Stars } from '../ui/Stars';
+import { PROVINCE_LABELS } from '../../lib/format';
 
 export function AdCard({
 	ad,
@@ -58,6 +59,11 @@ export function AdCard({
 				>
 					{ad.title}
 				</Link>
+				{ad.province && (
+					<p className="text-xs text-ink/50">
+						{PROVINCE_LABELS[ad.province] ?? ad.province}
+					</p>
+				)}
 				<div className="mt-auto flex items-center justify-between gap-2">
 					<Price value={ad.price} />
 					<span className="font-mono text-xs text-ink/40">

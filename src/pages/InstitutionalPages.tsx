@@ -3,6 +3,10 @@ import { useState } from 'react';
 import toast from 'react-hot-toast';
 import { usePageTitle } from '../hooks/usePageTitle';
 import { http, getApiError } from '../lib/api';
+import { FacebookSVG } from '../components/ui/icons/FacebookSVG';
+import { InstagramSVG } from '../components/ui/icons/InstagramSVG';
+import { WhatsAppSVG } from '../components/ui/icons/WhatsAppSVG';
+import { EnvelopeSVG } from '../components/ui/icons/EnvelopeSVG';
 
 type TocItem = { id: string; label: string };
 
@@ -464,10 +468,26 @@ export function ContactosPage() {
 	];
 
 	const socials = [
-		{ label: 'Facebook', href: 'https://facebook.com/caxindadivulga' },
-		{ label: 'Instagram', href: 'https://instagram.com/caxindadivulga' },
-		{ label: 'WhatsApp', href: 'https://wa.me/244923000000' },
-		{ label: 'Email', href: 'mailto:geral@caxindadivulga.ao' },
+		{
+			label: 'Facebook',
+			href: 'https://facebook.com/caxindadivulga',
+			Icon: FacebookSVG,
+		},
+		{
+			label: 'Instagram',
+			href: 'https://instagram.com/caxindadivulga',
+			Icon: InstagramSVG,
+		},
+		{
+			label: 'WhatsApp',
+			href: 'https://wa.me/244923000000',
+			Icon: WhatsAppSVG,
+		},
+		{
+			label: 'Email',
+			href: 'mailto:geral@caxindadivulga.ao',
+			Icon: EnvelopeSVG,
+		},
 	];
 
 	return (
@@ -624,8 +644,9 @@ export function ContactosPage() {
 										href={s.href}
 										target="_blank"
 										rel="noreferrer"
-										className="tag border-ink/15 text-ink/70 transition hover:border-kwanza hover:text-ink"
+										className="flex items-center gap-2 rounded-full border-2 border-ink/15 px-3 py-1.5 text-xs font-bold text-ink/70 transition hover:border-kwanza hover:text-ink"
 									>
+										<s.Icon width={16} height={16} />
 										{s.label}
 									</a>
 								))}

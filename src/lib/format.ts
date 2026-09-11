@@ -7,6 +7,27 @@ const decimalFormat = new Intl.NumberFormat('pt-PT', {
 	maximumFractionDigits: 2,
 });
 
+export const PROVINCE_LABELS: Record<string, string> = {
+	BENGO: 'Bengo',
+	BENGUELA: 'Benguela',
+	BIÉ: 'Bié',
+	CABINDA: 'Cabinda',
+	CUANDO_CUBANGO: 'Cuando-Cubango',
+	CUANZA_NORTE: 'Cuanza Norte',
+	CUANZA_SUL: 'Cuanza Sul',
+	CUNENE: 'Cunene',
+	HUAMBO: 'Huambo',
+	HUÍLA: 'Huíla',
+	LUANDA: 'Luanda',
+	LUNDA_NORTE: 'Lunda Norte',
+	LUNDA_SUL: 'Lunda Sul',
+	MALANJE: 'Malanje',
+	MOXICO: 'Moxico',
+	NAMIBE: 'Namibe',
+	UÍGE: 'Uíge',
+	ZAIRE: 'Zaire',
+};
+
 export function formatKz(value: number | null | undefined): string {
 	if (value === null || value === undefined) {
 		return '—';
@@ -58,6 +79,19 @@ export function formatDateTime(value?: string | null): string {
 		return '—';
 	}
 	return dateTimeFormat.format(new Date(value));
+}
+
+const shortDateFormat = new Intl.DateTimeFormat('pt-PT', {
+	day: '2-digit',
+	month: '2-digit',
+	year: 'numeric',
+});
+
+export function formatShortDate(value?: string | null): string {
+	if (!value) {
+		return '—';
+	}
+	return shortDateFormat.format(new Date(value));
 }
 
 export function timeAgo(value?: string | null): string {

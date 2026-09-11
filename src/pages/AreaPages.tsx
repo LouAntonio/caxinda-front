@@ -18,6 +18,7 @@ import {
 	useMessages,
 	useMyKyc,
 	useMyPayments,
+	useMySubscriptions,
 	usePlans,
 	useWishlist,
 } from '../hooks/queries';
@@ -42,12 +43,15 @@ import {
 	useUpdateAd,
 	useUpdateBusiness,
 	useUpdateProfile,
+	useRevokeOtherSessions,
 } from '../hooks/mutations';
 import { useSession } from '../hooks/useSession';
 import { useUpload } from '../hooks/useUpload';
 import { useChatStore } from '../store/chat';
 import { useAuthStore } from '../store/auth';
 import { getApiError } from '../lib/api';
+import { canCreateAds } from '../lib/roles';
+import { parseUserAgent } from '../lib/userAgent';
 import { AdCard } from '../components/ads/AdCard';
 import { BusinessCard } from '../components/businesses/BusinessCard';
 import { EmptyState } from '../components/ui/EmptyState';
@@ -60,7 +64,17 @@ import { Avatar } from '../components/ui/Avatar';
 import { PasswordInput } from '../components/ui/PasswordInput';
 import { ConfirmButton } from '../components/ui/ConfirmButton';
 import { GoogleButton } from '../components/ui/GoogleButton';
-import { formatDate, formatDateTime, formatKz, fullName } from '../lib/format';
+import { DeviceDesktopSVG } from '../components/ui/icons/DeviceDesktopSVG';
+import { DevicePhoneSVG } from '../components/ui/icons/DevicePhoneSVG';
+import { DeviceTabletSVG } from '../components/ui/icons/DeviceTabletSVG';
+import {
+	formatDate,
+	formatDateTime,
+	formatKz,
+	formatShortDate,
+	fullName,
+	PROVINCE_LABELS,
+} from '../lib/format';
 import type { MediaAsset, Province } from '../types/api';
 import { PROVINCES } from '../types/api';
 
@@ -69,6 +83,12 @@ function Title({ children }: { children: React.ReactNode }) {
 		<h1 className="mb-6 font-display text-2xl font-black">{children}</h1>
 	);
 }
+
+const DEVICE_ICONS = {
+	desktop: DeviceDesktopSVG,
+	mobile: DevicePhoneSVG,
+	tablet: DeviceTabletSVG,
+} as const;
 
 // ================= Dashboard =================
 
@@ -88,6 +108,8 @@ export function AreaDashboardPage() {
 	});
 	const { data: kyc } = useMyKyc();
 	const { data: payments } = useMyPayments();
+	const { data: subscriptions } = useMySubscriptions();
+	const creator = canCreateAds(user?.role);
 
 	const kycLabel = kyc
 		? kyc.status === 'APPROVED'
@@ -101,12 +123,21 @@ export function AreaDashboardPage() {
 		<div>
 			<Title>Visão geral</Title>
 			<div className="grid gap-4 sm:grid-cols-3">
-				<StatCard
-					label="Meus anúncios"
-					value={ads?.total ?? 0}
-					to="/area/anuncios"
-					accent="red"
-				/>
+				{creator ? (
+					<StatCard
+						label="Meus anúncios"
+						value={ads?.total ?? 0}
+						to="/area/anuncios"
+						accent="red"
+					/>
+				) : (
+					<StatCard
+						label="Subscrições"
+						value={subscriptions?.length ?? 0}
+						to="/area/subscricoes"
+						accent="red"
+					/>
+				)}
 				<StatCard
 					label="Empresas"
 					value={businesses?.total ?? 0}
@@ -178,9 +209,11 @@ export function AreaDashboardPage() {
 			</div>
 
 			<div className="mt-6 grid gap-3 sm:grid-cols-3">
-				<Link to="/area/anuncios/novo" className="btn-primary">
-					+ Novo anúncio
-				</Link>
+				{canCreateAds(user?.role) && (
+					<Link to="/area/anuncios/novo" className="btn-primary">
+						+ Novo anúncio
+					</Link>
+				)}
 				<Link to="/area/empresas/nova" className="btn-blue">
 					+ Nova empresa
 				</Link>
@@ -236,12 +269,19 @@ export function MyAdsPage() {
 		<div>
 			<div className="flex items-center justify-between">
 				<Title>Meus anúncios</Title>
-				<Link to="/area/anuncios/novo" className="btn-primary">
-					+ Novo
-				</Link>
+				{canCreateAds(user?.role) && (
+					<Link to="/area/anuncios/novo" className="btn-primary">
+						+ Novo
+					</Link>
+				)}
 			</div>
 			{isLoading ? (
 				<PageLoader />
+			) : !canCreateAds(user?.role) ? (
+				<EmptyState
+					title="Criação de anúncios reservada"
+					description="Novos anúncios são publicados pela equipa Caxinda. Pode também contactar-nos para divulgar um anúncio."
+				/>
 			) : !data || data.items.length === 0 ? (
 				<EmptyState
 					title="Ainda não publicaste anúncios"
@@ -337,11 +377,13 @@ export function AdFormPage() {
 	const createAd = useCreateAd();
 	const updateAd = useUpdateAd();
 	const navigate = useNavigate();
+	const { user } = useSession();
 
 	const [title, setTitle] = useState('');
 	const [description, setDescription] = useState('');
 	const [price, setPrice] = useState('');
 	const [categoryId, setCategoryId] = useState('');
+	const [province, setProvince] = useState<Province | ''>('');
 	const upload = useUpload('ads');
 	const [image, setImage] = useState<MediaAsset | null>(null);
 	const [gallery, setGallery] = useState<MediaAsset[]>([]);
@@ -356,6 +398,7 @@ export function AdFormPage() {
 					: '',
 			);
 			setCategoryId(ad.category?.id ?? '');
+			setProvince(ad.province ?? '');
 			setImage(
 				ad.image
 					? { url: ad.image, cloudinaryId: ad.imageId ?? ad.image }
@@ -369,6 +412,18 @@ export function AdFormPage() {
 		return <PageLoader />;
 	}
 
+	if (!editing && !canCreateAds(user?.role)) {
+		return (
+			<div>
+				<Title>Novo anúncio</Title>
+				<EmptyState
+					title="Criação de anúncios reservada"
+					description="Novos anúncios são publicados pela equipa Caxinda. Pode também contactar-nos para divulgar um anúncio."
+				/>
+			</div>
+		);
+	}
+
 	const submit = (e: React.FormEvent) => {
 		e.preventDefault();
 		if (!categoryId) {
@@ -380,6 +435,7 @@ export function AdFormPage() {
 			description,
 			price: price ? Number(price) : undefined,
 			categoryId,
+			province: province || null,
 			...(image ? { image: image.url, imageId: image.cloudinaryId } : {}),
 			...(gallery.length ? { gallery } : {}),
 		};
@@ -454,6 +510,26 @@ export function AdFormPage() {
 							))}
 						</select>
 					</div>
+				</div>
+				<div className="grid gap-4 sm:grid-cols-2">
+					<div>
+						<label className="label">Província</label>
+						<select
+							className="input"
+							value={province}
+							onChange={(e) =>
+								setProvince(e.target.value as Province | '')
+							}
+						>
+							<option value="">Todas / Indefinida</option>
+							{PROVINCES.map((p) => (
+								<option key={p} value={p}>
+									{PROVINCE_LABELS[p] ?? p}
+								</option>
+							))}
+						</select>
+					</div>
+					<div className="hidden sm:block" />
 				</div>
 				<div>
 					<label className="label">Descrição *</label>
@@ -571,6 +647,8 @@ function FilePicker({
 export function MyBusinessesPage() {
 	usePageTitle('As minhas empresas');
 	const { user } = useSession();
+	const { data: kyc } = useMyKyc();
+	const kycApproved = kyc?.status === 'APPROVED';
 	const { data, isLoading } = useBusinesses({
 		page: 1,
 		limit: 50,
@@ -581,22 +659,56 @@ export function MyBusinessesPage() {
 		<div>
 			<div className="flex items-center justify-between">
 				<Title>Minhas empresas</Title>
-				<Link to="/area/empresas/nova" className="btn-blue">
-					+ Nova
-				</Link>
+				{kycApproved && (
+					<Link to="/area/empresas/nova" className="btn-blue">
+						+ Nova
+					</Link>
+				)}
 			</div>
 			{isLoading ? (
 				<PageLoader />
 			) : !data || data.items.length === 0 ? (
-				<EmptyState
-					title="Ainda não registaste empresas"
-					description="Regista o teu estabelecimento para começares a divulgar."
-					action={
-						<Link to="/area/empresas/nova" className="btn-blue">
-							Registar empresa
-						</Link>
-					}
-				/>
+				kycApproved ? (
+					<EmptyState
+						title="Ainda não registaste empresas"
+						description="Regista o teu estabelecimento para começares a divulgar."
+						action={
+							<Link to="/area/empresas/nova" className="btn-blue">
+								Registar empresa
+							</Link>
+						}
+					/>
+				) : kyc?.status === 'REJECTED' ? (
+					<EmptyState
+						title="KYC rejeitado"
+						description="A tua verificação foi rejeitada. Corrige os dados e submete novamente para poderes registar uma empresa."
+						action={
+							<Link to="/area/verificacao" className="btn-blue">
+								Refazer verificação
+							</Link>
+						}
+					/>
+				) : kyc ? (
+					<EmptyState
+						title="KYC em análise"
+						description="Precisas de ter a verificação KYC aprovada para registar uma empresa. O teu pedido está a ser analisado, tenta novamente mais tarde."
+						action={
+							<Link to="/area/verificacao" className="btn-blue">
+								Ver estado do KYC
+							</Link>
+						}
+					/>
+				) : (
+					<EmptyState
+						title="Verifica a tua identidade primeiro"
+						description="Para registares uma empresa, tens de concluir a verificação KYC (documento de identificação, selfies e foto de corpo inteiro)."
+						action={
+							<Link to="/area/verificacao" className="btn-blue">
+								Fazer verificação
+							</Link>
+						}
+					/>
+				)
 			) : (
 				<div className="grid gap-4 sm:grid-cols-2">
 					{data.items.map((b) => (
@@ -681,6 +793,8 @@ export function BusinessFormPage() {
 	const updateBusiness = useUpdateBusiness();
 	const navigate = useNavigate();
 	const upload = useUpload('businesses');
+	const { data: kyc } = useMyKyc();
+	const kycApproved = kyc?.status === 'APPROVED';
 
 	const [name, setName] = useState('');
 	const [description, setDescription] = useState('');
@@ -712,6 +826,45 @@ export function BusinessFormPage() {
 
 	if (editing && isLoading) {
 		return <PageLoader />;
+	}
+
+	if (!editing && !kycApproved) {
+		return (
+			<div>
+				<Title>Nova empresa</Title>
+				{kyc?.status === 'REJECTED' ? (
+					<EmptyState
+						title="KYC rejeitado"
+						description="A tua verificação foi rejeitada. Corrige os dados e submete novamente para poderes registar uma empresa."
+						action={
+							<Link to="/area/verificacao" className="btn-blue">
+								Refazer verificação
+							</Link>
+						}
+					/>
+				) : kyc ? (
+					<EmptyState
+						title="KYC em análise"
+						description="Precisas de ter a verificação KYC aprovada para registar uma empresa. O teu pedido está a ser analisado, tenta novamente mais tarde."
+						action={
+							<Link to="/area/verificacao" className="btn-blue">
+								Ver estado do KYC
+							</Link>
+						}
+					/>
+				) : (
+					<EmptyState
+						title="Verifica a tua identidade primeiro"
+						description="Para registares uma empresa, tens de concluir a verificação KYC (documento de identificação, selfies e foto de corpo inteiro)."
+						action={
+							<Link to="/area/verificacao" className="btn-blue">
+								Fazer verificação
+							</Link>
+						}
+					/>
+				)}
+			</div>
+		);
 	}
 
 	const submit = (e: React.FormEvent) => {
@@ -776,7 +929,7 @@ export function BusinessFormPage() {
 						>
 							{PROVINCES.map((p) => (
 								<option key={p} value={p}>
-									{p.replace('_', ' ')}
+									{PROVINCE_LABELS[p] ?? p}
 								</option>
 							))}
 						</select>
@@ -1486,6 +1639,92 @@ export function PaymentsPage() {
 	);
 }
 
+// ================= Subscrições =================
+
+export function MySubscriptionsPage() {
+	usePageTitle('Subscrições');
+	const { data: subscriptions, isLoading } = useMySubscriptions();
+
+	return (
+		<div>
+			<Title>Subscrições</Title>
+			{isLoading ? (
+				<PageLoader />
+			) : !subscriptions || subscriptions.length === 0 ? (
+				<EmptyState
+					title="Sem subscrições"
+					description="Assina um plano para uma das tuas empresas."
+					action={
+						<Link to="/planos" className="btn-kwanza">
+							Ver planos
+						</Link>
+					}
+				/>
+			) : (
+				<div className="flex flex-col gap-4">
+					{(subscriptions ?? []).map((s) => (
+						<div key={s.id} className="card gap-3 p-5">
+							<div className="flex flex-wrap items-start justify-between gap-2">
+								<div>
+									<Link
+										to={`/empresas/${s.business.slug}`}
+										className="font-display text-sm font-black hover:text-red"
+									>
+										{s.business.name}
+									</Link>
+									<p className="text-xs text-ink/50">
+										Plano {s.plan.name} ·{' '}
+										{formatKz(s.plan.price)}
+									</p>
+								</div>
+								<StatusPill status={s.status} />
+							</div>
+
+							<div className="flex flex-wrap gap-x-6 gap-y-1 text-xs text-ink/60">
+								<span>
+									Início: <b>{formatDate(s.startDate)}</b>
+								</span>
+								<span>
+									Fim: <b>{formatDate(s.endDate)}</b>
+								</span>
+								<span>
+									Renovação automática:{' '}
+									<b>{s.autoRenew ? 'Sim' : 'Não'}</b>
+								</span>
+								{s.cancelledAt && (
+									<span>
+										Cancelada a{' '}
+										<b>{formatDate(s.cancelledAt)}</b>
+									</span>
+								)}
+							</div>
+
+							{(s.payments ?? []).length > 0 && (
+								<div className="flex flex-col gap-1.5">
+									{(s.payments ?? []).map((p) => (
+										<div
+											key={p.id}
+											className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-snow px-3 py-2 text-xs"
+										>
+											<span className="font-mono text-ink/50">
+												{formatDate(p.createdAt)}
+											</span>
+											<span className="flex items-center gap-2">
+												<StatusPill status={p.status} />
+												<b>{formatKz(p.amount)}</b>
+											</span>
+										</div>
+									))}
+								</div>
+							)}
+						</div>
+					))}
+				</div>
+			)}
+		</div>
+	);
+}
+
 // ================= KYC =================
 
 export function KycPage() {
@@ -1495,13 +1734,39 @@ export function KycPage() {
 	const upload = useUpload('kyc');
 	const [biFront, setBiFront] = useState<MediaAsset | null>(null);
 	const [biBack, setBiBack] = useState<MediaAsset | null>(null);
-	const [selfie, setSelfie] = useState<MediaAsset | null>(null);
+	const [selfies, setSelfies] = useState<MediaAsset[]>([]);
+	const [fullBody, setFullBody] = useState<MediaAsset | null>(null);
 
-	const canSubmit = biFront && biBack && selfie;
+	const canSubmit = biFront && biBack && selfies.length === 3 && fullBody;
+
+	const setSelfieAt = (index: number, asset: MediaAsset | null) => {
+		setSelfies((prev) => {
+			const next = [...prev];
+			if (asset) {
+				next[index] = asset;
+			} else {
+				next.splice(index, 1);
+			}
+			return next;
+		});
+	};
+
+	const uploadInto = async (
+		file: File,
+		setter: (asset: MediaAsset | null) => void,
+	) => {
+		try {
+			setter(await upload.mutateAsync(file));
+		} catch {
+			toast.error('Falha no envio da imagem.');
+		}
+	};
 
 	const submit = () => {
 		if (!canSubmit) {
-			toast.error('Envia a frente e o verso do BI e uma selfie.');
+			toast.error(
+				'Envia a frente e o verso do BI, 3 selfies e a foto de corpo inteiro.',
+			);
 			return;
 		}
 		void toast.promise(
@@ -1510,7 +1775,9 @@ export function KycPage() {
 				biFrontId: biFront.cloudinaryId,
 				biBackUrl: biBack.url,
 				biBackId: biBack.cloudinaryId,
-				selfies: [selfie],
+				selfies: selfies.slice(0, 3),
+				fullBodyUrl: fullBody.url,
+				fullBodyId: fullBody.cloudinaryId,
 			}),
 			{
 				loading: 'A enviar…',
@@ -1558,39 +1825,55 @@ export function KycPage() {
 						'Documentos ilegíveis. Tenta novamente.'}
 				</div>
 			)}
-			<div className="grid max-w-2xl gap-4 sm:grid-cols-3">
+			<div className="grid max-w-3xl gap-4 sm:grid-cols-2">
 				<KycSlot
 					label="Frente do BI"
 					asset={biFront}
 					busy={upload.isPending}
-					onFile={(f) =>
-						upload
-							.mutateAsync(f)
-							.then(setBiFront)
-							.catch(() => toast.error('Falha no envio.'))
-					}
+					onFile={(f) => void uploadInto(f, setBiFront)}
+					onRemove={biFront ? () => setBiFront(null) : undefined}
 				/>
 				<KycSlot
 					label="Verso do BI"
 					asset={biBack}
 					busy={upload.isPending}
-					onFile={(f) =>
-						upload
-							.mutateAsync(f)
-							.then(setBiBack)
-							.catch(() => toast.error('Falha no envio.'))
-					}
+					onFile={(f) => void uploadInto(f, setBiBack)}
+					onRemove={biBack ? () => setBiBack(null) : undefined}
 				/>
+			</div>
+			<p className="mt-6 mb-2 font-mono text-xs font-bold uppercase tracking-widest text-ink/40">
+				Selfies (3 obrigatórias) — de frente, de perfil e outro ângulo
+			</p>
+			<div className="grid max-w-3xl gap-4 sm:grid-cols-3">
+				{[0, 1, 2].map((index) => (
+					<KycSlot
+						key={index}
+						label={`Selfie ${index + 1}`}
+						asset={selfies[index] ?? null}
+						busy={upload.isPending}
+						onFile={(f) =>
+							void uploadInto(f, (asset) =>
+								setSelfieAt(index, asset),
+							)
+						}
+						onRemove={
+							selfies[index]
+								? () => setSelfieAt(index, null)
+								: undefined
+						}
+					/>
+				))}
+			</div>
+			<p className="mt-6 mb-2 font-mono text-xs font-bold uppercase tracking-widest text-ink/40">
+				Foto de corpo inteiro (obrigatória)
+			</p>
+			<div className="grid max-w-3xl gap-4 sm:grid-cols-2">
 				<KycSlot
-					label="Selfie"
-					asset={selfie}
+					label="Corpo inteiro"
+					asset={fullBody}
 					busy={upload.isPending}
-					onFile={(f) =>
-						upload
-							.mutateAsync(f)
-							.then(setSelfie)
-							.catch(() => toast.error('Falha no envio.'))
-					}
+					onFile={(f) => void uploadInto(f, setFullBody)}
+					onRemove={fullBody ? () => setFullBody(null) : undefined}
 				/>
 			</div>
 			<button
@@ -1610,21 +1893,34 @@ function KycSlot({
 	asset,
 	busy,
 	onFile,
+	onRemove,
 }: {
 	label: string;
 	asset: MediaAsset | null;
 	busy: boolean;
 	onFile: (f: File) => void;
+	onRemove?: () => void;
 }) {
 	return (
 		<div>
 			<label className="label">{label}</label>
 			{asset ? (
-				<img
-					src={asset.url}
-					alt={label}
-					className="h-36 w-full rounded-xl object-cover"
-				/>
+				<div className="relative">
+					<img
+						src={asset.url}
+						alt={label}
+						className="h-36 w-full rounded-xl object-cover"
+					/>
+					{onRemove && (
+						<button
+							type="button"
+							onClick={onRemove}
+							className="btn-ghost absolute -right-2 -top-2 !bg-white !text-red"
+						>
+							✕
+						</button>
+					)}
+				</div>
 			) : (
 				<div className="flex h-36 w-full items-center justify-center rounded-2xl border-2 border-dashed border-ink/20 bg-white">
 					<FilePicker busy={busy} onFile={onFile} />
@@ -1650,6 +1946,7 @@ export function SettingsPage() {
 	const changePassword = useChangePassword();
 	const changeEmail = useChangeEmail();
 	const revokeSession = useRevokeSession();
+	const revokeOther = useRevokeOtherSessions();
 	const unlinkGoogle = useUnlinkAccount();
 	const linkGoogle = useLinkGoogle();
 	const sessionToken = useAuthStore((state) => state.sessionToken);
@@ -1664,7 +1961,7 @@ export function SettingsPage() {
 			current?: boolean;
 		}[]
 	>([]);
-	const [showSessions, setShowSessions] = useState(false);
+	const [sessionsLoading, setSessionsLoading] = useState(false);
 
 	useEffect(() => {
 		if (user) {
@@ -1681,7 +1978,7 @@ export function SettingsPage() {
 	const hasPassword = user?.hasPassword ?? false;
 
 	const loadSessions = () => {
-		setShowSessions(true);
+		setSessionsLoading(true);
 		httpGetSessions()
 			.then((res) => {
 				const items = Array.isArray(res)
@@ -1699,9 +1996,14 @@ export function SettingsPage() {
 					})),
 				);
 			})
-			.catch(() => toast.error('Não foi possível carregar as sessões.'));
+			.catch(() => toast.error('Não foi possível carregar as sessões.'))
+			.finally(() => setSessionsLoading(false));
 	};
 
+	useEffect(() => {
+		void loadSessions();
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [sessionToken]);
 	return (
 		<div>
 			<Title>Definições</Title>
@@ -1897,7 +2199,7 @@ export function SettingsPage() {
 
 				<section className="card gap-4 p-6">
 					<h2 className="font-display text-sm font-black">
-						Contas e sessões
+						Conta Google
 					</h2>
 					{isGoogle ? (
 						<div className="flex items-center justify-between rounded-xl bg-snow p-3">
@@ -1949,32 +2251,112 @@ export function SettingsPage() {
 							</div>
 						</div>
 					)}
-					{!showSessions ? (
-						<button
-							className="btn-outline max-w-fit"
-							onClick={loadSessions}
-						>
-							Ver sessões ativas
-						</button>
+				</section>
+
+				<section className="card gap-4 p-6">
+					<div className="flex flex-wrap items-start justify-between gap-2">
+						<h2 className="font-display text-sm font-black">
+							Sessões ativas
+						</h2>
+						<div className="flex flex-wrap gap-2">
+							<button
+								className="btn-outline"
+								disabled={sessionsLoading}
+								onClick={loadSessions}
+							>
+								{sessionsLoading ? (
+									<Spinner size={14} />
+								) : (
+									'Atualizar'
+								)}
+							</button>
+							{sessions.length > 1 && (
+								<ConfirmButton
+									title="Terminar as outras sessões?"
+									message="Todas as sessões exceto a atual serão encerradas."
+									confirmLabel="Terminar todas"
+									busy={revokeOther.isPending}
+									onConfirm={() =>
+										void toast
+											.promise(
+												revokeOther.mutateAsync(),
+												{
+													loading: 'A terminar…',
+													success:
+														'As outras sessões foram terminadas.',
+													error: (err) =>
+														getApiError(err),
+												},
+											)
+											.then(loadSessions)
+									}
+								>
+									<button className="btn-ghost !text-red">
+										Terminar todas (menos a atual)
+									</button>
+								</ConfirmButton>
+							)}
+						</div>
+					</div>
+					{sessionsLoading && sessions.length === 0 ? (
+						<p className="text-sm text-ink/50">
+							A carregar sessões…
+						</p>
+					) : sessions.length === 0 ? (
+						<p className="text-sm text-ink/50">
+							Sem sessões ativas.
+						</p>
 					) : (
 						<div className="flex flex-col gap-2">
-							{sessions.map((s) => (
-								<div
-									key={s.id}
-									className="rounded-xl bg-snow px-3 py-2 text-sm"
-								>
-									<div className="flex items-center justify-between gap-2">
-										<span className="min-w-0 truncate font-bold">
-											{s.device || s.provider}
-											{s.current && (
-												<span className="ml-2 rounded-full bg-kwanza px-2 py-0.5 font-mono text-[10px] font-bold text-ink">
-													atual
-												</span>
-											)}
-										</span>
+							{sessions.map((s) => {
+								const parsed = parseUserAgent(s.device);
+								const DeviceIcon = DEVICE_ICONS[parsed.kind];
+								return (
+									<div
+										key={s.id}
+										className="flex flex-wrap items-start justify-between gap-3 rounded-xl bg-snow px-3 py-3 text-sm"
+									>
+										<div className="flex min-w-0 items-start gap-3">
+											<span className="mt-0.5 text-ink/60">
+												<DeviceIcon
+													width={18}
+													height={18}
+												/>
+											</span>
+											<div className="min-w-0">
+												<div className="flex items-center gap-2">
+													<span className="font-bold">
+														{parsed.label}
+													</span>
+													{s.current && (
+														<span className="rounded-full bg-kwanza px-2 py-0.5 font-mono text-[10px] font-bold text-ink">
+															atual
+														</span>
+													)}
+												</div>
+												{s.device && (
+													<p className="mt-0.5 max-w-full whitespace-pre-wrap break-words font-mono text-[11px] leading-snug text-ink/40">
+														{s.device}
+													</p>
+												)}
+												<p className="mt-1 font-mono text-xs text-ink/50">
+													Criada em{' '}
+													{formatShortDate(
+														s.createdAt,
+													)}{' '}
+													· expira{' '}
+													{formatShortDate(
+														s.expiresAt,
+													)}
+												</p>
+											</div>
+										</div>
 										<button
 											className="btn-ghost !text-red"
-											disabled={s.current}
+											disabled={
+												s.current ||
+												revokeSession.isPending
+											}
 											onClick={() =>
 												void toast
 													.promise(
@@ -1995,32 +2377,13 @@ export function SettingsPage() {
 													.then(loadSessions)
 											}
 										>
-											{s.current ? 'Esta' : 'Terminar'}
+											{s.current
+												? 'Esta sessão'
+												: 'Terminar'}
 										</button>
 									</div>
-									{s.device && s.provider !== s.device && (
-										<p className="mt-1 font-mono text-xs text-ink/50">
-											IP: {s.provider}
-										</p>
-									)}
-									<p className="mt-1 font-mono text-xs text-ink/50">
-										Criada:{' '}
-										{s.createdAt
-											? formatDateTime(s.createdAt)
-											: '—'}{' '}
-										· Expira:{' '}
-										{s.expiresAt
-											? formatDateTime(s.expiresAt)
-											: '—'}
-									</p>
-								</div>
-							))}
-							<button
-								className="btn-outline max-w-fit"
-								onClick={loadSessions}
-							>
-								Atualizar
-							</button>
+								);
+							})}
 						</div>
 					)}
 				</section>

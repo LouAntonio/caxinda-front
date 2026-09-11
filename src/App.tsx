@@ -139,6 +139,7 @@ const {
 	WishlistPage,
 	MessagesPage,
 	PaymentsPage,
+	MySubscriptionsPage,
 	KycPage,
 	SettingsPage,
 } = {
@@ -174,6 +175,11 @@ const {
 	),
 	PaymentsPage: lazyComponent(() =>
 		import('./pages/AreaPages').then((m) => ({ default: m.PaymentsPage })),
+	),
+	MySubscriptionsPage: lazyComponent(() =>
+		import('./pages/AreaPages').then((m) => ({
+			default: m.MySubscriptionsPage,
+		})),
 	),
 	KycPage: lazyComponent(() =>
 		import('./pages/AreaPages').then((m) => ({ default: m.KycPage })),
@@ -290,6 +296,7 @@ const router = createBrowserRouter([
 					{ path: 'favoritos', element: <WishlistPage /> },
 					{ path: 'mensagens', element: <MessagesPage /> },
 					{ path: 'pagamentos', element: <PaymentsPage /> },
+					{ path: 'subscricoes', element: <MySubscriptionsPage /> },
 					{ path: 'verificacao', element: <KycPage /> },
 					{ path: 'definicoes', element: <SettingsPage /> },
 				],

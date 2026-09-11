@@ -1,18 +1,21 @@
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import { useSession } from '../../hooks/useSession';
+import { canCreateAds } from '../../lib/roles';
 import { fullName } from '../../lib/format';
 import { Avatar } from '../ui/Avatar';
 
 const AREA_LINKS = [
 	{ to: '/area', label: 'Visão geral', end: true },
-	{ to: '/area/anuncios', label: 'Meus anúncios' },
 	{ to: '/area/empresas', label: 'Minhas empresas' },
+	{ to: '/area/subscricoes', label: 'Subscrições' },
 	{ to: '/area/favoritos', label: 'Favoritos' },
 	{ to: '/area/mensagens', label: 'Mensagens' },
 	{ to: '/area/pagamentos', label: 'Pagamentos' },
 	{ to: '/area/verificacao', label: 'Verificação KYC' },
 	{ to: '/area/definicoes', label: 'Definições' },
 ];
+
+const MY_ADS_LINK = { to: '/area/anuncios', label: 'Meus anúncios', end: false };
 
 const ADMIN_LINKS = [
 	{ to: '/admin', label: 'Dashboard', end: true },
@@ -30,7 +33,11 @@ const ADMIN_LINKS = [
 export function AreaLayout({ admin = false }: { admin?: boolean }) {
 	const { user } = useSession();
 	const location = useLocation();
-	const links = admin ? ADMIN_LINKS : AREA_LINKS;
+	const links = admin
+		? ADMIN_LINKS
+		: canCreateAds(user?.role)
+			? [AREA_LINKS[0], MY_ADS_LINK, ...AREA_LINKS.slice(1)]
+			: AREA_LINKS;
 
 	const header = admin ? 'Painel Admin' : 'Minha Conta';
 	const backLink = admin ? '/area' : null;

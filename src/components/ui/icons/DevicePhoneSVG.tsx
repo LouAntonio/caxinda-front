@@ -1,11 +1,11 @@
 import type { SVGProps } from 'react';
 
-export function EnvelopeSVG(props: SVGProps<SVGSVGElement>) {
+export function DevicePhoneSVG(props: SVGProps<SVGSVGElement>) {
 	return (
 		<svg
 			viewBox="0 0 24 24"
-			width="24"
-			height="24"
+			width="20"
+			height="20"
 			fill="none"
 			stroke="currentColor"
 			strokeWidth="2"
@@ -13,8 +13,8 @@ export function EnvelopeSVG(props: SVGProps<SVGSVGElement>) {
 			strokeLinejoin="round"
 			{...props}
 		>
-			<rect x="2" y="4" width="20" height="16" rx="2" />
-			<path d="m2 8 10 7 10-7" />
+			<rect x="7" y="2" width="10" height="20" rx="2.5" />
+			<path d="M11 18h2" />
 		</svg>
 	);
 }

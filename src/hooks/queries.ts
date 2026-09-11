@@ -17,6 +17,7 @@ import type {
 	ConversationType,
 	KycRecord,
 	MessagesResponse,
+	MySubscription,
 	Payment,
 	PaymentStatus,
 	PlansResponse,
@@ -26,6 +27,7 @@ import type {
 	ReportTarget,
 	Review,
 	SearchItem,
+	SearchSort,
 	SearchType,
 	Subscription,
 	UsersListResponse,
@@ -348,6 +350,18 @@ export function useMyPayments() {
 	});
 }
 
+export function useMySubscriptions() {
+	return useQuery({
+		queryKey: ['payments', 'mine', 'subscriptions'],
+		queryFn: async () => {
+			const res = await http.get<MySubscription[]>(
+				'/payments/mine/subscriptions',
+			);
+			return res.data;
+		},
+	});
+}
+
 export function usePayment(id?: string) {
 	return useQuery({
 		queryKey: ['payments', id],
@@ -524,6 +538,7 @@ export interface GlobalSearchParams {
 	type?: SearchType;
 	categoryId?: string;
 	province?: string;
+	sortBy?: SearchSort;
 	page?: number;
 	limit?: number;
 }

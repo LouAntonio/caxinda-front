@@ -38,38 +38,27 @@ import { Stars } from '../components/ui/Stars';
 import { Avatar } from '../components/ui/Avatar';
 import { FilterPills } from '../components/ui/FilterPills';
 import { useSession } from '../hooks/useSession';
-import { formatDate, formatKz, fullName, timeAgo } from '../lib/format';
+import {
+	formatDate,
+	formatKz,
+	fullName,
+	PROVINCE_LABELS,
+	timeAgo,
+} from '../lib/format';
 import {
 	PROVINCES,
 	REPORT_REASONS,
+	type AdSort,
+	type BusinessSort,
+	type Province,
 	type ReportReason,
 	type ReportTarget,
 	type SearchItem,
+	type SearchSort,
 	type SearchType,
 } from '../types/api';
 import { useAuthStore } from '../store/auth';
 import { useWishlistCheck } from '../hooks/queries';
-
-const PROVINCE_LABELS: Record<string, string> = {
-	BENGO: 'Bengo',
-	BENGUELA: 'Benguela',
-	BIÉ: 'Bié',
-	CABINDA: 'Cabinda',
-	CUANDO_CUBANGO: 'Cuando-Cubango',
-	CUANZA_NORTE: 'Cuanza Norte',
-	CUANZA_SUL: 'Cuanza Sul',
-	CUNENE: 'Cunene',
-	HUAMBO: 'Huambo',
-	HUÍLA: 'Huíla',
-	LUANDA: 'Luanda',
-	LUNDA_NORTE: 'Lunda Norte',
-	LUNDA_SUL: 'Lunda Sul',
-	MALANJE: 'Malanje',
-	MOXICO: 'Moxico',
-	NAMIBE: 'Namibe',
-	UÍGE: 'Uíge',
-	ZAIRE: 'Zaire',
-};
 
 // ================= Anúncios (lista) =================
 
@@ -82,6 +71,7 @@ export function AdsPage() {
 		searchParams.get('categoryIds')?.split(',').filter(Boolean) ?? [];
 	const sortBy = searchParams.get('sortBy') ?? 'newest';
 	const onlyFeatured = searchParams.get('featured') === 'true';
+	const province = searchParams.get('province') ?? '';
 	const minPrice = searchParams.get('minPrice')
 		? Number(searchParams.get('minPrice'))
 		: undefined;
@@ -109,9 +99,10 @@ export function AdsPage() {
 				? selectedCategoryIds.join(',')
 				: undefined,
 		featured: onlyFeatured || undefined,
+		province: (province as Province) || undefined,
 		minPrice,
 		maxPrice,
-		sortBy: sortBy as 'newest',
+		sortBy: sortBy as AdSort,
 	});
 
 	const setParam = (key: string, value?: string) => {
@@ -188,6 +179,20 @@ export function AdsPage() {
 							}
 						/>
 					)}
+					<FilterPills
+						label="Províncias"
+						items={PROVINCES.map((p) => ({
+							id: p,
+							name: PROVINCE_LABELS[p] ?? p,
+						}))}
+						selected={province ? [province] : []}
+						onToggle={(id) =>
+							setParam(
+								'province',
+								province === id ? undefined : id,
+							)
+						}
+					/>
 					<div className="flex gap-2">
 						<button
 							type="button"
@@ -199,6 +204,7 @@ export function AdsPage() {
 						{(q ||
 							selectedCategoryIds.length > 0 ||
 							onlyFeatured ||
+							province ||
 							sortBy !== 'newest') && (
 							<button
 								type="button"
@@ -236,6 +242,7 @@ export function AdsPage() {
 						{(q ||
 							selectedCategoryIds.length > 0 ||
 							onlyFeatured ||
+							province ||
 							sortBy !== 'newest') && (
 							<button
 								type="button"
@@ -265,6 +272,7 @@ export function AdsPage() {
 							onChange={(e) => setParam('sortBy', e.target.value)}
 						>
 							<option value="newest">Mais recentes</option>
+							<option value="oldest">Mais antigos</option>
 							<option value="price_asc">
 								Preço: menor → maior
 							</option>
@@ -565,7 +573,6 @@ export function BusinessesPage() {
 	const selectedProvinces =
 		searchParams.get('provinces')?.split(',').filter(Boolean) ?? [];
 	const sortBy = searchParams.get('sortBy') ?? 'newest';
-	const onlyFeatured = searchParams.get('featured') === 'true';
 	const page = Math.max(1, Number(searchParams.get('page')) || 1);
 	const [localQ, setLocalQ] = useState(q);
 
@@ -590,8 +597,7 @@ export function BusinessesPage() {
 			selectedProvinces.length > 0
 				? selectedProvinces.join(',')
 				: undefined,
-		featured: onlyFeatured || undefined,
-		sortBy: sortBy as 'newest',
+		sortBy: sortBy as BusinessSort,
 	});
 
 	const setParam = (key: string, value?: string) => {
@@ -640,22 +646,6 @@ export function BusinessesPage() {
 							}
 						}}
 					/>
-					<button
-						type="button"
-						onClick={() =>
-							setParam(
-								'featured',
-								onlyFeatured ? undefined : 'true',
-							)
-						}
-						className={`w-full rounded-xl border-2 px-3 py-2 text-xs font-bold transition ${
-							onlyFeatured
-								? 'border-kwanza bg-kwanza/15 text-ink'
-								: 'border-ink/15 text-ink/50 hover:border-ink/30'
-						}`}
-					>
-						★ Apenas destaque
-					</button>
 					{(categories ?? []).length > 0 && (
 						<FilterPills
 							label="Categorias"
@@ -690,7 +680,6 @@ export function BusinessesPage() {
 						{(q ||
 							selectedCategoryIds.length > 0 ||
 							selectedProvinces.length > 0 ||
-							onlyFeatured ||
 							sortBy !== 'newest') && (
 							<button
 								type="button"
@@ -728,7 +717,6 @@ export function BusinessesPage() {
 						{(q ||
 							selectedCategoryIds.length > 0 ||
 							selectedProvinces.length > 0 ||
-							onlyFeatured ||
 							sortBy !== 'newest') && (
 							<button
 								type="button"
@@ -1258,6 +1246,9 @@ export function SearchPage() {
 		typeParam === 'AD' || typeParam === 'BUSINESS' ? typeParam : null;
 	const categoryId = searchParams.get('categoryId') ?? undefined;
 	const province = searchParams.get('province') ?? undefined;
+	const rawSort = searchParams.get('sortBy');
+	const sortBy: SearchSort =
+		rawSort === 'newest' || rawSort === 'oldest' ? rawSort : 'relevance';
 	const { data: adCategories = [] } = useCategories('AD');
 	const { data: bizCategories = [] } = useCategories('BUSINESS');
 	const categoryOptions = [...adCategories, ...bizCategories];
@@ -1266,6 +1257,7 @@ export function SearchPage() {
 		type: type ?? undefined,
 		categoryId,
 		province,
+		sortBy,
 		page: 1,
 		limit: 20,
 	});
@@ -1384,10 +1376,27 @@ export function SearchPage() {
 						<PageLoader />
 					) : q ? (
 						<>
-							<p className="mb-4 text-sm text-ink/50">
-								{data?.total ?? 0} resultado(s) para «<b>{q}</b>
-								»
-							</p>
+							<div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+								<p className="text-sm text-ink/50">
+									{data?.total ?? 0} resultado(s) para «
+									<b>{q}</b>»
+								</p>
+								<select
+									className="input max-w-[200px]"
+									value={sortBy}
+									onChange={(e) =>
+										setParam('sortBy', e.target.value)
+									}
+								>
+									<option value="relevance">
+										Relevância
+									</option>
+									<option value="newest">
+										Mais recentes
+									</option>
+									<option value="oldest">Mais antigos</option>
+								</select>
+							</div>
 							{(data?.items ?? []).length === 0 && (
 								<EmptyState
 									title="Nada encontrado"

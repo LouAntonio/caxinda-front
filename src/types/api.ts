@@ -140,6 +140,7 @@ export interface Ad {
 	price: number | null;
 	status: AdStatus;
 	visibility: AdVisibility;
+	province: Province | null;
 	verified: boolean;
 	createdAt: string;
 	updatedAt: string;
@@ -173,6 +174,7 @@ export interface AdQueryParams {
 	categorySlugs?: string;
 	minPrice?: number;
 	maxPrice?: number;
+	province?: Province;
 	includeInactive?: boolean;
 	featured?: boolean;
 	userId?: string;
@@ -214,16 +216,17 @@ export interface Business {
 	updatedAt: string;
 }
 
+export type BusinessSort = 'newest' | 'oldest' | 'name_asc' | 'name_desc';
+
 export interface BusinessQueryParams {
 	page?: number;
 	limit?: number;
-	sortBy?: 'newest' | 'oldest' | 'name_asc' | 'name_desc';
+	sortBy?: BusinessSort;
 	q?: string;
 	province?: Province;
 	provinces?: string;
 	categoryId?: string;
 	categoryIds?: string;
-	featured?: boolean;
 	ownerId?: string;
 }
 
@@ -287,6 +290,8 @@ export interface KycRecord {
 	biBackUrl: string;
 	biBackId: string;
 	selfies: MediaAsset[];
+	fullBodyUrl: string | null;
+	fullBodyId: string | null;
 	verifiedAt: string | null;
 	createdAt: string;
 	updatedAt: string;
@@ -333,6 +338,21 @@ export interface Subscription {
 	renewedAt: string | null;
 	createdAt: string;
 	updatedAt: string;
+}
+
+export interface MySubscription extends Subscription {
+	plan: PlanSummary;
+	business: { id: UUID; name: string; slug: string };
+	payments: {
+		id: UUID;
+		amount: number;
+		status: PaymentStatus;
+		proofUrl: string | null;
+		proofAt: string | null;
+		reviewedAt: string | null;
+		adminNote: string | null;
+		createdAt: string;
+	}[];
 }
 
 export interface PlanSummary {
@@ -445,6 +465,8 @@ export interface BusinessAnalytics {
 // ---------------- Search ----------------
 
 export type SearchType = 'AD' | 'BUSINESS';
+
+export type SearchSort = 'relevance' | 'newest' | 'oldest';
 
 export type SearchItem =
 	| (AdListItem & {

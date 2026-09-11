@@ -223,7 +223,16 @@ export function useListSessions() {
 export function useRevokeSession() {
 	return useMutation({
 		mutationFn: async (token: string) => {
-			const res = await http.post('/auth/revoke-sessions', { token });
+			const res = await http.post('/auth/revoke-session', { token });
+			return res.data;
+		},
+	});
+}
+
+export function useRevokeOtherSessions() {
+	return useMutation({
+		mutationFn: async () => {
+			const res = await http.post('/auth/revoke-other-sessions');
 			return res.data;
 		},
 	});
@@ -378,6 +387,7 @@ export interface CreateAdPayload {
 	title: string;
 	description: string;
 	price?: number;
+	province?: Province | null;
 	categoryId: string;
 	image?: string;
 	imageId?: string;
@@ -883,6 +893,8 @@ export interface SubmitKycPayload {
 	biBackUrl: string;
 	biBackId: string;
 	selfies: MediaAsset[];
+	fullBodyUrl: string;
+	fullBodyId: string;
 }
 
 export function useSubmitKyc() {

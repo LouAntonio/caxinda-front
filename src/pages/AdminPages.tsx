@@ -944,13 +944,41 @@ export function AdminKycPage() {
 									alt="BI verso"
 									className="h-24 w-full rounded-lg object-cover"
 								/>
-								{k.selfies[0] && (
+								{k.fullBodyUrl ? (
 									<img
-										src={k.selfies[0].url}
-										alt="Selfie"
+										src={k.fullBodyUrl}
+										alt="Corpo inteiro"
 										className="h-24 w-full rounded-lg object-cover"
 									/>
+								) : (
+									<div className="flex h-24 w-full items-center justify-center rounded-lg bg-snow text-[10px] font-bold text-ink/40">
+										Sem corpo inteiro
+									</div>
 								)}
+							</div>
+							<p className="font-mono text-[10px] font-bold uppercase tracking-widest text-ink/40">
+								Selfies
+							</p>
+							<div className="grid grid-cols-3 gap-2">
+								{(k.selfies ?? []).map((s, i) => (
+									<img
+										key={s.cloudinaryId ?? i}
+										src={s.url}
+										alt={`Selfie ${i + 1}`}
+										className="h-24 w-full rounded-lg object-cover"
+									/>
+								))}
+								{k.selfies.length < 3 &&
+									Array.from({
+										length: 3 - k.selfies.length,
+									}).map((_, i) => (
+										<div
+											key={`empty-${i}`}
+											className="flex h-24 w-full items-center justify-center rounded-lg bg-snow text-[10px] font-bold text-ink/40"
+										>
+											Sem selfie
+										</div>
+									))}
 							</div>
 							{k.status === 'PENDING' && (
 								<div className="flex gap-2">
