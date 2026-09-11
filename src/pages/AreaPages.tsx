@@ -448,7 +448,10 @@ export function AdFormPage() {
 				galleryAssets = await Promise.all(
 					pendingGallery.map((f) => upload.mutateAsync(f)),
 				);
-				setGallery((g) => [...g, ...galleryAssets]);
+				setGallery((g) => [
+					...g.filter((item) => item.cloudinaryId !== 'pending'),
+					...galleryAssets,
+				]);
 				setPendingGallery([]);
 			}
 
@@ -456,8 +459,8 @@ export function AdFormPage() {
 				title,
 				description,
 				price: price ? Number(price) : undefined,
-				categoryId,
-				province: province || null,
+				categoryIds: [categoryId],
+				...(province ? { province } : {}),
 				...(imageAsset
 					? {
 							image: imageAsset.url,

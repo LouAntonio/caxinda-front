@@ -398,7 +398,7 @@ export interface CreateAdPayload {
 	description: string;
 	price?: number;
 	province?: Province | null;
-	categoryId: string;
+	categoryIds: string[];
 	image?: string;
 	imageId?: string;
 	gallery?: MediaAsset[];

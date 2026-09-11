@@ -192,6 +192,7 @@ const {
 const {
 	AdminDashboardPage,
 	AdminAdsPage,
+	AdminAdFormPage,
 	AdminBusinessesPage,
 	AdminUsersPage,
 	AdminUserPage,
@@ -210,6 +211,11 @@ const {
 	),
 	AdminAdsPage: lazyComponent(() =>
 		import('./pages/AdminPages').then((m) => ({ default: m.AdminAdsPage })),
+	),
+	AdminAdFormPage: lazyComponent(() =>
+		import('./pages/AdminPages').then((m) => ({
+			default: m.AdminAdFormPage,
+		})),
 	),
 	AdminBusinessesPage: lazyComponent(() =>
 		import('./pages/AdminPages').then((m) => ({
@@ -317,6 +323,7 @@ const router = createBrowserRouter([
 				children: [
 					{ index: true, element: <AdminDashboardPage /> },
 					{ path: 'anuncios', element: <AdminAdsPage /> },
+					{ path: 'anuncios/novo', element: <AdminAdFormPage /> },
 					{ path: 'empresas', element: <AdminBusinessesPage /> },
 					{ path: 'utilizadores', element: <AdminUsersPage /> },
 					{ path: 'utilizadores/:id', element: <AdminUserPage /> },

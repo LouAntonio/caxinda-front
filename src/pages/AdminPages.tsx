@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useParams, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { usePageTitle } from '../hooks/usePageTitle';
+import { useUpload } from '../hooks/useUpload';
 import {
 	useAdminConversations,
 	useAdminKycList,
@@ -17,6 +18,7 @@ import {
 } from '../hooks/queries';
 import {
 	useBanUser,
+	useCreateAd,
 	useCreateCategory,
 	useCreatePlan,
 	useDeleteCategory,
@@ -45,8 +47,21 @@ import { Avatar } from '../components/ui/Avatar';
 import { ConfirmButton } from '../components/ui/ConfirmButton';
 import { Price } from '../components/ui/Price';
 import { getApiError } from '../lib/api';
-import { formatDate, formatDecimal, formatKz, fullName } from '../lib/format';
-import type { CategoryType, Plan, Role } from '../types/api';
+import {
+	formatDate,
+	formatDecimal,
+	formatKz,
+	fullName,
+	PROVINCE_LABELS,
+} from '../lib/format';
+import type {
+	CategoryType,
+	Plan,
+	Role,
+	MediaAsset,
+	Province,
+} from '../types/api';
+import { PROVINCES } from '../types/api';
 
 function Title({ children }: { children: React.ReactNode }) {
 	return (
@@ -231,7 +246,12 @@ export function AdminAdsPage() {
 
 	return (
 		<div>
-			<Title>Moderação de anúncios</Title>
+			<div className="flex items-center justify-between">
+				<Title>Moderação de anúncios</Title>
+				<Link to="/admin/anuncios/novo" className="btn-primary">
+					+ Novo anúncio
+				</Link>
+			</div>
 			<input
 				className="input mb-4 max-w-sm"
 				placeholder="Pesquisar anúncios…"
@@ -346,6 +366,284 @@ function AdModerateActions({
 			>
 				{ad.visibility === 'VISIBLE' ? 'Destaque' : 'Retirar destaque'}
 			</button>
+		</div>
+	);
+}
+
+// ================= Anúncio (criar) =================
+
+export function AdminAdFormPage() {
+	usePageTitle('Novo anúncio');
+	const { data: categories } = useCategories('AD');
+	const createAd = useCreateAd();
+	const navigate = useNavigate();
+	const upload = useUpload('ads');
+
+	const [title, setTitle] = useState('');
+	const [description, setDescription] = useState('');
+	const [price, setPrice] = useState('');
+	const [categoryId, setCategoryId] = useState('');
+	const [province, setProvince] = useState<Province | ''>('');
+	const [image, setImage] = useState<MediaAsset | null>(null);
+	const [gallery, setGallery] = useState<MediaAsset[]>([]);
+	const [pendingImage, setPendingImage] = useState<File | null>(null);
+	const [pendingGallery, setPendingGallery] = useState<File[]>([]);
+
+	const onFile = (file: File, target: 'main' | 'gallery') => {
+		const preview = URL.createObjectURL(file);
+		if (target === 'main') {
+			setPendingImage(file);
+			setImage({ url: preview, cloudinaryId: 'pending' });
+		} else {
+			setPendingGallery((g) => [...g, file]);
+			setGallery((g) => [
+				...g,
+				{ url: preview, cloudinaryId: 'pending' },
+			]);
+		}
+	};
+
+	const submit = async (e: React.FormEvent) => {
+		e.preventDefault();
+		if (!categoryId) {
+			toast.error('Escolhe uma categoria.');
+			return;
+		}
+		try {
+			let imageAsset = image;
+			let galleryAssets = gallery;
+
+			if (pendingImage) {
+				imageAsset = await upload.mutateAsync(pendingImage);
+				setImage(imageAsset);
+				setPendingImage(null);
+			}
+			if (pendingGallery.length > 0) {
+				galleryAssets = await Promise.all(
+					pendingGallery.map((f) => upload.mutateAsync(f)),
+				);
+				setGallery((g) => [
+					...g.filter((item) => item.cloudinaryId !== 'pending'),
+					...galleryAssets,
+				]);
+				setPendingGallery([]);
+			}
+
+			const payload = {
+				title,
+				description,
+				price: price ? Number(price) : undefined,
+				categoryIds: [categoryId],
+				...(province ? { province } : {}),
+				...(imageAsset
+					? {
+							image: imageAsset.url,
+							imageId: imageAsset.cloudinaryId,
+						}
+					: {}),
+				...(galleryAssets.length ? { gallery: galleryAssets } : {}),
+			};
+			await toast.promise(createAd.mutateAsync(payload), {
+				loading: 'A publicar…',
+				success: 'Anúncio publicado.',
+				error: (err) => getApiError(err),
+			});
+			void navigate('/admin/anuncios');
+		} catch {
+			// error handled by toast.promise
+		}
+	};
+
+	return (
+		<div>
+			<Title>Novo anúncio</Title>
+			<form onSubmit={submit} className="card max-w-2xl gap-4 p-6">
+				<div>
+					<label className="label">Título *</label>
+					<input
+						className="input"
+						value={title}
+						onChange={(e) => setTitle(e.target.value)}
+						required
+						maxLength={140}
+					/>
+				</div>
+				<div className="grid gap-4 sm:grid-cols-2">
+					<div>
+						<label className="label">Preço (Kz)</label>
+						<input
+							className="input"
+							type="number"
+							min={0}
+							value={price}
+							onChange={(e) => setPrice(e.target.value)}
+							placeholder="0"
+						/>
+					</div>
+					<div>
+						<label className="label">Categoria *</label>
+						<select
+							className="input"
+							value={categoryId}
+							onChange={(e) => setCategoryId(e.target.value)}
+							required
+						>
+							<option value="">Escolhe…</option>
+							{(categories ?? []).map((c) => (
+								<option key={c.id} value={c.id}>
+									{c.name}
+								</option>
+							))}
+						</select>
+					</div>
+				</div>
+				<div className="grid gap-4 sm:grid-cols-2">
+					<div>
+						<label className="label">Província</label>
+						<select
+							className="input"
+							value={province}
+							onChange={(e) =>
+								setProvince(e.target.value as Province | '')
+							}
+						>
+							<option value="">Todas / Indefinida</option>
+							{PROVINCES.map((p: Province) => (
+								<option key={p} value={p}>
+									{PROVINCE_LABELS[p] ?? p}
+								</option>
+							))}
+						</select>
+					</div>
+					<div className="hidden sm:block" />
+				</div>
+				<div>
+					<label className="label">Descrição *</label>
+					<textarea
+						className="input min-h-32"
+						value={description}
+						onChange={(e) => setDescription(e.target.value)}
+						required
+						maxLength={5000}
+					/>
+				</div>
+
+				<div>
+					<label className="label">Imagem principal</label>
+					{image ? (
+						<div className="relative inline-block">
+							<img
+								src={image.url}
+								alt="Principal"
+								className="h-40 w-52 rounded-xl object-cover"
+							/>
+							<button
+								type="button"
+								onClick={() => {
+									setImage(null);
+									setPendingImage(null);
+								}}
+								className="btn-ghost absolute -top-2 -right-2 !bg-white !text-red"
+							>
+								✕
+							</button>
+						</div>
+					) : (
+						<div>
+							<input
+								type="file"
+								accept="image/*"
+								className="hidden"
+								id="admin-ad-image"
+								onChange={(e) => {
+									const file = e.target.files?.[0];
+									if (file) onFile(file, 'main');
+									e.target.value = '';
+								}}
+							/>
+							<label
+								htmlFor="admin-ad-image"
+								className="btn-outline cursor-pointer"
+							>
+								⬆ Enviar imagem
+							</label>
+						</div>
+					)}
+				</div>
+
+				<div>
+					<label className="label">Galeria (até 4)</label>
+					<div className="flex flex-wrap gap-2">
+						{gallery.map((g, idx) => (
+							<div
+								key={`${g.cloudinaryId}-${idx}`}
+								className="relative inline-block"
+							>
+								<img
+									src={g.url}
+									alt=""
+									className="h-20 w-24 rounded-lg object-cover"
+								/>
+								<button
+									type="button"
+									onClick={() => {
+										setGallery((gal) =>
+											gal.filter((_, i) => i !== idx),
+										);
+										setPendingGallery((pg) =>
+											pg.filter((_, i) => i !== idx),
+										);
+									}}
+									className="btn-ghost absolute -top-2 -right-2 !bg-white !text-red"
+								>
+									✕
+								</button>
+							</div>
+						))}
+						{gallery.length < 4 && (
+							<div>
+								<input
+									type="file"
+									accept="image/*"
+									multiple
+									className="hidden"
+									id="admin-ad-gallery"
+									onChange={(e) => {
+										const files = Array.from(
+											e.target.files ?? [],
+										);
+										files.forEach((f) =>
+											onFile(f, 'gallery'),
+										);
+										e.target.value = '';
+									}}
+								/>
+								<label
+									htmlFor="admin-ad-gallery"
+									className="btn-outline cursor-pointer"
+								>
+									⬆ Enviar imagem
+								</label>
+							</div>
+						)}
+					</div>
+				</div>
+
+				<div className="flex gap-2 pt-2">
+					<button
+						className="btn-primary"
+						disabled={createAd.isPending}
+					>
+						{createAd.isPending && (
+							<span className="ml-2">A guardar…</span>
+						)}
+						Publicar anúncio
+					</button>
+					<Link to="/admin/anuncios" className="btn-ghost">
+						Cancelar
+					</Link>
+				</div>
+			</form>
 		</div>
 	);
 }

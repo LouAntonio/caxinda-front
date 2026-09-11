@@ -377,9 +377,9 @@ export function AdDetailPage() {
 						</div>
 					)}
 					<div className="grid grid-cols-3 gap-2 p-2">
-						{(ad.gallery ?? []).slice(0, 3).map((g) => (
+						{(ad.gallery ?? []).slice(0, 3).map((g, idx) => (
 							<img
-								key={g.cloudinaryId}
+								key={`${g.cloudinaryId}-${idx}`}
 								src={g.url}
 								alt=""
 								className="aspect-square w-full rounded-lg object-cover"
@@ -887,9 +887,9 @@ export function BusinessDetailPage() {
 						</div>
 						{business.gallery.length > 0 && (
 							<div className="mt-6 grid grid-cols-3 gap-2">
-								{business.gallery.map((g) => (
+								{business.gallery.map((g, idx) => (
 									<img
-										key={g.cloudinaryId}
+										key={`${g.cloudinaryId}-${idx}`}
 										src={g.url}
 										alt=""
 										className="aspect-square w-full rounded-xl object-cover"
