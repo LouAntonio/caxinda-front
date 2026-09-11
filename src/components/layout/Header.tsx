@@ -7,6 +7,7 @@ import { EnvelopeSVG } from '../ui/icons/EnvelopeSVG';
 import { Drawer } from '../ui/Drawer';
 import { useSession } from '../../hooks/useSession';
 import { useLogout } from '../../hooks/mutations';
+import { canCreateAds } from '../../lib/roles';
 import { useChatStore } from '../../store/chat';
 import { fullName } from '../../lib/format';
 
@@ -188,12 +189,14 @@ export function Header() {
 											>
 												Minha conta
 											</Link>
-											<Link
-												to="/area/anuncios"
-												className="px-4 py-2 hover:bg-snow"
-											>
-												Meus anúncios
-											</Link>
+											{canCreateAds(user.role) && (
+												<Link
+													to="/area/anuncios"
+													className="px-4 py-2 hover:bg-snow"
+												>
+													Meus anúncios
+												</Link>
+											)}
 											<Link
 												to="/area/empresas"
 												className="px-4 py-2 hover:bg-snow"
@@ -228,7 +231,8 @@ export function Header() {
 											)}
 											<button
 												type="button"
-												className="px-4 py-2 text-left text-red hover:bg-snow"
+												className="flex items-center gap-2 px-4 py-2 text-left text-red hover:bg-snow disabled:cursor-not-allowed disabled:opacity-50"
+												disabled={logout.isPending}
 												onClick={() => {
 													logout.mutate(undefined, {
 														onSettled: () => {
@@ -240,6 +244,9 @@ export function Header() {
 													});
 												}}
 											>
+												{logout.isPending && (
+													<Spinner size={14} />
+												)}
 												Sair
 											</button>
 										</div>
@@ -331,6 +338,8 @@ export function Header() {
 									</Link>
 									<button
 										type="button"
+										className="flex items-center gap-2 text-red disabled:cursor-not-allowed disabled:opacity-50"
+										disabled={logout.isPending}
 										onClick={() => {
 											logout.mutate(undefined, {
 												onSettled: () => {
@@ -340,6 +349,9 @@ export function Header() {
 											});
 										}}
 									>
+										{logout.isPending && (
+											<Spinner size={14} />
+										)}
 										Sair
 									</button>
 								</div>

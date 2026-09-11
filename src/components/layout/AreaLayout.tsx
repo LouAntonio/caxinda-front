@@ -15,7 +15,11 @@ const AREA_LINKS = [
 	{ to: '/area/definicoes', label: 'Definições' },
 ];
 
-const MY_ADS_LINK = { to: '/area/anuncios', label: 'Meus anúncios', end: false };
+const MY_ADS_LINK = {
+	to: '/area/anuncios',
+	label: 'Meus anúncios',
+	end: false,
+};
 
 const ADMIN_LINKS = [
 	{ to: '/admin', label: 'Dashboard', end: true },

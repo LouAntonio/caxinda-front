@@ -202,6 +202,19 @@ export function useChangePassword() {
 	});
 }
 
+export function useSetPassword() {
+	const queryClient = useQueryClient();
+	return useMutation({
+		mutationFn: async (newPassword: string) => {
+			const res = await http.post('/auth/set-password', { newPassword });
+			return res.data;
+		},
+		onSuccess: () => {
+			void queryClient.invalidateQueries({ queryKey: ['me'] });
+		},
+	});
+}
+
 export function useChangeEmail() {
 	return useMutation({
 		mutationFn: async (newEmail: string) => {

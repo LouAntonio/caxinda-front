@@ -44,6 +44,7 @@ import {
 	useUpdateBusiness,
 	useUpdateProfile,
 	useRevokeOtherSessions,
+	useSetPassword,
 } from '../hooks/mutations';
 import { useSession } from '../hooks/useSession';
 import { useUpload } from '../hooks/useUpload';
@@ -1944,6 +1945,7 @@ export function SettingsPage() {
 	const [newEmail, setNewEmail] = useState('');
 	const updateProfile = useUpdateProfile();
 	const changePassword = useChangePassword();
+	const setPassword = useSetPassword();
 	const changeEmail = useChangeEmail();
 	const revokeSession = useRevokeSession();
 	const revokeOther = useRevokeOtherSessions();
@@ -2075,7 +2077,7 @@ export function SettingsPage() {
 					</button>
 				</section>
 
-				{hasPassword && (
+				{hasPassword ? (
 					<section className="card gap-4 p-6">
 						<h2 className="font-display text-sm font-black">
 							Alterar palavra-passe
@@ -2166,6 +2168,93 @@ export function SettingsPage() {
 							Alterar
 						</button>
 					</section>
+				) : (
+					<section className="card gap-4 p-6">
+						<h2 className="font-display text-sm font-black">
+							Definir palavra-passe
+						</h2>
+						<p className="text-sm text-ink/50">
+							A tua conta foi criada com Google. Define uma
+							palavra-passe para poderes entrar também com email e
+							palavra-passe.
+						</p>
+						<div className="grid gap-4 sm:grid-cols-2">
+							<div>
+								<label className="label">
+									Nova palavra-passe
+								</label>
+								<PasswordInput
+									minLength={8}
+									value={pw.next}
+									onChange={(e) =>
+										setPw({
+											...pw,
+											next: e.target.value,
+										})
+									}
+									autoComplete="new-password"
+								/>
+							</div>
+							<div>
+								<label className="label">
+									Confirmar nova palavra-passe
+								</label>
+								<PasswordInput
+									minLength={8}
+									value={pw.confirm}
+									onChange={(e) =>
+										setPw({
+											...pw,
+											confirm: e.target.value,
+										})
+									}
+									autoComplete="new-password"
+									aria-invalid={
+										(pw.confirm.length > 0 &&
+											pw.confirm !== pw.next) ||
+										undefined
+									}
+								/>
+								{pw.confirm.length > 0 &&
+									pw.confirm !== pw.next && (
+										<p className="mt-1 text-xs font-bold text-red">
+											As palavras-passe não coincidem.
+										</p>
+									)}
+							</div>
+						</div>
+						<button
+							className="btn-blue max-w-fit"
+							disabled={setPassword.isPending}
+							onClick={() => {
+								if (pw.next !== pw.confirm) {
+									toast.error(
+										'As palavras-passe não coincidem.',
+									);
+									return;
+								}
+								void toast
+									.promise(setPassword.mutateAsync(pw.next), {
+										loading: 'A definir…',
+										success: 'Palavra-passe definida.',
+										error: (err) => getApiError(err),
+									})
+									.then(() =>
+										setPw({
+											current: '',
+											next: '',
+											confirm: '',
+										}),
+									);
+							}}
+						>
+							{setPassword.isPending ? (
+								<ButtonLoader />
+							) : (
+								'Definir palavra-passe'
+							)}
+						</button>
+					</section>
 				)}
 
 				<section className="card gap-4 p-6">
@@ -2221,7 +2310,7 @@ export function SettingsPage() {
 								}
 							>
 								{!hasPassword
-									? 'Define password primeiro'
+									? 'Define palavra-passe primeiro'
 									: 'Desligar'}
 							</button>
 						</div>
