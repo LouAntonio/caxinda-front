@@ -31,6 +31,7 @@ const ADMIN_LINKS = [
 	{ to: '/admin/kyc', label: 'KYC' },
 	{ to: '/admin/suporte', label: 'Suporte' },
 	{ to: '/admin/categorias', label: 'Categorias' },
+	{ to: '/admin/planos', label: 'Planos' },
 	{ to: '/admin/analiticas', label: 'Analíticas' },
 ];
 

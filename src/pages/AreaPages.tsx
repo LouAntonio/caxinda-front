@@ -47,7 +47,7 @@ import {
 	useSetPassword,
 } from '../hooks/mutations';
 import { useSession } from '../hooks/useSession';
-import { useUpload } from '../hooks/useUpload';
+import { uploadImage, useUpload } from '../hooks/useUpload';
 import { useChatStore } from '../store/chat';
 import { useAuthStore } from '../store/auth';
 import { getApiError } from '../lib/api';
@@ -1728,23 +1728,39 @@ export function MySubscriptionsPage() {
 
 // ================= KYC =================
 
+// ================= Verificação KYC =================
+
+interface KycFile {
+	file: File;
+	preview: string;
+}
+
 export function KycPage() {
 	usePageTitle('Verificação');
 	const { data: kyc } = useMyKyc();
 	const submitKyc = useSubmitKyc();
-	const upload = useUpload('kyc');
-	const [biFront, setBiFront] = useState<MediaAsset | null>(null);
-	const [biBack, setBiBack] = useState<MediaAsset | null>(null);
-	const [selfies, setSelfies] = useState<MediaAsset[]>([]);
-	const [fullBody, setFullBody] = useState<MediaAsset | null>(null);
+	const previewsRef = useRef<Set<string>>(new Set());
+	const [submitting, setSubmitting] = useState(false);
+	const [biFront, setBiFront] = useState<KycFile | null>(null);
+	const [biBack, setBiBack] = useState<KycFile | null>(null);
+	const [selfies, setSelfies] = useState<KycFile[]>([]);
+	const [fullBody, setFullBody] = useState<KycFile | null>(null);
+
+	useEffect(() => {
+		const previews = previewsRef.current;
+		return () => {
+			previews.forEach((url) => URL.revokeObjectURL(url));
+			previews.clear();
+		};
+	}, []);
 
 	const canSubmit = biFront && biBack && selfies.length === 3 && fullBody;
 
-	const setSelfieAt = (index: number, asset: MediaAsset | null) => {
+	const setSelfieAt = (index: number, item: KycFile | null) => {
 		setSelfies((prev) => {
 			const next = [...prev];
-			if (asset) {
-				next[index] = asset;
+			if (item) {
+				next[index] = item;
 			} else {
 				next.splice(index, 1);
 			}
@@ -1752,15 +1768,10 @@ export function KycPage() {
 		});
 	};
 
-	const uploadInto = async (
-		file: File,
-		setter: (asset: MediaAsset | null) => void,
-	) => {
-		try {
-			setter(await upload.mutateAsync(file));
-		} catch {
-			toast.error('Falha no envio da imagem.');
-		}
+	const pickImage = (file: File, setter: (item: KycFile | null) => void) => {
+		const preview = URL.createObjectURL(file);
+		previewsRef.current.add(preview);
+		setter({ file, preview });
 	};
 
 	const submit = () => {
@@ -1770,22 +1781,38 @@ export function KycPage() {
 			);
 			return;
 		}
-		void toast.promise(
-			submitKyc.mutateAsync({
-				biFrontUrl: biFront.url,
-				biFrontId: biFront.cloudinaryId,
-				biBackUrl: biBack.url,
-				biBackId: biBack.cloudinaryId,
-				selfies: selfies.slice(0, 3),
-				fullBodyUrl: fullBody.url,
-				fullBodyId: fullBody.cloudinaryId,
-			}),
-			{
-				loading: 'A enviar…',
-				success: 'Documentos enviados. A análise leva até 48h.',
-				error: (err) => getApiError(err),
-			},
-		);
+		setSubmitting(true);
+		void toast
+			.promise(
+				(async () => {
+					const [biFrontAsset, biBackAsset, fullBodyAsset] =
+						await Promise.all([
+							uploadImage(biFront.file, 'kyc'),
+							uploadImage(biBack.file, 'kyc'),
+							uploadImage(fullBody.file, 'kyc'),
+						]);
+					const selfieAssets = await Promise.all(
+						selfies
+							.slice(0, 3)
+							.map((s) => uploadImage(s.file, 'kyc')),
+					);
+					await submitKyc.mutateAsync({
+						biFrontUrl: biFrontAsset.url,
+						biFrontId: biFrontAsset.cloudinaryId,
+						biBackUrl: biBackAsset.url,
+						biBackId: biBackAsset.cloudinaryId,
+						selfies: selfieAssets,
+						fullBodyUrl: fullBodyAsset.url,
+						fullBodyId: fullBodyAsset.cloudinaryId,
+					});
+				})(),
+				{
+					loading: 'A enviar…',
+					success: 'Documentos enviados. A análise leva até 48h.',
+					error: (err) => getApiError(err),
+				},
+			)
+			.finally(() => setSubmitting(false));
 	};
 
 	if (kyc?.status === 'APPROVED') {
@@ -1830,15 +1857,13 @@ export function KycPage() {
 				<KycSlot
 					label="Frente do BI"
 					asset={biFront}
-					busy={upload.isPending}
-					onFile={(f) => void uploadInto(f, setBiFront)}
+					onFile={(f) => void pickImage(f, setBiFront)}
 					onRemove={biFront ? () => setBiFront(null) : undefined}
 				/>
 				<KycSlot
 					label="Verso do BI"
 					asset={biBack}
-					busy={upload.isPending}
-					onFile={(f) => void uploadInto(f, setBiBack)}
+					onFile={(f) => void pickImage(f, setBiBack)}
 					onRemove={biBack ? () => setBiBack(null) : undefined}
 				/>
 			</div>
@@ -1851,10 +1876,9 @@ export function KycPage() {
 						key={index}
 						label={`Selfie ${index + 1}`}
 						asset={selfies[index] ?? null}
-						busy={upload.isPending}
 						onFile={(f) =>
-							void uploadInto(f, (asset) =>
-								setSelfieAt(index, asset),
+							void pickImage(f, (item) =>
+								setSelfieAt(index, item),
 							)
 						}
 						onRemove={
@@ -1872,18 +1896,16 @@ export function KycPage() {
 				<KycSlot
 					label="Corpo inteiro"
 					asset={fullBody}
-					busy={upload.isPending}
-					onFile={(f) => void uploadInto(f, setFullBody)}
+					onFile={(f) => void pickImage(f, setFullBody)}
 					onRemove={fullBody ? () => setFullBody(null) : undefined}
 				/>
 			</div>
 			<button
 				className="btn-primary mt-6"
-				disabled={!canSubmit || submitKyc.isPending}
+				disabled={!canSubmit || submitting}
 				onClick={submit}
 			>
-				{submitKyc.isPending && <ButtonLoader />} Enviar para
-				verificação
+				{submitting && <ButtonLoader />} Enviar para verificação
 			</button>
 		</div>
 	);
@@ -1892,13 +1914,11 @@ export function KycPage() {
 function KycSlot({
 	label,
 	asset,
-	busy,
 	onFile,
 	onRemove,
 }: {
 	label: string;
-	asset: MediaAsset | null;
-	busy: boolean;
+	asset: KycFile | null;
 	onFile: (f: File) => void;
 	onRemove?: () => void;
 }) {
@@ -1908,7 +1928,7 @@ function KycSlot({
 			{asset ? (
 				<div className="relative">
 					<img
-						src={asset.url}
+						src={asset.preview}
 						alt={label}
 						className="h-36 w-full rounded-xl object-cover"
 					/>
@@ -1924,7 +1944,7 @@ function KycSlot({
 				</div>
 			) : (
 				<div className="flex h-36 w-full items-center justify-center rounded-2xl border-2 border-dashed border-ink/20 bg-white">
-					<FilePicker busy={busy} onFile={onFile} />
+					<FilePicker busy={false} onFile={onFile} />
 				</div>
 			)}
 		</div>

@@ -200,6 +200,7 @@ const {
 	AdminKycPage,
 	AdminSupportPage,
 	AdminCategoriesPage,
+	AdminPlansPage,
 	AdminAnalyticsPage,
 } = {
 	AdminDashboardPage: lazyComponent(() =>
@@ -246,6 +247,11 @@ const {
 	AdminCategoriesPage: lazyComponent(() =>
 		import('./pages/AdminPages').then((m) => ({
 			default: m.AdminCategoriesPage,
+		})),
+	),
+	AdminPlansPage: lazyComponent(() =>
+		import('./pages/AdminPages').then((m) => ({
+			default: m.AdminPlansPage,
 		})),
 	),
 	AdminAnalyticsPage: lazyComponent(() =>
@@ -319,6 +325,7 @@ const router = createBrowserRouter([
 					{ path: 'kyc', element: <AdminKycPage /> },
 					{ path: 'suporte', element: <AdminSupportPage /> },
 					{ path: 'categorias', element: <AdminCategoriesPage /> },
+					{ path: 'planos', element: <AdminPlansPage /> },
 					{ path: 'analiticas', element: <AdminAnalyticsPage /> },
 				],
 			},

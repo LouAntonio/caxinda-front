@@ -12,12 +12,15 @@ import {
 	useAdminAds,
 	useBusinesses,
 	useCategories,
+	useAdminPlans,
 	usePlatformAnalytics,
 } from '../hooks/queries';
 import {
 	useBanUser,
 	useCreateCategory,
+	useCreatePlan,
 	useDeleteCategory,
+	useDeletePlan,
 	useModerateAd,
 	useModerateBusiness,
 	useModerateReport,
@@ -26,11 +29,13 @@ import {
 	useSetUserRole,
 	useUnbanUser,
 	useUpdateCategory,
+	useUpdatePlan,
 	useClaimConversation,
 	useReleaseConversation,
 	useResolveConversation,
 	useUnfeatureAd,
 	useFeatureAd,
+	type PlanInput,
 } from '../hooks/mutations';
 import { PageLoader, Spinner } from '../components/ui/Spinner';
 import { EmptyState } from '../components/ui/EmptyState';
@@ -41,7 +46,7 @@ import { ConfirmButton } from '../components/ui/ConfirmButton';
 import { Price } from '../components/ui/Price';
 import { getApiError } from '../lib/api';
 import { formatDate, formatDecimal, formatKz, fullName } from '../lib/format';
-import type { CategoryType, Role } from '../types/api';
+import type { CategoryType, Plan, Role } from '../types/api';
 
 function Title({ children }: { children: React.ReactNode }) {
 	return (
@@ -154,6 +159,10 @@ export function AdminDashboardPage() {
 					</Link>
 					<Link to="/admin/categorias" className="btn-outline">
 						Categorias
+					</Link>
+					{/* Gestão de planos */}
+					<Link to="/admin/planos" className="btn-outline">
+						Gerir planos
 					</Link>
 				</div>
 			</div>
@@ -1269,6 +1278,327 @@ export function AdminCategoriesPage() {
 									🗑
 								</button>
 							</ConfirmButton>
+						</div>
+					))}
+				</div>
+			)}
+		</div>
+	);
+}
+
+// ================= Planos =================
+
+interface PlanFormState {
+	name: string;
+	description: string;
+	price: number;
+	currency: string;
+	durationDays: number;
+	benefits: string;
+	businessVisibilityLimit: number;
+	featuredAdsLimit: number;
+	isActive: boolean;
+}
+
+const EMPTY_PLAN_FORM: PlanFormState = {
+	name: '',
+	description: '',
+	price: 0,
+	currency: 'AOA',
+	durationDays: 30,
+	benefits: '',
+	businessVisibilityLimit: 1,
+	featuredAdsLimit: 0,
+	isActive: true,
+};
+
+function planToForm(plan: Plan): PlanFormState {
+	return {
+		name: plan.name,
+		description: plan.description ?? '',
+		price: plan.price,
+		currency: plan.currency,
+		durationDays: plan.durationDays,
+		benefits: plan.benefits.join('\n'),
+		businessVisibilityLimit: plan.businessVisibilityLimit,
+		featuredAdsLimit: plan.featuredAdsLimit,
+		isActive: plan.isActive,
+	};
+}
+
+function formToPayload(form: PlanFormState): PlanInput {
+	return {
+		name: form.name.trim(),
+		description: form.description.trim() || undefined,
+		price: form.price,
+		currency: form.currency.trim() || undefined,
+		durationDays: form.durationDays,
+		benefits: form.benefits
+			.split('\n')
+			.map((b) => b.trim())
+			.filter(Boolean),
+		businessVisibilityLimit: form.businessVisibilityLimit,
+		featuredAdsLimit: form.featuredAdsLimit,
+		isActive: form.isActive,
+	};
+}
+
+export function AdminPlansPage() {
+	usePageTitle('Planos');
+	const { data: plans, isLoading } = useAdminPlans();
+	const create = useCreatePlan();
+	const update = useUpdatePlan();
+	const del = useDeletePlan();
+	const [editingId, setEditingId] = useState<string | null>(null);
+	const [form, setForm] = useState<PlanFormState>(EMPTY_PLAN_FORM);
+
+	const startCreate = () => {
+		setEditingId(null);
+		setForm(EMPTY_PLAN_FORM);
+	};
+
+	const startEdit = (plan: Plan) => {
+		setEditingId(plan.id);
+		setForm(planToForm(plan));
+	};
+
+	const patch = <K extends keyof PlanFormState>(
+		key: K,
+		value: PlanFormState[K],
+	) => setForm((prev) => ({ ...prev, [key]: value }));
+
+	const handleSubmit = (e: React.FormEvent) => {
+		e.preventDefault();
+		if (!form.name.trim()) {
+			toast.error('O nome do plano é obrigatório.');
+			return;
+		}
+		const payload = formToPayload(form);
+		void toast
+			.promise(
+				editingId
+					? update.mutateAsync({ id: editingId, ...payload })
+					: create.mutateAsync(payload),
+				{
+					loading: editingId
+						? 'A atualizar plano…'
+						: 'A criar plano…',
+					success: editingId ? 'Plano atualizado.' : 'Plano criado.',
+					error: (err) => getApiError(err),
+				},
+			)
+			.then(() => {
+				setForm(EMPTY_PLAN_FORM);
+				setEditingId(null);
+			});
+	};
+
+	return (
+		<div>
+			<Title>Gestão de planos</Title>
+
+			<form
+				className="card mb-6 max-w-2xl gap-3 p-4"
+				onSubmit={handleSubmit}
+			>
+				<h2 className="font-display text-sm font-black">
+					{editingId ? 'Editar plano' : 'Novo plano'}
+				</h2>
+				<div className="grid gap-3 sm:grid-cols-2">
+					<div>
+						<label className="label">Nome</label>
+						<input
+							className="input"
+							value={form.name}
+							onChange={(e) => patch('name', e.target.value)}
+							required
+						/>
+					</div>
+					<div>
+						<label className="label">Preço (AOA)</label>
+						<input
+							className="input"
+							type="number"
+							min={0}
+							step="0.01"
+							value={form.price}
+							onChange={(e) =>
+								patch('price', Number(e.target.value))
+							}
+						/>
+					</div>
+					<div>
+						<label className="label">Duração (dias)</label>
+						<input
+							className="input"
+							type="number"
+							min={1}
+							max={365}
+							value={form.durationDays}
+							onChange={(e) =>
+								patch('durationDays', Number(e.target.value))
+							}
+						/>
+					</div>
+					<div>
+						<label className="label">Moeda</label>
+						<input
+							className="input"
+							maxLength={3}
+							value={form.currency}
+							onChange={(e) => patch('currency', e.target.value)}
+						/>
+					</div>
+					<div>
+						<label className="label">
+							Limite de visibilidade de empresas
+						</label>
+						<input
+							className="input"
+							type="number"
+							min={0}
+							value={form.businessVisibilityLimit}
+							onChange={(e) =>
+								patch(
+									'businessVisibilityLimit',
+									Number(e.target.value),
+								)
+							}
+						/>
+					</div>
+					<div>
+						<label className="label">Anúncios em destaque</label>
+						<input
+							className="input"
+							type="number"
+							min={0}
+							value={form.featuredAdsLimit}
+							onChange={(e) =>
+								patch(
+									'featuredAdsLimit',
+									Number(e.target.value),
+								)
+							}
+						/>
+					</div>
+					<div className="sm:col-span-2">
+						<label className="label">Descrição</label>
+						<textarea
+							className="input min-h-20"
+							value={form.description}
+							onChange={(e) =>
+								patch('description', e.target.value)
+							}
+						/>
+					</div>
+					<div className="sm:col-span-2">
+						<label className="label">
+							Benefícios (um por linha)
+						</label>
+						<textarea
+							className="input min-h-24"
+							value={form.benefits}
+							onChange={(e) => patch('benefits', e.target.value)}
+							placeholder={
+								'Anúncio na página inicial\nSuporte prioritário'
+							}
+						/>
+					</div>
+				</div>
+				<label className="flex items-center gap-2 text-sm font-bold">
+					<input
+						type="checkbox"
+						checked={form.isActive}
+						onChange={(e) => patch('isActive', e.target.checked)}
+					/>
+					Plano ativo
+				</label>
+				<div className="flex gap-2">
+					<button
+						className="btn-primary"
+						disabled={create.isPending || update.isPending}
+					>
+						{(create.isPending || update.isPending) && (
+							<Spinner size={16} />
+						)}
+						{editingId ? 'Guardar alterações' : 'Criar plano'}
+					</button>
+					{editingId && (
+						<button
+							type="button"
+							className="btn-ghost"
+							onClick={startCreate}
+						>
+							Cancelar
+						</button>
+					)}
+				</div>
+			</form>
+
+			{isLoading ? (
+				<PageLoader />
+			) : (plans ?? []).length === 0 ? (
+				<EmptyState
+					title="Sem planos"
+					description="Cria o primeiro plano de subscrição acima."
+				/>
+			) : (
+				<div className="flex flex-col gap-2">
+					{(plans ?? []).map((plan) => (
+						<div
+							key={plan.id}
+							className="card items-center gap-3 p-3 sm:flex-row"
+						>
+							<div className="min-w-0 flex-1">
+								<p className="flex flex-wrap items-center gap-2 text-sm font-bold">
+									<span>{plan.name}</span>
+									{plan.isActive ? (
+										<StatusPill status="ACTIVE" />
+									) : (
+										<StatusPill
+											status="HIDDEN"
+											label="Inativo"
+										/>
+									)}
+								</p>
+								<p className="text-xs text-ink/50">
+									{formatKz(plan.price)} · {plan.durationDays}{' '}
+									dias · {plan.benefits.length} benefícios
+								</p>
+								{plan.description && (
+									<p className="mt-1 line-clamp-1 text-xs text-ink/40">
+										{plan.description}
+									</p>
+								)}
+							</div>
+							<div className="flex gap-2">
+								<button
+									onClick={() => startEdit(plan)}
+									className="btn-ghost !text-blue"
+								>
+									Editar
+								</button>
+								<ConfirmButton
+									title="Apagar plano?"
+									message={`«${plan.name}» será removido.`}
+									confirmLabel="Apagar"
+									onConfirm={() =>
+										void toast.promise(
+											del.mutateAsync(plan.id),
+											{
+												loading: 'A apagar plano…',
+												success: 'Plano apagado.',
+												error: (err) =>
+													getApiError(err),
+											},
+										)
+									}
+								>
+									<button className="btn-ghost !text-red">
+										🗑
+									</button>
+								</ConfirmButton>
+							</div>
 						</div>
 					))}
 				</div>

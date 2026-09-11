@@ -333,19 +333,11 @@ export function AuthMagicPage() {
 				className="mt-6 flex flex-col gap-4"
 				onSubmit={(e) => {
 					e.preventDefault();
-					void toast.promise(
-						magic.mutateAsync({
-							email,
-							callbackURL:
-								window.location.origin +
-								'/auth/verificar?tipo=magic',
-						}),
-						{
-							loading: 'A enviar o link…',
-							success: 'Link enviado! Verifica o teu email.',
-							error: (err) => getApiError(err),
-						},
-					);
+					void toast.promise(magic.mutateAsync({ email }), {
+						loading: 'A enviar o link…',
+						success: 'Link enviado! Verifica o teu email.',
+						error: (err) => getApiError(err),
+					});
 				}}
 			>
 				<div>

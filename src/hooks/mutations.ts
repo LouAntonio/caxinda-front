@@ -129,10 +129,7 @@ export function useResetPassword() {
 
 export function useMagicLinkRequest() {
 	return useMutation({
-		mutationFn: async (payload: {
-			email: string;
-			callbackURL?: string;
-		}) => {
+		mutationFn: async (payload: { email: string }) => {
 			const res = await http.post('/auth/magic-link/request', payload);
 			return res.data;
 		},
@@ -894,6 +891,68 @@ export function useReviewPayment() {
 		onSuccess: () => {
 			void queryClient.invalidateQueries({ queryKey: ['payments'] });
 			void queryClient.invalidateQueries({ queryKey: ['businesses'] });
+		},
+	});
+}
+
+// ================= Planos (admin) =================
+
+export interface PlanInput {
+	name: string;
+	description?: string;
+	price: number;
+	currency?: string;
+	durationDays?: number;
+	benefits?: string[];
+	businessVisibilityLimit?: number;
+	featuredAdsLimit?: number;
+	isActive?: boolean;
+}
+
+export function useCreatePlan() {
+	const queryClient = useQueryClient();
+	return useMutation({
+		mutationFn: async (payload: PlanInput) => {
+			const res = await http.post('/plans', payload);
+			return res.data;
+		},
+		onSuccess: () => {
+			void queryClient.invalidateQueries({
+				queryKey: ['admin', 'plans'],
+			});
+			void queryClient.invalidateQueries({ queryKey: ['plans'] });
+		},
+	});
+}
+
+export function useUpdatePlan() {
+	const queryClient = useQueryClient();
+	return useMutation({
+		mutationFn: async (payload: { id: string } & PlanInput) => {
+			const { id, ...data } = payload;
+			const res = await http.patch(`/plans/${id}`, data);
+			return res.data;
+		},
+		onSuccess: () => {
+			void queryClient.invalidateQueries({
+				queryKey: ['admin', 'plans'],
+			});
+			void queryClient.invalidateQueries({ queryKey: ['plans'] });
+		},
+	});
+}
+
+export function useDeletePlan() {
+	const queryClient = useQueryClient();
+	return useMutation({
+		mutationFn: async (id: string) => {
+			await http.delete(`/plans/${id}`);
+		},
+		onSuccess: () => {
+			void queryClient.invalidateQueries({
+				queryKey: ['admin', 'plans'],
+			});
+			void queryClient.invalidateQueries({ queryKey: ['plans'] });
 		},
 	});
 }

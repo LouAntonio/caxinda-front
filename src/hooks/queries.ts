@@ -20,6 +20,7 @@ import type {
 	MySubscription,
 	Payment,
 	PaymentStatus,
+	Plan,
 	PlansResponse,
 	PublicUser,
 	Report,
@@ -337,6 +338,16 @@ export function usePlans() {
 			return res.data;
 		},
 		staleTime: 5 * 60_000,
+	});
+}
+
+export function useAdminPlans() {
+	return useQuery({
+		queryKey: ['admin', 'plans'],
+		queryFn: async () => {
+			const res = await http.get<Plan[]>('/plans/admin');
+			return res.data;
+		},
 	});
 }
 
