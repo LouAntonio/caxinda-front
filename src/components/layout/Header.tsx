@@ -62,7 +62,9 @@ export function Header() {
 		<>
 			<header
 				className={`sticky top-0 z-40 transition-colors duration-200 ${
-					showTransparent ? '' : 'border-b border-ink/10 bg-white'
+					showTransparent
+						? 'bg-transparent'
+						: 'border-b border-ink/10 bg-white'
 				}`}
 			>
 				<div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-3 px-4">

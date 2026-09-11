@@ -388,6 +388,8 @@ export function AdFormPage() {
 	const upload = useUpload('ads');
 	const [image, setImage] = useState<MediaAsset | null>(null);
 	const [gallery, setGallery] = useState<MediaAsset[]>([]);
+	const [pendingImage, setPendingImage] = useState<File | null>(null);
+	const [pendingGallery, setPendingGallery] = useState<File[]>([]);
 
 	useEffect(() => {
 		if (ad) {
@@ -406,6 +408,8 @@ export function AdFormPage() {
 					: null,
 			);
 			setGallery(ad.gallery ?? []);
+			setPendingImage(null);
+			setPendingGallery([]);
 		}
 	}, [ad]);
 
@@ -425,24 +429,45 @@ export function AdFormPage() {
 		);
 	}
 
-	const submit = (e: React.FormEvent) => {
+	const submit = async (e: React.FormEvent) => {
 		e.preventDefault();
 		if (!categoryId) {
 			toast.error('Escolhe uma categoria.');
 			return;
 		}
-		const payload = {
-			title,
-			description,
-			price: price ? Number(price) : undefined,
-			categoryId,
-			province: province || null,
-			...(image ? { image: image.url, imageId: image.cloudinaryId } : {}),
-			...(gallery.length ? { gallery } : {}),
-		};
-		const mutation = editing ? updateAd : createAd;
-		void toast
-			.promise(
+		try {
+			let imageAsset = image;
+			let galleryAssets = gallery;
+
+			if (pendingImage) {
+				imageAsset = await upload.mutateAsync(pendingImage);
+				setImage(imageAsset);
+				setPendingImage(null);
+			}
+			if (pendingGallery.length > 0) {
+				galleryAssets = await Promise.all(
+					pendingGallery.map((f) => upload.mutateAsync(f)),
+				);
+				setGallery((g) => [...g, ...galleryAssets]);
+				setPendingGallery([]);
+			}
+
+			const payload = {
+				title,
+				description,
+				price: price ? Number(price) : undefined,
+				categoryId,
+				province: province || null,
+				...(imageAsset
+					? {
+							image: imageAsset.url,
+							imageId: imageAsset.cloudinaryId,
+						}
+					: {}),
+				...(galleryAssets.length ? { gallery: galleryAssets } : {}),
+			};
+			const mutation = editing ? updateAd : createAd;
+			await toast.promise(
 				(mutation.mutateAsync as (input: unknown) => Promise<unknown>)(
 					editing ? { id: id!, ...payload } : payload,
 				),
@@ -453,19 +478,24 @@ export function AdFormPage() {
 						: 'Anúncio publicado.',
 					error: (err) => getApiError(err),
 				},
-			)
-			.then(() => {
-				void navigate('/area/anuncios');
-			});
+			);
+			void navigate('/area/anuncios');
+		} catch {
+			// error handled by toast.promise
+		}
 	};
 
-	const onFile = async (file: File, target: 'main' | 'gallery') => {
-		try {
-			const asset = await upload.mutateAsync(file);
-			if (target === 'main') setImage(asset);
-			else setGallery((g) => [...g, asset]);
-		} catch {
-			toast.error('Falha ao enviar a imagem.');
+	const onFile = (file: File, target: 'main' | 'gallery') => {
+		const preview = URL.createObjectURL(file);
+		if (target === 'main') {
+			setPendingImage(file);
+			setImage({ url: preview, cloudinaryId: 'pending' });
+		} else {
+			setPendingGallery((g) => [...g, file]);
+			setGallery((g) => [
+				...g,
+				{ url: preview, cloudinaryId: 'pending' },
+			]);
 		}
 	};
 
@@ -554,7 +584,10 @@ export function AdFormPage() {
 							/>
 							<button
 								type="button"
-								onClick={() => setImage(null)}
+								onClick={() => {
+									setImage(null);
+									setPendingImage(null);
+								}}
 								className="btn-ghost absolute -top-2 -right-2 !bg-white !text-red"
 							>
 								✕
@@ -571,13 +604,31 @@ export function AdFormPage() {
 				<div>
 					<label className="label">Galeria (até 4)</label>
 					<div className="flex flex-wrap gap-2">
-						{gallery.map((g) => (
-							<img
-								key={g.cloudinaryId}
-								src={g.url}
-								alt=""
-								className="h-20 w-24 rounded-lg object-cover"
-							/>
+						{gallery.map((g, idx) => (
+							<div
+								key={`${g.cloudinaryId}-${idx}`}
+								className="relative inline-block"
+							>
+								<img
+									src={g.url}
+									alt=""
+									className="h-20 w-24 rounded-lg object-cover"
+								/>
+								<button
+									type="button"
+									onClick={() => {
+										setGallery((gal) =>
+											gal.filter((_, i) => i !== idx),
+										);
+										setPendingGallery((pg) =>
+											pg.filter((_, i) => i !== idx),
+										);
+									}}
+									className="btn-ghost absolute -top-2 -right-2 !bg-white !text-red"
+								>
+									✕
+								</button>
+							</div>
 						))}
 						{gallery.length < 4 && (
 							<FilePicker
@@ -808,6 +859,8 @@ export function BusinessFormPage() {
 	const [address, setAddress] = useState('');
 	const [logo, setLogo] = useState<MediaAsset | null>(null);
 	const [cover, setCover] = useState<MediaAsset | null>(null);
+	const [pendingLogo, setPendingLogo] = useState<File | null>(null);
+	const [pendingCover, setPendingCover] = useState<File | null>(null);
 
 	useEffect(() => {
 		if (business) {
@@ -822,6 +875,8 @@ export function BusinessFormPage() {
 			setAddress(business.address ?? '');
 			setLogo(null);
 			setCover(null);
+			setPendingLogo(null);
+			setPendingCover(null);
 		}
 	}, [business]);
 
@@ -868,26 +923,45 @@ export function BusinessFormPage() {
 		);
 	}
 
-	const submit = (e: React.FormEvent) => {
+	const submit = async (e: React.FormEvent) => {
 		e.preventDefault();
-		const payload = {
-			name,
-			description,
-			province,
-			categoryId: categoryId || undefined,
-			phone: phone || undefined,
-			whatsapp: whatsapp || undefined,
-			email: email || undefined,
-			website: website || undefined,
-			address: address || undefined,
-			...(logo ? { logoUrl: logo.url, logoId: logo.cloudinaryId } : {}),
-			...(cover
-				? { coverUrl: cover.url, coverId: cover.cloudinaryId }
-				: {}),
-		};
-		const mutation = editing ? updateBusiness : createBusiness;
-		void toast
-			.promise(
+		try {
+			let logoAsset = logo;
+			let coverAsset = cover;
+
+			if (pendingLogo) {
+				logoAsset = await upload.mutateAsync(pendingLogo);
+				setLogo(logoAsset);
+				setPendingLogo(null);
+			}
+			if (pendingCover) {
+				coverAsset = await upload.mutateAsync(pendingCover);
+				setCover(coverAsset);
+				setPendingCover(null);
+			}
+
+			const payload = {
+				name,
+				description,
+				province,
+				categoryId: categoryId || undefined,
+				phone: phone || undefined,
+				whatsapp: whatsapp || undefined,
+				email: email || undefined,
+				website: website || undefined,
+				address: address || undefined,
+				...(logoAsset
+					? { logoUrl: logoAsset.url, logoId: logoAsset.cloudinaryId }
+					: {}),
+				...(coverAsset
+					? {
+							coverUrl: coverAsset.url,
+							coverId: coverAsset.cloudinaryId,
+						}
+					: {}),
+			};
+			const mutation = editing ? updateBusiness : createBusiness;
+			await toast.promise(
 				(mutation.mutateAsync as (input: unknown) => Promise<unknown>)(
 					editing ? { id: id!, ...payload } : payload,
 				),
@@ -898,10 +972,22 @@ export function BusinessFormPage() {
 						: 'Empresa registada.',
 					error: (err) => getApiError(err),
 				},
-			)
-			.then(() => {
-				void navigate('/area/empresas');
-			});
+			);
+			void navigate('/area/empresas');
+		} catch {
+			// error handled by toast.promise
+		}
+	};
+
+	const onFile = (file: File, target: 'logo' | 'cover') => {
+		const preview = URL.createObjectURL(file);
+		if (target === 'logo') {
+			setPendingLogo(file);
+			setLogo({ url: preview, cloudinaryId: 'pending' });
+		} else {
+			setPendingCover(file);
+			setCover({ url: preview, cloudinaryId: 'pending' });
+		}
 	};
 
 	return (
@@ -1018,15 +1104,20 @@ export function BusinessFormPage() {
 						) : (
 							<FilePicker
 								busy={upload.isPending}
-								onFile={(f) =>
-									upload
-										.mutateAsync(f)
-										.then(setLogo)
-										.catch(() =>
-											toast.error('Falha no envio.'),
-										)
-								}
+								onFile={(f) => onFile(f, 'logo')}
 							/>
+						)}
+						{logo && (
+							<button
+								type="button"
+								onClick={() => {
+									setLogo(null);
+									setPendingLogo(null);
+								}}
+								className="btn-ghost !text-red"
+							>
+								Remover
+							</button>
 						)}
 					</div>
 					<div>
@@ -1040,15 +1131,20 @@ export function BusinessFormPage() {
 						) : (
 							<FilePicker
 								busy={upload.isPending}
-								onFile={(f) =>
-									upload
-										.mutateAsync(f)
-										.then(setCover)
-										.catch(() =>
-											toast.error('Falha no envio.'),
-										)
-								}
+								onFile={(f) => onFile(f, 'cover')}
 							/>
+						)}
+						{cover && (
+							<button
+								type="button"
+								onClick={() => {
+									setCover(null);
+									setPendingCover(null);
+								}}
+								className="btn-ghost !text-red"
+							>
+								Remover
+							</button>
 						)}
 					</div>
 				</div>
@@ -1470,29 +1566,38 @@ export function PaymentsPage() {
 	const { data: plans } = usePlans();
 	const upload = useUpload('payments');
 	const [proof, setProof] = useState<MediaAsset | null>(null);
+	const [pendingProof, setPendingProof] = useState<File | null>(null);
 
-	const sendProof = (id: string) => {
-		if (!proof) {
+	const sendProof = async (id: string) => {
+		if (!pendingProof && !proof) {
 			toast.error('Anexa o comprovativo.');
 			return;
 		}
-		void toast
-			.promise(
+		try {
+			let proofAsset = proof;
+			if (pendingProof) {
+				proofAsset = await upload.mutateAsync(pendingProof);
+				setProof(proofAsset);
+				setPendingProof(null);
+			}
+			await toast.promise(
 				submitProof.mutateAsync({
 					id,
-					proofUrl: proof.url,
-					proofId: proof.cloudinaryId,
+					proofUrl: proofAsset!.url,
+					proofId: proofAsset!.cloudinaryId,
 				}),
 				{
 					loading: 'A enviar…',
 					success: 'Comprovativo enviado. Fica em análise.',
 					error: (err) => getApiError(err),
 				},
-			)
-			.then(() => {
-				setProof(null);
-				setSearchParams({});
-			});
+			);
+			setProof(null);
+			setPendingProof(null);
+			setSearchParams({});
+		} catch {
+			// error handled by toast.promise
+		}
 	};
 
 	return (
@@ -1549,28 +1654,45 @@ export function PaymentsPage() {
 							{p.status === 'PENDING' && (
 								<div className="flex flex-wrap items-center gap-3">
 									{proof && (
-										<img
-											src={proof.url}
-											alt="Comprovativo"
-											className="h-14 w-16 rounded-lg object-cover"
+										<div className="relative inline-block">
+											<img
+												src={proof.url}
+												alt="Comprovativo"
+												className="h-14 w-16 rounded-lg object-cover"
+											/>
+											<button
+												type="button"
+												onClick={() => {
+													setProof(null);
+													setPendingProof(null);
+												}}
+												className="btn-ghost absolute -top-2 -right-2 !bg-white !text-red"
+											>
+												✕
+											</button>
+										</div>
+									)}
+									{!proof && (
+										<FilePicker
+											busy={upload.isPending}
+											onFile={(f) => {
+												const preview =
+													URL.createObjectURL(f);
+												setPendingProof(f);
+												setProof({
+													url: preview,
+													cloudinaryId: 'pending',
+												});
+											}}
 										/>
 									)}
-									<FilePicker
-										busy={upload.isPending}
-										onFile={(f) =>
-											upload
-												.mutateAsync(f)
-												.then(setProof)
-												.catch(() =>
-													toast.error(
-														'Falha no envio do comprovativo.',
-													),
-												)
-										}
-									/>
 									<button
 										className="btn-primary"
 										onClick={() => sendProof(p.id)}
+										disabled={
+											submitProof.isPending ||
+											(!proof && !pendingProof)
+										}
 									>
 										{submitProof.isPending && (
 											<ButtonLoader />

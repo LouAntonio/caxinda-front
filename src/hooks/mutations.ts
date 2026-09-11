@@ -142,7 +142,7 @@ export function useMagicLinkVerify() {
 		mutationFn: async (token: string) => {
 			const res = await http.post<{ sessionToken?: string; user?: Me }>(
 				'/auth/magic-link/verify',
-				{ token, redirect: false },
+				{ token },
 			);
 			return res.data;
 		},

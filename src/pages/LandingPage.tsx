@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { usePageTitle } from '../hooks/usePageTitle';
 import { useAds, useBusinesses } from '../hooks/queries';
@@ -5,8 +6,15 @@ import { AdCard } from '../components/ads/AdCard';
 import { BusinessCard } from '../components/businesses/BusinessCard';
 import { PageLoader } from '../components/ui/Spinner';
 
+const HERO_IMAGES = [
+	'https://images.unsplash.com/photo-1611348586804-61bf6c080437?w=1920&q=80',
+	'https://images.unsplash.com/photo-1523805009345-7448845a9e53?w=1920&q=80',
+	'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=1920&q=80',
+];
+
 export default function LandingPage() {
 	usePageTitle('Caxinda Divulga');
+	const [heroIndex, setHeroIndex] = useState(0);
 	const { data: ads, isLoading: adsLoading } = useAds({
 		limit: 8,
 		featured: true,
@@ -16,17 +24,29 @@ export default function LandingPage() {
 		sortBy: 'newest',
 	});
 
+	useEffect(() => {
+		const timer = setInterval(() => {
+			setHeroIndex((prev) => (prev + 1) % HERO_IMAGES.length);
+		}, 5000);
+		return () => clearInterval(timer);
+	}, []);
+
 	return (
 		<div>
 			{/* Hero */}
-			<section className="relative flex min-h-[calc(100vh-4rem)] items-center justify-center overflow-hidden">
-				<img
-					src="https://images.unsplash.com/photo-1611348586804-61bf6c080437?w=1920&q=80"
-					alt=""
-					className="absolute inset-0 h-full w-full object-cover"
-				/>
+			<section className="relative flex min-h-screen -mt-16 items-center justify-center overflow-hidden">
+				{HERO_IMAGES.map((src, idx) => (
+					<img
+						key={src}
+						src={src}
+						alt=""
+						className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-1000 ${
+							idx === heroIndex ? 'opacity-100' : 'opacity-0'
+						}`}
+					/>
+				))}
 				<div className="absolute inset-0 bg-ink/60" />
-				<div className="relative z-10 mx-auto max-w-2xl px-4 text-center text-white">
+				<div className="relative z-10 mx-auto max-w-2xl px-4 pt-16 text-center text-white">
 					<p className="text-lg leading-relaxed text-white/80">
 						Caxinda Divulga é a plataforma que leva o teu negócio a
 						outro nível. Divulga serviços, vende produtos e destaca
@@ -46,6 +66,21 @@ export default function LandingPage() {
 							Criar conta grátis
 						</Link>
 					</div>
+				</div>
+				<div className="absolute bottom-8 left-1/2 z-20 flex -translate-x-1/2 gap-2">
+					{HERO_IMAGES.map((_, idx) => (
+						<button
+							key={idx}
+							type="button"
+							onClick={() => setHeroIndex(idx)}
+							className={`h-2 rounded-full transition-all ${
+								idx === heroIndex
+									? 'w-6 bg-white'
+									: 'w-2 bg-white/50 hover:bg-white/80'
+							}`}
+							aria-label={`Imagem ${idx + 1}`}
+						/>
+					))}
 				</div>
 			</section>
 
