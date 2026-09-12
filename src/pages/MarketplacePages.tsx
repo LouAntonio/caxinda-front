@@ -35,13 +35,13 @@ import { BusinessDetailSkeleton } from '../components/skeletons/BusinessDetailSk
 import { Pagination } from '../components/ui/Pagination';
 import { ButtonLoader } from '../components/ui/Spinner';
 import { EmptyState } from '../components/ui/EmptyState';
-import { StatusPill } from '../components/ui/StatusPill';
 import { Stars } from '../components/ui/Stars';
 import { Avatar } from '../components/ui/Avatar';
 import { FilterPills } from '../components/ui/FilterPills';
 import { MobileFilterDrawer } from '../components/ui/FilterDrawer';
 import { Divider } from '../components/ui/Divider';
 import { Skeleton } from '../components/ui/Skeleton';
+import { Lightbox } from '../components/ui/Lightbox';
 import {
 	ChatSVG,
 	CheckSVG,
@@ -92,19 +92,77 @@ export function AdsPage() {
 		? Number(searchParams.get('maxPrice'))
 		: undefined;
 	const page = Math.max(1, Number(searchParams.get('page')) || 1);
-	const [localQ, setLocalQ] = useState(q);
+
+	const [draftQ, setDraftQ] = useState(q);
+	const [draftCategories, setDraftCategories] =
+		useState<string[]>(selectedCategoryIds);
+	const [draftProvinces, setDraftProvinces] =
+		useState<string[]>(selectedProvinces);
+	const [draftFeatured, setDraftFeatured] = useState(onlyFeatured);
 	const [filtersOpen, setFiltersOpen] = useState(false);
 
-	const applySearch = () => {
-		setParam('q', localQ || undefined);
+	useEffect(() => {
+		setDraftQ(q);
+		setDraftCategories(selectedCategoryIds);
+		setDraftProvinces(selectedProvinces);
+		setDraftFeatured(onlyFeatured);
+	}, [searchParams]);
+
+	const toggleCategory = (id: string) => {
+		setDraftCategories((prev) =>
+			prev.includes(id) ? prev.filter((v) => v !== id) : [...prev, id],
+		);
+	};
+
+	const toggleProvince = (id: string) => {
+		setDraftProvinces((prev) =>
+			prev.includes(id) ? prev.filter((v) => v !== id) : [...prev, id],
+		);
+	};
+
+	const commit = () => {
+		const next = new URLSearchParams(searchParams);
+		if (draftQ) next.set('q', draftQ);
+		else next.delete('q');
+		if (draftCategories.length > 0)
+			next.set('categoryIds', draftCategories.join(','));
+		else next.delete('categoryIds');
+		if (draftProvinces.length > 0)
+			next.set('provinces', draftProvinces.join(','));
+		else next.delete('provinces');
+		if (draftFeatured) next.set('featured', 'true');
+		else next.delete('featured');
+		next.delete('page');
+		setSearchParams(next);
 	};
 
 	const clearFilters = () => {
-		setLocalQ('');
+		setDraftQ('');
+		setDraftCategories([]);
+		setDraftProvinces([]);
+		setDraftFeatured(false);
 		setSearchParams(new URLSearchParams());
 	};
 
-	const { data, isLoading } = useAds({
+	const setParam = (key: string, value?: string) => {
+		const next = new URLSearchParams(searchParams);
+		if (!value) {
+			next.delete(key);
+		} else {
+			next.set(key, value);
+		}
+		next.delete('page');
+		setSearchParams(next);
+	};
+
+	const hasActiveFilters =
+		draftQ !== '' ||
+		draftCategories.length > 0 ||
+		draftProvinces.length > 0 ||
+		draftFeatured ||
+		sortBy !== 'newest';
+
+	const { data, isFetching } = useAds({
 		page,
 		limit: 15,
 		q: q || undefined,
@@ -122,53 +180,25 @@ export function AdsPage() {
 		sortBy: sortBy as AdSort,
 	});
 
-	const setParam = (key: string, value?: string) => {
-		const next = new URLSearchParams(searchParams);
-		if (!value) {
-			next.delete(key);
-		} else {
-			next.set(key, value);
-		}
-		next.delete('page');
-		setSearchParams(next);
-	};
-
-	const toggleArrayParam = (key: string, id: string) => {
-		const current = searchParams.get(key)?.split(',').filter(Boolean) ?? [];
-		const next = current.includes(id)
-			? current.filter((v) => v !== id)
-			: [...current, id];
-		const nextParams = new URLSearchParams(searchParams);
-		if (next.length === 0) {
-			nextParams.delete(key);
-		} else {
-			nextParams.set(key, next.join(','));
-		}
-		nextParams.delete('page');
-		setSearchParams(nextParams);
-	};
-
 	const filtersPanel = (
 		<>
 			<input
 				className="input"
 				placeholder="Pesquisar anúncios…"
-				value={localQ}
-				onChange={(e) => setLocalQ(e.target.value)}
+				value={draftQ}
+				onChange={(e) => setDraftQ(e.target.value)}
 				onKeyDown={(e) => {
 					if (e.key === 'Enter') {
 						e.preventDefault();
-						applySearch();
+						commit();
 					}
 				}}
 			/>
 			<button
 				type="button"
-				onClick={() =>
-					setParam('featured', onlyFeatured ? undefined : 'true')
-				}
+				onClick={() => setDraftFeatured((prev) => !prev)}
 				className={`w-full rounded-xl border-2 px-3 py-2 text-xs font-bold transition ${
-					onlyFeatured
+					draftFeatured
 						? 'border-kwanza bg-kwanza/15 text-ink'
 						: 'border-ink/15 text-ink/50 hover:border-ink/30'
 				}`}
@@ -183,8 +213,8 @@ export function AdsPage() {
 						name: c.name,
 						count: c.adCount,
 					}))}
-					selected={selectedCategoryIds}
-					onToggle={(id) => toggleArrayParam('categoryIds', id)}
+					selected={draftCategories}
+					onToggle={toggleCategory}
 				/>
 			)}
 			<FilterPills
@@ -193,22 +223,18 @@ export function AdsPage() {
 					id: p,
 					name: PROVINCE_LABELS[p] ?? p,
 				}))}
-				selected={selectedProvinces}
-				onToggle={(id) => toggleArrayParam('provinces', id)}
+				selected={draftProvinces}
+				onToggle={toggleProvince}
 			/>
 			<div className="flex gap-2">
 				<button
 					type="button"
-					onClick={applySearch}
+					onClick={commit}
 					className="flex-1 rounded-xl bg-blue px-3 py-2 text-xs font-bold text-white transition hover:opacity-90"
 				>
 					Pesquisar
 				</button>
-				{(q ||
-					selectedCategoryIds.length > 0 ||
-					onlyFeatured ||
-					selectedProvinces.length > 0 ||
-					sortBy !== 'newest') && (
+				{hasActiveFilters && (
 					<button
 						type="button"
 						onClick={clearFilters}
@@ -226,8 +252,8 @@ export function AdsPage() {
 		<div className="mx-auto max-w-6xl px-4 py-10">
 			<h1 className="mb-6 font-display text-3xl font-black">Anúncios</h1>
 
-			<div className="flex gap-6">
-				<aside className="nice-scroll sticky top-20 hidden w-64 shrink-0 flex-col gap-5 self-start rounded-2xl border border-ink/10 bg-white p-4 lg:flex lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto">
+			<div className="flex gap-6 lg:grid lg:grid-cols-[17rem_minmax(0,1fr)] lg:items-start">
+				<aside className="nice-scroll hidden w-64 shrink-0 flex-col gap-5 rounded-2xl border border-ink/10 bg-white p-4 lg:sticky lg:top-24 lg:flex lg:max-h-[calc(100vh-6rem)] lg:w-auto lg:overflow-y-auto lg:self-start">
 					{filtersPanel}
 				</aside>
 
@@ -236,12 +262,12 @@ export function AdsPage() {
 						<input
 							className="input flex-1"
 							placeholder="Pesquisar anúncios…"
-							value={localQ}
-							onChange={(e) => setLocalQ(e.target.value)}
+							value={draftQ}
+							onChange={(e) => setDraftQ(e.target.value)}
 							onKeyDown={(e) => {
 								if (e.key === 'Enter') {
 									e.preventDefault();
-									applySearch();
+									commit();
 								}
 							}}
 						/>
@@ -254,16 +280,12 @@ export function AdsPage() {
 						</button>
 						<button
 							type="button"
-							onClick={applySearch}
+							onClick={commit}
 							className="shrink-0 rounded-xl bg-blue px-3 py-2 text-xs font-bold text-white transition hover:opacity-90"
 						>
 							Pesquisar
 						</button>
-						{(q ||
-							selectedCategoryIds.length > 0 ||
-							onlyFeatured ||
-							selectedProvinces.length > 0 ||
-							sortBy !== 'newest') && (
+						{hasActiveFilters && (
 							<button
 								type="button"
 								onClick={clearFilters}
@@ -302,7 +324,7 @@ export function AdsPage() {
 						</select>
 					</div>
 
-					{isLoading ? (
+					{isFetching ? (
 						<AdCardSkeletonGrid count={6} />
 					) : (data?.items.length ?? 0) === 0 ? (
 						<EmptyState
@@ -347,8 +369,10 @@ export function AdDetailPage() {
 	const openConversation = useOpenConversation();
 	const { data: wishlistSaved } = useWishlistCheck(ad?.id);
 	const [activeImg, setActiveImg] = useState<string | null>(null);
+	const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
 	useEffect(() => {
 		setActiveImg(null);
+		setLightboxIndex(null);
 	}, [slug]);
 
 	if (isLoading) {
@@ -401,9 +425,6 @@ export function AdDetailPage() {
 				: 'Angola',
 		},
 		{ label: 'Publicado', value: timeAgo(ad.createdAt) },
-		{ label: 'Visualizações', value: `${ad.views}` },
-		{ label: 'Verificado', value: ad.verified ? 'Sim' : 'Não' },
-		{ label: 'Estado', value: ad.status },
 	];
 
 	return (
@@ -419,7 +440,13 @@ export function AdDetailPage() {
 			<div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
 				<div className="flex min-w-0 flex-col gap-6">
 					<div className="card overflow-hidden">
-						<div className="relative aspect-[16/10] w-full overflow-hidden bg-snow-dark">
+						<button
+							type="button"
+							onClick={() => setLightboxIndex(0)}
+							className="relative block aspect-[16/10] w-full bg-snow-dark"
+							disabled={adImages.length === 0}
+							aria-label="Ampliar fotografia"
+						>
 							{currentImg ? (
 								<img
 									src={currentImg}
@@ -436,15 +463,18 @@ export function AdDetailPage() {
 									{adImages.length} fotos
 								</span>
 							)}
-						</div>
+						</button>
 						{adImages.length > 1 && (
-							<div className="nice-scroll flex gap-2 overflow-x-auto border-t border-ink/10 bg-snow p-2">
+							<div className="grid grid-cols-3 gap-2 border-t border-ink/10 bg-snow p-3 sm:grid-cols-4 md:grid-cols-6">
 								{adImages.map((url, idx) => (
 									<button
 										type="button"
 										key={`${url}-${idx}`}
-										onClick={() => setActiveImg(url)}
-										className={`h-16 w-20 shrink-0 overflow-hidden rounded-lg border-2 transition ${
+										onClick={() => {
+											setActiveImg(url);
+											setLightboxIndex(idx);
+										}}
+										className={`aspect-[4/3] overflow-hidden rounded-lg border-2 transition ${
 											currentImg === url
 												? 'border-blue'
 												: 'border-transparent hover:border-ink/20'
@@ -481,14 +511,6 @@ export function AdDetailPage() {
 							{ad.description}
 						</p>
 					</div>
-
-					<div className="card p-6">
-						<ReportForm
-							targetType="AD"
-							targetId={ad.id}
-							targetLabel={ad.title}
-						/>
-					</div>
 				</div>
 
 				<aside className="lg:sticky lg:top-24 lg:self-start">
@@ -499,16 +521,6 @@ export function AdDetailPage() {
 									★ Destaque
 								</span>
 							)}
-							{ad.verified && (
-								<span
-									className="stamp"
-									title="Anúncio verificado"
-								>
-									<CheckSVG width={12} height={12} />{' '}
-									Verificado
-								</span>
-							)}
-							<StatusPill status={ad.status} />
 						</div>
 
 						<h1 className="text-balance font-display text-xl font-black leading-tight">
@@ -528,8 +540,6 @@ export function AdDetailPage() {
 							)}
 							<span aria-hidden>·</span>
 							<span>Publicado {timeAgo(ad.createdAt)}</span>
-							<span aria-hidden>·</span>
-							<span>{ad.views} visualizações</span>
 						</p>
 
 						<div className="mt-4">
@@ -583,10 +593,23 @@ export function AdDetailPage() {
 							responde às tuas mensagens sobre este anúncio.
 						</p>
 					</div>
+
+					<div className="card p-5">
+						<ReportForm
+							targetType="AD"
+							targetId={ad.id}
+							targetLabel={ad.title}
+						/>
+					</div>
 				</aside>
 			</div>
 
 			<ReviewSection target={{ adId: ad.id }} />
+			<Lightbox
+				images={adImages}
+				index={lightboxIndex}
+				onClose={() => setLightboxIndex(null)}
+			/>
 		</div>
 	);
 }
@@ -639,18 +662,68 @@ export function BusinessesPage() {
 		searchParams.get('provinces')?.split(',').filter(Boolean) ?? [];
 	const sortBy = searchParams.get('sortBy') ?? 'newest';
 	const page = Math.max(1, Number(searchParams.get('page')) || 1);
-	const [localQ, setLocalQ] = useState(q);
+	const [filtersOpen, setFiltersOpen] = useState(false);
 
-	const applySearch = () => {
-		setParam('q', localQ || undefined);
+	const [draftQ, setDraftQ] = useState(q);
+	const [draftCategories, setDraftCategories] =
+		useState<string[]>(selectedCategoryIds);
+	const [draftProvinces, setDraftProvinces] =
+		useState<string[]>(selectedProvinces);
+
+	useEffect(() => {
+		setDraftQ(q);
+		setDraftCategories(selectedCategoryIds);
+		setDraftProvinces(selectedProvinces);
+	}, [searchParams]);
+
+	const toggleCategory = (id: string) => {
+		setDraftCategories((prev) =>
+			prev.includes(id) ? prev.filter((v) => v !== id) : [...prev, id],
+		);
+	};
+
+	const toggleProvince = (id: string) => {
+		setDraftProvinces((prev) =>
+			prev.includes(id) ? prev.filter((v) => v !== id) : [...prev, id],
+		);
+	};
+
+	const commit = () => {
+		const next = new URLSearchParams(searchParams);
+		if (draftQ) next.set('q', draftQ);
+		else next.delete('q');
+		if (draftCategories.length > 0)
+			next.set('categoryIds', draftCategories.join(','));
+		else next.delete('categoryIds');
+		if (draftProvinces.length > 0)
+			next.set('provinces', draftProvinces.join(','));
+		else next.delete('provinces');
+		next.delete('page');
+		setSearchParams(next);
 	};
 
 	const clearFilters = () => {
-		setLocalQ('');
+		setDraftQ('');
+		setDraftCategories([]);
+		setDraftProvinces([]);
 		setSearchParams(new URLSearchParams());
 	};
 
-	const { data, isLoading } = useBusinesses({
+	const setParam = (key: string, value?: string) => {
+		const next = new URLSearchParams(searchParams);
+		if (!value) next.delete(key);
+		else next.set(key, value);
+		next.delete('page');
+		setSearchParams(next);
+	};
+
+	const hasActiveFilters =
+		draftQ !== '' ||
+		draftCategories.length > 0 ||
+		draftProvinces.length > 0 ||
+		sortBy !== 'newest';
+
+	const { data, isFetching } = useBusinesses({
 		page,
 		limit: 12,
 		q: q || undefined,
@@ -665,42 +738,17 @@ export function BusinessesPage() {
 		sortBy: sortBy as BusinessSort,
 	});
 
-	const setParam = (key: string, value?: string) => {
-		const next = new URLSearchParams(searchParams);
-		if (!value) next.delete(key);
-		else next.set(key, value);
-		next.delete('page');
-		setSearchParams(next);
-	};
-
-	const toggleArrayParam = (key: string, id: string) => {
-		const current = searchParams.get(key)?.split(',').filter(Boolean) ?? [];
-		const next = current.includes(id)
-			? current.filter((v) => v !== id)
-			: [...current, id];
-		const nextParams = new URLSearchParams(searchParams);
-		if (next.length === 0) {
-			nextParams.delete(key);
-		} else {
-			nextParams.set(key, next.join(','));
-		}
-		nextParams.delete('page');
-		setSearchParams(nextParams);
-	};
-
-	const [filtersOpen, setFiltersOpen] = useState(false);
-
 	const filtersPanel = (
 		<>
 			<input
 				className="input"
 				placeholder="Pesquisar empresas…"
-				value={localQ}
-				onChange={(e) => setLocalQ(e.target.value)}
+				value={draftQ}
+				onChange={(e) => setDraftQ(e.target.value)}
 				onKeyDown={(e) => {
 					if (e.key === 'Enter') {
 						e.preventDefault();
-						applySearch();
+						commit();
 					}
 				}}
 			/>
@@ -712,8 +760,8 @@ export function BusinessesPage() {
 						name: c.name,
 						count: c.businessCount,
 					}))}
-					selected={selectedCategoryIds}
-					onToggle={(id) => toggleArrayParam('categoryIds', id)}
+					selected={draftCategories}
+					onToggle={toggleCategory}
 				/>
 			)}
 			<FilterPills
@@ -722,21 +770,18 @@ export function BusinessesPage() {
 					id: p,
 					name: PROVINCE_LABELS[p] ?? p,
 				}))}
-				selected={selectedProvinces}
-				onToggle={(id) => toggleArrayParam('provinces', id)}
+				selected={draftProvinces}
+				onToggle={toggleProvince}
 			/>
 			<div className="flex gap-2">
 				<button
 					type="button"
-					onClick={applySearch}
+					onClick={commit}
 					className="flex-1 rounded-xl bg-blue px-3 py-2 text-xs font-bold text-white transition hover:opacity-90"
 				>
 					Pesquisar
 				</button>
-				{(q ||
-					selectedCategoryIds.length > 0 ||
-					selectedProvinces.length > 0 ||
-					sortBy !== 'newest') && (
+				{hasActiveFilters && (
 					<button
 						type="button"
 						onClick={clearFilters}
@@ -759,8 +804,8 @@ export function BusinessesPage() {
 				</Link>
 			</div>
 
-			<div className="flex gap-6">
-				<aside className="nice-scroll sticky top-20 hidden w-64 shrink-0 flex-col gap-5 self-start rounded-2xl border border-ink/10 bg-white p-4 lg:flex lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto">
+			<div className="flex gap-6 lg:grid lg:grid-cols-[17rem_minmax(0,1fr)] lg:items-start">
+				<aside className="nice-scroll hidden w-64 shrink-0 flex-col gap-5 rounded-2xl border border-ink/10 bg-white p-4 lg:sticky lg:top-24 lg:flex lg:max-h-[calc(100vh-6rem)] lg:w-auto lg:overflow-y-auto lg:self-start">
 					{filtersPanel}
 				</aside>
 
@@ -769,12 +814,12 @@ export function BusinessesPage() {
 						<input
 							className="input flex-1"
 							placeholder="Pesquisar empresas…"
-							value={localQ}
-							onChange={(e) => setLocalQ(e.target.value)}
+							value={draftQ}
+							onChange={(e) => setDraftQ(e.target.value)}
 							onKeyDown={(e) => {
 								if (e.key === 'Enter') {
 									e.preventDefault();
-									applySearch();
+									commit();
 								}
 							}}
 						/>
@@ -787,15 +832,12 @@ export function BusinessesPage() {
 						</button>
 						<button
 							type="button"
-							onClick={applySearch}
+							onClick={commit}
 							className="shrink-0 rounded-xl bg-blue px-3 py-2 text-xs font-bold text-white transition hover:opacity-90"
 						>
 							Pesquisar
 						</button>
-						{(q ||
-							selectedCategoryIds.length > 0 ||
-							selectedProvinces.length > 0 ||
-							sortBy !== 'newest') && (
+						{hasActiveFilters && (
 							<button
 								type="button"
 								onClick={clearFilters}
@@ -830,7 +872,7 @@ export function BusinessesPage() {
 						</select>
 					</div>
 
-					{isLoading ? (
+					{isFetching ? (
 						<BusinessCardSkeletonGrid count={6} />
 					) : (data?.items.length ?? 0) === 0 ? (
 						<EmptyState title="Sem empresas encontradas" />
@@ -867,8 +909,15 @@ export function BusinessDetailPage() {
 	usePageTitle('Empresa');
 	const { slug } = useParams();
 	const { data: business, isLoading } = useBusinessBySlug(slug);
-	const { user } = useSession();
+	const { user, isAuthenticated } = useSession();
 	const trackClick = useTrackBusinessClick();
+	const navigate = useNavigate();
+	const openConversation = useOpenConversation();
+	const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+
+	useEffect(() => {
+		setLightboxIndex(null);
+	}, [slug]);
 
 	if (isLoading) return <BusinessDetailSkeleton />;
 	if (!business)
@@ -885,6 +934,14 @@ export function BusinessDetailPage() {
 
 	const isOwner = user?.id === business.owner.id;
 
+	const normalizeWebsite = (url: string) =>
+		url.match(/^[a-z][a-z0-9+.-]*:\/\//i) ? url : `https://${url}`;
+
+	const businessImages = [
+		business.coverUrl,
+		...business.gallery.map((g) => g.url),
+	].filter((u): u is string => Boolean(u));
+
 	const contact = (channel: 'phone' | 'whatsapp' | 'email' | 'website') => {
 		trackClick.mutate({ businessId: business.id, channel });
 		if (channel === 'phone' && business.phone)
@@ -897,7 +954,29 @@ export function BusinessDetailPage() {
 		if (channel === 'email' && business.email)
 			window.location.href = `mailto:${business.email}`;
 		if (channel === 'website' && business.website)
-			window.open(business.website, '_blank');
+			window.open(normalizeWebsite(business.website), '_blank');
+	};
+
+	const messageBusiness = () => {
+		if (!isAuthenticated) {
+			void navigate('/auth/entrar', {
+				state: { from: `/empresas/${business.slug}` },
+			});
+			return;
+		}
+		void toast
+			.promise(
+				openConversation.mutateAsync({
+					type: 'BUSINESS',
+					businessId: business.id,
+				}),
+				{
+					loading: 'A abrir conversa…',
+					success: 'Conversa aberta.',
+					error: (err) => getApiError(err),
+				},
+			)
+			.then((conv) => navigate(`/area/mensagens?id=${conv.id}`));
 	};
 
 	return (
@@ -910,7 +989,13 @@ export function BusinessDetailPage() {
 				<span className="truncate text-ink/80">{business.name}</span>
 			</nav>
 			<div className="rounded-2xl border border-ink/10 bg-white">
-				<div className="relative h-56 overflow-hidden rounded-t-2xl bg-blue">
+				<button
+					type="button"
+					onClick={() => setLightboxIndex(0)}
+					className="relative block h-56 w-full overflow-hidden rounded-t-2xl bg-blue"
+					disabled={businessImages.length === 0}
+					aria-label="Ampliar fotografia de capa"
+				>
 					{business.coverUrl ? (
 						<img
 							src={business.coverUrl}
@@ -922,23 +1007,28 @@ export function BusinessDetailPage() {
 							{business.name}
 						</div>
 					)}
-				</div>
+					{businessImages.length > 1 && (
+						<span className="absolute right-3 bottom-3 rounded-full bg-ink/70 px-2.5 py-1 font-mono text-[10px] font-bold text-white backdrop-blur">
+							{businessImages.length} fotos
+						</span>
+					)}
+				</button>
 
-				<div className="px-6 pt-3 pb-2">
-					<div className="flex flex-wrap items-end justify-between gap-3">
-						<div className="flex items-end gap-4">
+				<div className="px-6 pt-5 pb-2">
+					<div className="flex flex-wrap items-center justify-between gap-3">
+						<div className="flex items-center gap-4">
 							{business.logoUrl ? (
 								<img
 									src={business.logoUrl}
 									alt={business.name}
-									className="-mt-12 h-20 w-20 rounded-2xl border-4 border-white bg-white object-cover shadow-sm"
+									className="h-20 w-20 shrink-0 rounded-2xl border border-ink/10 bg-white object-cover shadow-sm"
 								/>
 							) : (
-								<span className="-mt-12 flex h-20 w-20 items-center justify-center rounded-2xl border-4 border-white bg-ink font-display text-xl font-black text-white shadow-sm">
+								<span className="flex h-20 w-20 shrink-0 items-center justify-center rounded-2xl border border-ink/10 bg-ink font-display text-xl font-black text-white shadow-sm">
 									{business.name.slice(0, 2).toUpperCase()}
 								</span>
 							)}
-							<div className="pb-1">
+							<div>
 								<h1 className="text-balance font-display text-xl font-black leading-tight">
 									{business.name}
 								</h1>
@@ -953,12 +1043,12 @@ export function BusinessDetailPage() {
 							</div>
 						</div>
 						{business.isVerified && (
-							<span className="stamp mb-2 shrink-0">
+							<span className="stamp shrink-0">
 								<CheckSVG width={12} height={12} /> Verificada
 							</span>
 						)}
 					</div>
-					<Divider className="mt-3" />
+					<Divider className="mt-4" />
 				</div>
 
 				<div className="grid gap-6 p-6 lg:grid-cols-[minmax(0,1fr)_340px]">
@@ -988,12 +1078,24 @@ export function BusinessDetailPage() {
 								<h2 className="kicker">Álbum</h2>
 								<div className="mt-4 grid grid-cols-2 gap-2.5 md:grid-cols-3">
 									{business.gallery.map((g, idx) => (
-										<img
+										<button
+											type="button"
 											key={`${g.cloudinaryId}-${idx}`}
-											src={g.url}
-											alt={`${business.name} ${idx + 1}`}
-											className="aspect-square w-full rounded-xl object-cover"
-										/>
+											onClick={() =>
+												setLightboxIndex(
+													business.coverUrl
+														? idx + 1
+														: idx,
+												)
+											}
+											className="aspect-square w-full overflow-hidden rounded-xl"
+										>
+											<img
+												src={g.url}
+												alt={`${business.name} ${idx + 1}`}
+												className="h-full w-full object-cover transition hover:scale-105"
+											/>
+										</button>
 									))}
 								</div>
 							</section>
@@ -1058,13 +1160,18 @@ export function BusinessDetailPage() {
 								)}
 							</div>
 							{!isOwner && (
-								<Link
-									to={`/auth/entrar`}
+								<button
+									type="button"
 									className="btn-blue w-full"
+									onClick={messageBusiness}
+									disabled={openConversation.isPending}
 								>
+									{openConversation.isPending && (
+										<ButtonLoader />
+									)}
 									<ChatSVG width={16} height={16} /> Mensagem
 									→
-								</Link>
+								</button>
 							)}
 							{isOwner && (
 								<Link
@@ -1074,21 +1181,6 @@ export function BusinessDetailPage() {
 									Editar empresa
 								</Link>
 							)}
-							<Link
-								to={{
-									pathname: `/planos`,
-									search: `?business=${business.id}`,
-								}}
-								className={
-									isOwner
-										? 'btn-kwanza w-full'
-										: 'btn-ghost w-full'
-								}
-							>
-								{isOwner
-									? 'Assinar plano para esta empresa'
-									: 'Ver planos'}
-							</Link>
 						</div>
 					</aside>
 				</div>
@@ -1097,6 +1189,12 @@ export function BusinessDetailPage() {
 			<div className="mt-8 grid gap-6 lg:grid-cols-2">
 				<ReviewSection target={{ businessId: business.id }} />
 			</div>
+
+			<Lightbox
+				images={businessImages}
+				index={lightboxIndex}
+				onClose={() => setLightboxIndex(null)}
+			/>
 		</div>
 	);
 }
@@ -1361,8 +1459,6 @@ export function SearchPage() {
 	usePageTitle('Pesquisa');
 	const [searchParams, setSearchParams] = useSearchParams();
 	const q = searchParams.get('q') ?? '';
-	const [localQ, setLocalQ] = useState(q);
-	const [filtersOpen, setFiltersOpen] = useState(false);
 	const typeParam = searchParams.get('type');
 	const type: SearchType | null =
 		typeParam === 'AD' || typeParam === 'BUSINESS' ? typeParam : null;
@@ -1375,7 +1471,24 @@ export function SearchPage() {
 	const { data: adCategories = [] } = useCategories('AD');
 	const { data: bizCategories = [] } = useCategories('BUSINESS');
 	const categoryOptions = [...adCategories, ...bizCategories];
-	const { data, isLoading } = useGlobalSearch({
+
+	const [localQ, setLocalQ] = useState(q);
+	const [draftType, setDraftType] = useState<SearchType | null>(type);
+	const [draftCategoryId, setDraftCategoryId] = useState<string | undefined>(
+		categoryId,
+	);
+	const [draftProvinces, setDraftProvinces] =
+		useState<string[]>(selectedProvinces);
+	const [filtersOpen, setFiltersOpen] = useState(false);
+
+	useEffect(() => {
+		setLocalQ(q);
+		setDraftType(type);
+		setDraftCategoryId(categoryId);
+		setDraftProvinces(selectedProvinces);
+	}, [searchParams]);
+
+	const { data, isFetching } = useGlobalSearch({
 		q,
 		type: type ?? undefined,
 		categoryId,
@@ -1384,7 +1497,8 @@ export function SearchPage() {
 		page: 1,
 		limit: 20,
 	});
-	const activeType = SEARCH_TYPES.find((t) => t.type === type)?.id ?? 'todos';
+	const draftActiveType =
+		SEARCH_TYPES.find((t) => t.type === draftType)?.id ?? 'todos';
 
 	const setParam = (key: string, value?: string) => {
 		const next = new URLSearchParams(searchParams);
@@ -1396,28 +1510,40 @@ export function SearchPage() {
 		setSearchParams(next);
 	};
 
-	const toggleArrayParam = (key: string, value: string) => {
-		const current = searchParams.get(key)?.split(',').filter(Boolean) ?? [];
-		const next = new URLSearchParams(searchParams);
-		const updated = current.includes(value)
-			? current.filter((v) => v !== value)
-			: [...current, value];
-		if (updated.length === 0) next.delete(key);
-		else next.set(key, updated.join(','));
-		setSearchParams(next);
+	const toggleProvince = (id: string) => {
+		setDraftProvinces((prev) =>
+			prev.includes(id) ? prev.filter((v) => v !== id) : [...prev, id],
+		);
 	};
 
-	const applySearch = () => {
+	const commit = () => {
 		const next = new URLSearchParams(searchParams);
 		if (localQ) next.set('q', localQ);
 		else next.delete('q');
+		if (draftType) next.set('type', draftType);
+		else next.delete('type');
+		if (draftCategoryId) next.set('categoryId', draftCategoryId);
+		else next.delete('categoryId');
+		if (draftProvinces.length > 0)
+			next.set('provinces', draftProvinces.join(','));
+		else next.delete('provinces');
 		setSearchParams(next);
 	};
 
 	const clearFilters = () => {
-		setSearchParams(new URLSearchParams());
 		setLocalQ('');
+		setDraftType(null);
+		setDraftCategoryId(undefined);
+		setDraftProvinces([]);
+		setSearchParams(new URLSearchParams());
 	};
+
+	const hasActiveFilters =
+		localQ !== '' ||
+		draftType !== null ||
+		draftCategoryId !== undefined ||
+		draftProvinces.length > 0 ||
+		sortBy !== 'relevance';
 
 	const filtersPanel = (
 		<>
@@ -1430,9 +1556,9 @@ export function SearchPage() {
 						<button
 							key={t.id}
 							type="button"
-							onClick={() => setParam('type', t.type)}
+							onClick={() => setDraftType(t.type ?? null)}
 							className={`rounded-full px-3 py-1.5 text-xs font-bold transition ${
-								activeType === t.id
+								draftActiveType === t.id
 									? 'bg-ink text-white'
 									: 'bg-ink/5 text-ink/70 hover:bg-ink/10'
 							}`}
@@ -1443,7 +1569,7 @@ export function SearchPage() {
 				</div>
 			</div>
 
-			{type !== 'BUSINESS' &&
+			{draftType !== 'BUSINESS' &&
 				(categoryOptions.length > 0 || adCategories.length > 0) && (
 					<FilterPills
 						label="Categorias"
@@ -1451,11 +1577,10 @@ export function SearchPage() {
 							id: c.id,
 							name: c.name,
 						}))}
-						selected={categoryId ? [categoryId] : []}
+						selected={draftCategoryId ? [draftCategoryId] : []}
 						onToggle={(id) =>
-							setParam(
-								'categoryId',
-								categoryId === id ? undefined : id,
+							setDraftCategoryId(
+								draftCategoryId === id ? undefined : id,
 							)
 						}
 					/>
@@ -1467,17 +1592,29 @@ export function SearchPage() {
 					id: p,
 					name: PROVINCE_LABELS[p] ?? p,
 				}))}
-				selected={selectedProvinces}
-				onToggle={(id) => toggleArrayParam('provinces', id)}
+				selected={draftProvinces}
+				onToggle={toggleProvince}
 			/>
 
-			<button
-				type="button"
-				onClick={clearFilters}
-				className="flex w-full items-center justify-center gap-1.5 rounded-xl border border-ink/15 px-3 py-2 text-xs font-bold text-ink/60 transition hover:border-red hover:text-red"
-			>
-				✕ Limpar filtros
-			</button>
+			<div className="flex gap-2">
+				<button
+					type="button"
+					onClick={commit}
+					className="flex-1 rounded-xl bg-blue px-3 py-2 text-xs font-bold text-white transition hover:opacity-90"
+				>
+					Pesquisar
+				</button>
+				{hasActiveFilters && (
+					<button
+						type="button"
+						onClick={clearFilters}
+						className="flex items-center justify-center rounded-xl border-2 border-ink/15 px-3 py-2 text-xs text-ink/50 transition hover:border-red/30 hover:text-red"
+						title="Limpar filtros"
+					>
+						✕
+					</button>
+				)}
+			</div>
 		</>
 	);
 
@@ -1488,7 +1625,7 @@ export function SearchPage() {
 				className="mt-4 flex gap-2"
 				onSubmit={(e) => {
 					e.preventDefault();
-					applySearch();
+					commit();
 				}}
 			>
 				<input
@@ -1500,8 +1637,8 @@ export function SearchPage() {
 				<button className="btn-primary">Buscar</button>
 			</form>
 
-			<div className="mt-8 flex flex-col gap-6 lg:flex-row">
-				<aside className="nice-scroll sticky top-20 hidden w-64 shrink-0 flex-col gap-5 self-start rounded-2xl border border-ink/10 bg-white p-4 lg:flex lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto">
+			<div className="mt-8 flex flex-col gap-6 lg:grid lg:grid-cols-[17rem_minmax(0,1fr)] lg:items-start">
+				<aside className="nice-scroll hidden w-64 shrink-0 flex-col gap-5 rounded-2xl border border-ink/10 bg-white p-4 lg:sticky lg:top-24 lg:flex lg:max-h-[calc(100vh-6rem)] lg:w-auto lg:overflow-y-auto lg:self-start">
 					{filtersPanel}
 				</aside>
 
@@ -1515,7 +1652,7 @@ export function SearchPage() {
 							onKeyDown={(e) => {
 								if (e.key === 'Enter') {
 									e.preventDefault();
-									applySearch();
+									commit();
 								}
 							}}
 						/>
@@ -1528,14 +1665,24 @@ export function SearchPage() {
 						</button>
 						<button
 							type="button"
-							onClick={applySearch}
+							onClick={commit}
 							className="shrink-0 rounded-xl bg-blue px-3 py-2 text-xs font-bold text-white transition hover:opacity-90"
 						>
 							Pesquisar
 						</button>
+						{hasActiveFilters && (
+							<button
+								type="button"
+								onClick={clearFilters}
+								className="flex shrink-0 items-center justify-center rounded-xl border-2 border-ink/15 px-3 py-2 text-xs text-ink/50 transition hover:border-red/30 hover:text-red"
+								title="Limpar filtros"
+							>
+								✕
+							</button>
+						)}
 					</div>
 
-					{isLoading ? (
+					{isFetching ? (
 						<div className="flex flex-col gap-3" aria-hidden>
 							{Array.from({ length: 5 }).map((_, i) => (
 								<div key={i} className="card flex gap-4 p-4">

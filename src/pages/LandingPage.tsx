@@ -180,23 +180,26 @@ export default function LandingPage() {
 			</section>
 
 			{/* CTA final */}
-			<section className="bg-blue text-white">
-				<div className="mx-auto max-w-6xl px-4 py-10 text-center">
-					<h2 className="font-display text-3xl font-black">
+			<section className="mx-4 max-w-6xl overflow-hidden rounded-2xl border border-blue-light/30 bg-blue shadow-[0_18px_40px_rgba(14,23,51,0.16)] md:mx-auto">
+				<div className="px-5 py-12 text-center sm:px-8">
+					<h2 className="text-balance font-display text-3xl font-black">
 						O teu negócio merece ser visto.
 					</h2>
-					<p className="mx-auto mt-3 max-w-xl text-blue-100">
+					<p className="mx-auto mt-4 max-w-xl text-blue-100/85">
 						Junta-te milhares de vendedores e serviços em Angola que
 						já usam a Caxinda Divulga para vender mais todos os
 						dias.
 					</p>
-					<div className="mt-8 flex justify-center gap-3">
-						<Link to="/auth/registar" className="btn-kwanza">
+					<div className="mt-8 flex flex-wrap justify-center gap-3">
+						<Link
+							to="/auth/registar"
+							className="btn-kwanza shadow-[0_8px_18px_rgba(14,23,51,0.18)]"
+						>
 							Começar hoje — é grátis
 						</Link>
 						<Link
 							to="/planos"
-							className="btn-outline !border-white/40 !text-white hover:!border-white/80"
+							className="btn-outline !border-white/45 !text-white hover:!border-white/85"
 						>
 							Ver planos
 						</Link>

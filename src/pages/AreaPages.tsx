@@ -31,6 +31,8 @@ import {
 	useCreatePayment,
 	useDeleteAd,
 	useDeleteBusiness,
+	useFeatureAd,
+	useFeatureBusiness,
 	useMarkConversationRead,
 	useRevokeSession,
 	useSendMessage,
@@ -38,6 +40,8 @@ import {
 	useSetBusinessStatus,
 	useSubmitKyc,
 	useSubmitPaymentProof,
+	useUnfeatureAd,
+	useUnfeatureBusiness,
 	useUnlinkAccount,
 	useLinkGoogle,
 	useUpdateAd,
@@ -79,7 +83,7 @@ import {
 	fullName,
 	PROVINCE_LABELS,
 } from '../lib/format';
-import type { MediaAsset, Province } from '../types/api';
+import type { KycRecord, MediaAsset, Province } from '../types/api';
 import { PROVINCES } from '../types/api';
 
 function Title({ children }: { children: React.ReactNode }) {
@@ -305,6 +309,7 @@ export function MyAdsPage() {
 						<div key={ad.id} className="relative">
 							<AdCard ad={ad} showStatus />
 							<div className="absolute bottom-2 right-2 z-10 flex gap-1.5">
+								<FeatureAdButton ad={ad} />
 								<VisibilityToggle
 									id={ad.id}
 									current={ad.visibility}
@@ -370,6 +375,75 @@ function VisibilityToggle({ id, current }: { id: string; current: string }) {
 		>
 			{current === 'VISIBLE' ? 'Ocultar' : 'Mostrar'}
 		</button>
+	);
+}
+
+function FeatureAdButton({
+	ad,
+}: {
+	ad: {
+		id: string;
+		featured: boolean;
+		featuredUntil: string | null;
+	};
+}) {
+	const [open, setOpen] = useState(false);
+	const feature = useFeatureAd();
+	const unfeature = useUnfeatureAd();
+	const active =
+		ad.featured &&
+		ad.featuredUntil &&
+		new Date(ad.featuredUntil) > new Date();
+
+	const run = (days: number) => {
+		setOpen(false);
+		void toast.promise(feature.mutateAsync({ id: ad.id, days }), {
+			loading: 'A destacar…',
+			success: 'Anúncio em destaque.',
+			error: (e) => getApiError(e),
+		});
+	};
+
+	if (active) {
+		return (
+			<button
+				className="btn-ghost !bg-white/90 !text-amber-600"
+				title={`Destaque ativo até ${new Date(ad.featuredUntil!).toLocaleDateString('pt-AO')}`}
+				onClick={() =>
+					void toast.promise(unfeature.mutateAsync({ id: ad.id }), {
+						loading: 'A retirar destaque…',
+						success: 'Destaque removido.',
+						error: (e) => getApiError(e),
+					})
+				}
+			>
+				★ Ativo
+			</button>
+		);
+	}
+
+	return (
+		<div className="relative">
+			<button
+				className="btn-ghost !bg-white/90 !text-amber-600"
+				onClick={() => setOpen((v) => !v)}
+			>
+				★ Destacar
+			</button>
+			{open && (
+				<div className="absolute right-0 bottom-full z-20 mb-1 flex flex-col gap-1 rounded-lg border border-ink/10 bg-white p-1.5 shadow-lg">
+					{([7, 15, 30] as const).map((d) => (
+						<button
+							key={d}
+							className="rounded-md px-3 py-1.5 text-xs hover:bg-ink/5"
+							onClick={() => run(d)}
+						>
+							{d} dias
+						</button>
+					))}
+				</div>
+			)}
+		</div>
 	);
 }
 
@@ -780,6 +854,7 @@ export function MyBusinessesPage() {
 							<BusinessCard business={b} showStatus />
 							<div className="mt-2 flex flex-wrap gap-1.5">
 								<StatusToggle id={b.id} current={b.status} />
+								<FeatureBusinessButton business={b} />
 								<Link
 									to={`/area/empresas/${b.id}/subscricao`}
 									className="btn-ghost !text-blue"
@@ -842,6 +917,78 @@ function StatusToggle({ id, current }: { id: string; current: string }) {
 		>
 			{current === 'SHOW' ? 'Ocultar' : 'Mostrar'}
 		</button>
+	);
+}
+
+function FeatureBusinessButton({
+	business,
+}: {
+	business: {
+		id: string;
+		featured: boolean;
+		featuredUntil: string | null;
+	};
+}) {
+	const [open, setOpen] = useState(false);
+	const feature = useFeatureBusiness();
+	const unfeature = useUnfeatureBusiness();
+	const active =
+		business.featured &&
+		business.featuredUntil &&
+		new Date(business.featuredUntil) > new Date();
+
+	const run = (days: number) => {
+		setOpen(false);
+		void toast.promise(feature.mutateAsync({ id: business.id, days }), {
+			loading: 'A destacar…',
+			success: 'Empresa em destaque.',
+			error: (e) => getApiError(e),
+		});
+	};
+
+	if (active) {
+		return (
+			<button
+				className="btn-ghost !text-amber-600"
+				title={`Destaque ativo até ${new Date(business.featuredUntil!).toLocaleDateString('pt-AO')}`}
+				onClick={() =>
+					void toast.promise(
+						unfeature.mutateAsync({ id: business.id }),
+						{
+							loading: 'A retirar destaque…',
+							success: 'Destaque removido.',
+							error: (e) => getApiError(e),
+						},
+					)
+				}
+			>
+				★ Ativo
+			</button>
+		);
+	}
+
+	return (
+		<div className="relative">
+			<button
+				className="btn-ghost !text-amber-600"
+				onClick={() => setOpen((v) => !v)}
+			>
+				★ Destacar
+			</button>
+			{open && (
+				<div className="absolute right-0 bottom-full z-20 mb-1 flex flex-col gap-1 rounded-lg border border-ink/10 bg-white p-1.5 shadow-lg">
+					{([7, 15, 30] as const).map((d) => (
+						<button
+							key={d}
+							className="rounded-md px-3 py-1.5 text-xs hover:bg-ink/5"
+							onClick={() => run(d)}
+						>
+							{d} dias
+						</button>
+					))}
+				</div>
+			)}
+		</div>
 	);
 }
 
@@ -952,6 +1099,12 @@ export function BusinessFormPage() {
 				setPendingCover(null);
 			}
 
+			const normalizedWebsite = website?.trim()
+				? website.match(/^[a-z][a-z0-9+.-]*:\/\//i)
+					? website.trim()
+					: `https://${website.trim()}`
+				: undefined;
+
 			const payload = {
 				name,
 				description,
@@ -960,7 +1113,7 @@ export function BusinessFormPage() {
 				phone: phone || undefined,
 				whatsapp: whatsapp || undefined,
 				email: email || undefined,
-				website: website || undefined,
+				website: normalizedWebsite,
 				address: address || undefined,
 				...(logoAsset
 					? { logoUrl: logoAsset.url, logoId: logoAsset.cloudinaryId }
@@ -1798,6 +1951,8 @@ export function PaymentsPage() {
 export function MySubscriptionsPage() {
 	usePageTitle('Subscrições');
 	const { data: subscriptions, isLoading } = useMySubscriptions();
+	const { data: plansData } = usePlans();
+	const plans = plansData?.plans ?? [];
 
 	return (
 		<div>
@@ -1861,6 +2016,34 @@ export function MySubscriptionsPage() {
 								)}
 							</div>
 
+							{s.plan.description && (
+								<p className="text-sm text-ink/70">
+									{s.plan.description}
+								</p>
+							)}
+							{s.plan.benefits.length > 0 && (
+								<ul className="flex flex-wrap gap-1.5">
+									{s.plan.benefits.map((b) => (
+										<li
+											key={b}
+											className="rounded-full bg-kwanza/15 px-2.5 py-1 text-xs font-medium text-ink"
+										>
+											{b}
+										</li>
+									))}
+								</ul>
+							)}
+							<div className="flex flex-wrap gap-x-6 gap-y-1 text-xs text-ink/60">
+								<span>
+									Empresas visíveis:{' '}
+									<b>{s.plan.businessVisibilityLimit}</b>
+								</span>
+								<span>
+									Anúncios em destaque:{' '}
+									<b>{s.plan.featuredAdsLimit}</b>
+								</span>
+							</div>
+
 							{(s.payments ?? []).length > 0 && (
 								<div className="flex flex-col gap-1.5">
 									{(s.payments ?? []).map((p) => (
@@ -1881,6 +2064,59 @@ export function MySubscriptionsPage() {
 							)}
 						</div>
 					))}
+				</div>
+			)}
+
+			{plans.length > 0 && (
+				<div className="mt-10">
+					<h2 className="mb-4 font-display text-lg font-black">
+						Planos disponíveis
+					</h2>
+					<div className="flex flex-col gap-4">
+						{plans.map((plan) => (
+							<div key={plan.id} className="card gap-3 p-5">
+								<div className="flex flex-wrap items-center justify-between gap-2">
+									<h3 className="font-display text-base font-black">
+										{plan.name}
+									</h3>
+									<p className="font-mono text-sm font-bold">
+										{formatKz(plan.price)}
+										<span className="text-xs font-normal text-ink/40">
+											{' '}
+											/ {plan.durationDays} dias
+										</span>
+									</p>
+								</div>
+								{plan.description && (
+									<p className="text-sm text-ink/70">
+										{plan.description}
+									</p>
+								)}
+								{plan.benefits.length > 0 && (
+									<ul className="flex flex-wrap gap-1.5">
+										{plan.benefits.map((b) => (
+											<li
+												key={b}
+												className="rounded-full bg-kwanza/15 px-2.5 py-1 text-xs font-medium text-ink"
+											>
+												{b}
+											</li>
+										))}
+									</ul>
+								)}
+								<div className="flex flex-wrap gap-x-6 gap-y-1 text-xs text-ink/60">
+									<span>
+										Empresas visíveis:{' '}
+										<b>{plan.businessVisibilityLimit}</b>
+									</span>
+									<span>
+										Anúncios em destaque:{' '}
+										<b>{plan.featuredAdsLimit}</b>
+									</span>
+								</div>
+							</div>
+						))}
+					</div>
 				</div>
 			)}
 		</div>
@@ -1979,30 +2215,45 @@ export function KycPage() {
 			.finally(() => setSubmitting(false));
 	};
 
-	if (kyc?.status === 'APPROVED') {
+	if (kyc && (kyc.status === 'APPROVED' || kyc.status === 'PENDING')) {
 		return (
-			<div className="card p-8 text-center">
-				<p className="text-4xl">✔</p>
-				<h1 className="mt-3 font-display text-xl font-black text-green-700">
-					Conta verificada
-				</h1>
-				<p className="mt-1 text-sm text-ink/60">
-					Verificado em {formatDate(kyc.verifiedAt)}.
+			<div>
+				<Title>Verificação de identidade (KYC)</Title>
+				{kyc.status === 'APPROVED' ? (
+					<div className="card mb-6 flex items-center gap-3 p-6">
+						<p className="text-4xl">✔</p>
+						<div>
+							<h1 className="font-display text-xl font-black text-green-700">
+								Conta verificada
+							</h1>
+							<p className="mt-1 text-sm text-ink/60">
+								Verificada em{' '}
+								{kyc.verifiedAt
+									? formatDate(kyc.verifiedAt)
+									: 'data desconhecida'}
+								.
+							</p>
+						</div>
+					</div>
+				) : (
+					<div className="card mb-6 flex items-center gap-3 p-6">
+						<p className="text-4xl">⏳</p>
+						<div>
+							<h1 className="font-display text-xl font-black">
+								Em análise
+							</h1>
+							<p className="mt-1 text-sm text-ink/60">
+								Os teus documentos estão a ser verificados. A
+								análise demora até 48h.
+							</p>
+						</div>
+					</div>
+				)}
+				<p className="mb-4 max-w-3xl text-sm text-ink/60">
+					Estes são os documentos que enviaste. Depois de submetidos
+					não podem ser alterados.
 				</p>
-			</div>
-		);
-	}
-
-	if (kyc?.status === 'PENDING') {
-		return (
-			<div className="card p-8 text-center">
-				<p className="text-4xl">⏳</p>
-				<h1 className="mt-3 font-display text-xl font-black">
-					Em análise
-				</h1>
-				<p className="mt-1 text-sm text-ink/60">
-					Os teus documentos estão a ser verificados.
-				</p>
+				<KycReadonlyGrid kyc={kyc} />
 			</div>
 		);
 	}
@@ -2071,6 +2322,38 @@ export function KycPage() {
 			>
 				{submitting && <ButtonLoader />} Enviar para verificação
 			</button>
+		</div>
+	);
+}
+
+function KycReadonlyGrid({ kyc }: { kyc: KycRecord }) {
+	const items: { label: string; src: string | null }[] = [
+		{ label: 'Frente do BI', src: kyc.biFrontUrl },
+		{ label: 'Verso do BI', src: kyc.biBackUrl },
+		{ label: 'Selfie 1', src: kyc.selfies[0]?.url ?? null },
+		{ label: 'Selfie 2', src: kyc.selfies[1]?.url ?? null },
+		{ label: 'Selfie 3', src: kyc.selfies[2]?.url ?? null },
+		{ label: 'Corpo inteiro', src: kyc.fullBodyUrl },
+	];
+
+	return (
+		<div className="grid max-w-3xl grid-cols-2 gap-4 sm:grid-cols-3">
+			{items.map((item) => (
+				<div key={item.label}>
+					<p className="label">{item.label}</p>
+					{item.src ? (
+						<img
+							src={item.src}
+							alt={item.label}
+							className="h-36 w-full rounded-xl border border-ink/10 bg-snow object-cover"
+						/>
+					) : (
+						<div className="flex h-36 w-full items-center justify-center rounded-2xl border-2 border-dashed border-ink/15 font-mono text-xs font-bold text-ink/30">
+							Sem imagem
+						</div>
+					)}
+				</div>
+			))}
 		</div>
 	);
 }

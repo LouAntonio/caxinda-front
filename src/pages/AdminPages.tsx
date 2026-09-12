@@ -364,7 +364,7 @@ function AdModerateActions({
 						(ad.visibility === 'VISIBLE'
 							? unfeature
 							: feature
-						).mutateAsync(ad.id),
+						).mutateAsync({ id: ad.id }),
 						{
 							loading: 'A alterar destaque…',
 							success: 'Feito.',

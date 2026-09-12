@@ -1,15 +1,32 @@
+import { useEffect } from 'react';
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { Header } from './Header';
 import { Footer } from './Footer';
 import { useSocketEvents } from '../../hooks/useSocketEvents';
 import { useSession } from '../../hooks/useSession';
 import { useScrollToTop } from '../../hooks/useScrollToTop';
+import { useConversations } from '../../hooks/queries';
+import { useChatStore } from '../../store/chat';
 import { PageShellSkeleton } from '../skeletons/ListSkeletons';
 import type { Role } from '../../types/api';
+
+function useUnreadSync() {
+	const { isAuthenticated } = useSession();
+	const { data } = useConversations();
+	const setUnread = useChatStore((s) => s.setUnread);
+
+	useEffect(() => {
+		if (!isAuthenticated || !data) return;
+		for (const c of data.items) {
+			if (c.unreadCount > 0) setUnread(c.id, c.unreadCount);
+		}
+	}, [data, isAuthenticated, setUnread]);
+}
 
 export function AppLayout() {
 	useSocketEvents();
 	useScrollToTop();
+	useUnreadSync();
 	return (
 		<div className="flex min-h-screen flex-col">
 			<Header />

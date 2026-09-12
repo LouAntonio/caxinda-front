@@ -211,6 +211,8 @@ export interface Business {
 	status: BusinessStatus;
 	viewCount: number;
 	clickCount: number;
+	featured: boolean;
+	featuredUntil: string | null;
 	reviewCount: number;
 	averageRating: number | null;
 	createdAt: string;
@@ -366,6 +368,10 @@ export interface PlanSummary {
 	price: number;
 	currency: string;
 	durationDays: number;
+	description: string | null;
+	benefits: string[];
+	businessVisibilityLimit: number;
+	featuredAdsLimit: number;
 }
 
 export interface Payment {

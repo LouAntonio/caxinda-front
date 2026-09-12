@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { http } from '../lib/api';
+import { useSession } from './useSession';
 import type {
 	Ad,
 	AdQueryParams,
@@ -451,6 +452,7 @@ export function useAdminKycList(params: {
 // ---------------- Conversas ----------------
 
 export function useConversations() {
+	const { isAuthenticated } = useSession();
 	return useQuery({
 		queryKey: ['conversations'],
 		queryFn: async () => {
@@ -463,6 +465,7 @@ export function useConversations() {
 			}>('/conversations');
 			return res.data;
 		},
+		enabled: isAuthenticated,
 	});
 }
 

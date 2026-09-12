@@ -58,6 +58,16 @@ export function Header() {
 		}
 	};
 
+	const onLogout = () => {
+		logout.mutate(undefined, {
+			onSettled: () => {
+				useChatStore.getState().reset();
+				navigate('/');
+				setDrawerOpen(false);
+			},
+		});
+	};
+
 	return (
 		<>
 			<header
@@ -69,10 +79,7 @@ export function Header() {
 			>
 				<div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-3 px-4">
 					<Logo variant={showTransparent ? 'dark' : 'default'} />
-					<form
-						onSubmit={submitSearch}
-						className="flex-1 items-center"
-					>
+					<form onSubmit={submitSearch} className="relative flex-1">
 						<input
 							value={search}
 							onChange={(e) => setSearch(e.target.value)}
@@ -81,9 +88,23 @@ export function Header() {
 								showTransparent
 									? '!border-white/30 !bg-white/15 !text-white placeholder:!text-white/50 focus:!border-white/60'
 									: ''
-							}`}
+							} ${search.length > 0 ? '!pr-9' : ''}`}
 							aria-label="Pesquisar"
 						/>
+						{search.length > 0 && (
+							<button
+								type="button"
+								onClick={() => setSearch('')}
+								className={`absolute top-1/2 right-3 flex h-5 w-5 -translate-y-1/2 items-center justify-center rounded-full text-xs font-bold transition ${
+									showTransparent
+										? 'bg-white/20 text-white hover:bg-white/30'
+										: 'bg-ink/10 text-ink/60 hover:bg-ink/20'
+								}`}
+								aria-label="Limpar pesquisa"
+							>
+								✕
+							</button>
+						)}
 					</form>
 					<nav
 						className={`hidden items-center gap-4 text-sm font-bold lg:flex ${
@@ -235,16 +256,7 @@ export function Header() {
 												type="button"
 												className="flex items-center gap-2 px-4 py-2 text-left text-red hover:bg-snow disabled:cursor-not-allowed disabled:opacity-50"
 												disabled={logout.isPending}
-												onClick={() => {
-													logout.mutate(undefined, {
-														onSettled: () => {
-															navigate('/');
-															setDrawerOpen(
-																false,
-															);
-														},
-													});
-												}}
+												onClick={onLogout}
 											>
 												{logout.isPending && (
 													<Spinner size={14} />
@@ -342,14 +354,7 @@ export function Header() {
 										type="button"
 										className="flex items-center gap-2 text-red disabled:cursor-not-allowed disabled:opacity-50"
 										disabled={logout.isPending}
-										onClick={() => {
-											logout.mutate(undefined, {
-												onSettled: () => {
-													navigate('/');
-													setDrawerOpen(false);
-												},
-											});
-										}}
+										onClick={onLogout}
 									>
 										{logout.isPending && (
 											<Spinner size={14} />

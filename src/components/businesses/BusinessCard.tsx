@@ -11,6 +11,11 @@ export function BusinessCard({
 	business: Business;
 	showStatus?: boolean;
 }) {
+	const featuredActive =
+		business.featured &&
+		business.featuredUntil &&
+		new Date(business.featuredUntil) > new Date();
+
 	return (
 		<article className="card group overflow-hidden transition hover:-translate-y-0.5 hover:shadow-md">
 			<Link
@@ -29,11 +34,18 @@ export function BusinessCard({
 						{business.name?.slice(0, 12)}
 					</div>
 				)}
-				{business.isVerified && (
-					<span className="absolute left-3 top-3 inline-flex items-center gap-1 rounded-full bg-blue px-2.5 py-1 font-mono text-[10px] font-bold uppercase tracking-wider text-white shadow">
-						✔ Verificada
-					</span>
-				)}
+				<div className="absolute left-3 top-3 flex flex-col items-start gap-1.5">
+					{business.isVerified && (
+						<span className="inline-flex items-center gap-1 rounded-full bg-blue px-2.5 py-1 font-mono text-[10px] font-bold uppercase tracking-wider text-white shadow">
+							✔ Verificada
+						</span>
+					)}
+					{featuredActive && (
+						<span className="inline-flex items-center gap-1 rounded-full bg-amber-500 px-2.5 py-1 font-mono text-[10px] font-bold uppercase tracking-wider text-white shadow">
+							★ Destaque
+						</span>
+					)}
+				</div>
 				{showStatus && (
 					<div className="absolute right-2 top-2">
 						<StatusPill status={business.status} />
@@ -53,7 +65,7 @@ export function BusinessCard({
 				>
 					{business.name}
 				</Link>
-				<span className="chip border-blue/20 bg-blue/5 text-blue">
+				<span className="chip self-start border-blue/20 bg-blue/5 text-blue">
 					{business.category.name}
 				</span>
 				<p className="line-clamp-2 text-sm text-ink/60">

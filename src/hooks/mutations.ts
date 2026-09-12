@@ -466,8 +466,10 @@ export function useSetAdVisibility() {
 export function useFeatureAd() {
 	const queryClient = useQueryClient();
 	return useMutation({
-		mutationFn: async (id: string) => {
-			const res = await http.post(`/ads/${id}/feature`);
+		mutationFn: async (payload: { id: string; days?: number }) => {
+			const res = await http.post(`/ads/${payload.id}/feature`, {
+				days: payload.days,
+			});
 			return res.data;
 		},
 		onSuccess: () =>
@@ -478,12 +480,42 @@ export function useFeatureAd() {
 export function useUnfeatureAd() {
 	const queryClient = useQueryClient();
 	return useMutation({
-		mutationFn: async (id: string) => {
-			const res = await http.delete(`/ads/${id}/feature`);
+		mutationFn: async (payload: { id: string }) => {
+			const res = await http.delete(`/ads/${payload.id}/feature`);
 			return res.data;
 		},
 		onSuccess: () =>
 			void queryClient.invalidateQueries({ queryKey: ['ads'] }),
+	});
+}
+
+export function useFeatureBusiness() {
+	const queryClient = useQueryClient();
+	return useMutation({
+		mutationFn: async (payload: { id: string; days?: number }) => {
+			const res = await http.post(`/businesses/${payload.id}/feature`, {
+				days: payload.days,
+			});
+			return res.data;
+		},
+		onSuccess: () => {
+			void queryClient.invalidateQueries({ queryKey: ['businesses'] });
+			void queryClient.invalidateQueries({ queryKey: ['me'] });
+		},
+	});
+}
+
+export function useUnfeatureBusiness() {
+	const queryClient = useQueryClient();
+	return useMutation({
+		mutationFn: async (payload: { id: string }) => {
+			const res = await http.delete(`/businesses/${payload.id}/feature`);
+			return res.data;
+		},
+		onSuccess: () => {
+			void queryClient.invalidateQueries({ queryKey: ['businesses'] });
+			void queryClient.invalidateQueries({ queryKey: ['me'] });
+		},
 	});
 }
 
