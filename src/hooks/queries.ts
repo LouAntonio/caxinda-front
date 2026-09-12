@@ -22,6 +22,7 @@ import type {
 	PaymentStatus,
 	Plan,
 	PlansResponse,
+	PlatformBankAccount,
 	PublicUser,
 	Report,
 	ReportStatus,
@@ -346,6 +347,17 @@ export function useAdminPlans() {
 		queryKey: ['admin', 'plans'],
 		queryFn: async () => {
 			const res = await http.get<Plan[]>('/plans/admin');
+			return res.data;
+		},
+	});
+}
+
+export function usePlatformAccounts() {
+	return useQuery({
+		queryKey: ['admin', 'platform-accounts'],
+		queryFn: async () => {
+			const res =
+				await http.get<PlatformBankAccount[]>('/platform-accounts');
 			return res.data;
 		},
 	});

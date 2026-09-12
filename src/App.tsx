@@ -202,6 +202,7 @@ const {
 	AdminSupportPage,
 	AdminCategoriesPage,
 	AdminPlansPage,
+	AdminBankAccountsPage,
 	AdminAnalyticsPage,
 } = {
 	AdminDashboardPage: lazyComponent(() =>
@@ -258,6 +259,11 @@ const {
 	AdminPlansPage: lazyComponent(() =>
 		import('./pages/AdminPages').then((m) => ({
 			default: m.AdminPlansPage,
+		})),
+	),
+	AdminBankAccountsPage: lazyComponent(() =>
+		import('./pages/AdminPages').then((m) => ({
+			default: m.AdminBankAccountsPage,
 		})),
 	),
 	AdminAnalyticsPage: lazyComponent(() =>
@@ -333,6 +339,10 @@ const router = createBrowserRouter([
 					{ path: 'suporte', element: <AdminSupportPage /> },
 					{ path: 'categorias', element: <AdminCategoriesPage /> },
 					{ path: 'planos', element: <AdminPlansPage /> },
+					{
+						path: 'contas-bancarias',
+						element: <AdminBankAccountsPage />,
+					},
 					{ path: 'analiticas', element: <AdminAnalyticsPage /> },
 				],
 			},

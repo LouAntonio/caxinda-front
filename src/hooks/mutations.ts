@@ -825,7 +825,6 @@ export function useResolveConversation() {
 export interface CreatePaymentPayload {
 	businessId: string;
 	planId: string;
-	autoRenew?: boolean;
 }
 
 export function useCreatePayment() {
@@ -951,6 +950,63 @@ export function useDeletePlan() {
 		onSuccess: () => {
 			void queryClient.invalidateQueries({
 				queryKey: ['admin', 'plans'],
+			});
+			void queryClient.invalidateQueries({ queryKey: ['plans'] });
+		},
+	});
+}
+
+// ================= Contas bancárias (admin) =================
+
+export interface PlatformAccountInput {
+	bankName: string;
+	bankHolder: string;
+	bankIban: string;
+	isActive?: boolean;
+}
+
+export function useCreatePlatformAccount() {
+	const queryClient = useQueryClient();
+	return useMutation({
+		mutationFn: async (payload: PlatformAccountInput) => {
+			const res = await http.post('/platform-accounts', payload);
+			return res.data;
+		},
+		onSuccess: () => {
+			void queryClient.invalidateQueries({
+				queryKey: ['admin', 'platform-accounts'],
+			});
+			void queryClient.invalidateQueries({ queryKey: ['plans'] });
+		},
+	});
+}
+
+export function useUpdatePlatformAccount() {
+	const queryClient = useQueryClient();
+	return useMutation({
+		mutationFn: async (payload: { id: string } & PlatformAccountInput) => {
+			const { id, ...data } = payload;
+			const res = await http.patch(`/platform-accounts/${id}`, data);
+			return res.data;
+		},
+		onSuccess: () => {
+			void queryClient.invalidateQueries({
+				queryKey: ['admin', 'platform-accounts'],
+			});
+			void queryClient.invalidateQueries({ queryKey: ['plans'] });
+		},
+	});
+}
+
+export function useDeletePlatformAccount() {
+	const queryClient = useQueryClient();
+	return useMutation({
+		mutationFn: async (id: string) => {
+			await http.delete(`/platform-accounts/${id}`);
+		},
+		onSuccess: () => {
+			void queryClient.invalidateQueries({
+				queryKey: ['admin', 'platform-accounts'],
 			});
 			void queryClient.invalidateQueries({ queryKey: ['plans'] });
 		},

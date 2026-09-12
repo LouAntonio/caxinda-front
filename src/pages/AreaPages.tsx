@@ -1182,7 +1182,6 @@ export function SubscribePage() {
 	const [selectedPlan, setSelectedPlan] = useState(
 		searchParams.get('plan') ?? '',
 	);
-	const [autoRenew, setAutoRenew] = useState(false);
 	const { data: plans } = usePlans();
 	const createPayment = useCreatePayment();
 
@@ -1225,15 +1224,6 @@ export function SubscribePage() {
 				))}
 			</div>
 
-			<label className="flex items-center gap-2 text-sm font-bold">
-				<input
-					type="checkbox"
-					checked={autoRenew}
-					onChange={(e) => setAutoRenew(e.target.checked)}
-				/>
-				Renovação automática
-			</label>
-
 			<button
 				className="btn-primary"
 				disabled={!selectedPlan || createPayment.isPending}
@@ -1243,7 +1233,6 @@ export function SubscribePage() {
 							createPayment.mutateAsync({
 								businessId: id!,
 								planId: selectedPlan,
-								autoRenew,
 							}),
 							{
 								loading: 'A criar pedido…',
@@ -1926,7 +1915,10 @@ export function KycPage() {
 						biFrontId: biFrontAsset.cloudinaryId,
 						biBackUrl: biBackAsset.url,
 						biBackId: biBackAsset.cloudinaryId,
-						selfies: selfieAssets,
+						selfies: selfieAssets.map(({ url, cloudinaryId }) => ({
+							url,
+							cloudinaryId,
+						})),
 						fullBodyUrl: fullBodyAsset.url,
 						fullBodyId: fullBodyAsset.cloudinaryId,
 					});

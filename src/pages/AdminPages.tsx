@@ -15,14 +15,17 @@ import {
 	useCategories,
 	useAdminPlans,
 	usePlatformAnalytics,
+	usePlatformAccounts,
 } from '../hooks/queries';
 import {
 	useBanUser,
 	useCreateAd,
 	useCreateCategory,
 	useCreatePlan,
+	useCreatePlatformAccount,
 	useDeleteCategory,
 	useDeletePlan,
+	useDeletePlatformAccount,
 	useModerateAd,
 	useModerateBusiness,
 	useModerateReport,
@@ -31,6 +34,7 @@ import {
 	useSetUserRole,
 	useUnbanUser,
 	useUpdateCategory,
+	useUpdatePlatformAccount,
 	useUpdatePlan,
 	useClaimConversation,
 	useReleaseConversation,
@@ -38,6 +42,7 @@ import {
 	useUnfeatureAd,
 	useFeatureAd,
 	type PlanInput,
+	type PlatformAccountInput,
 } from '../hooks/mutations';
 import { PageLoader, Spinner } from '../components/ui/Spinner';
 import { EmptyState } from '../components/ui/EmptyState';
@@ -56,6 +61,7 @@ import {
 } from '../lib/format';
 import type {
 	CategoryType,
+	PlatformBankAccount,
 	Plan,
 	Role,
 	MediaAsset,
@@ -1886,6 +1892,242 @@ export function AdminPlansPage() {
 											{
 												loading: 'A apagar plano…',
 												success: 'Plano apagado.',
+												error: (err) =>
+													getApiError(err),
+											},
+										)
+									}
+								>
+									<button className="btn-ghost !text-red">
+										🗑
+									</button>
+								</ConfirmButton>
+							</div>
+						</div>
+					))}
+				</div>
+			)}
+		</div>
+	);
+}
+
+// ================= Contas bancárias (admin) =================
+
+const EMPTY_ACCOUNT_FORM: PlatformAccountInput = {
+	bankName: '',
+	bankHolder: '',
+	bankIban: '',
+	isActive: false,
+};
+
+export function AdminBankAccountsPage() {
+	usePageTitle('Contas bancárias');
+	const { data: accounts, isLoading } = usePlatformAccounts();
+	const create = useCreatePlatformAccount();
+	const update = useUpdatePlatformAccount();
+	const del = useDeletePlatformAccount();
+	const [editingId, setEditingId] = useState<string | null>(null);
+	const [form, setForm] = useState<PlatformAccountInput>(EMPTY_ACCOUNT_FORM);
+
+	const startCreate = () => {
+		setEditingId(null);
+		setForm(EMPTY_ACCOUNT_FORM);
+	};
+
+	const startEdit = (account: PlatformBankAccount) => {
+		setEditingId(account.id);
+		setForm({
+			bankName: account.bankName,
+			bankHolder: account.bankHolder,
+			bankIban: account.bankIban,
+			isActive: account.isActive,
+		});
+	};
+
+	const patch = <K extends keyof PlatformAccountInput>(
+		key: K,
+		value: PlatformAccountInput[K],
+	) => setForm((prev) => ({ ...prev, [key]: value }));
+
+	const handleSubmit = (e: React.FormEvent) => {
+		e.preventDefault();
+		if (
+			!form.bankName.trim() ||
+			!form.bankHolder.trim() ||
+			!form.bankIban.trim()
+		) {
+			toast.error('Preenche o banco, o titular e o IBAN da conta.');
+			return;
+		}
+		void toast
+			.promise(
+				editingId
+					? update.mutateAsync({ id: editingId, ...form })
+					: create.mutateAsync(form),
+				{
+					loading: editingId
+						? 'A atualizar conta…'
+						: 'A criar conta…',
+					success: editingId ? 'Conta atualizada.' : 'Conta criada.',
+					error: (err) => getApiError(err),
+				},
+			)
+			.then(() => {
+				setForm(EMPTY_ACCOUNT_FORM);
+				setEditingId(null);
+			});
+	};
+
+	const setActive = (account: PlatformBankAccount) =>
+		void toast.promise(
+			update.mutateAsync({
+				id: account.id,
+				bankName: account.bankName,
+				bankHolder: account.bankHolder,
+				bankIban: account.bankIban,
+				isActive: true,
+			}),
+			{
+				loading: 'A ativar conta…',
+				success: 'Conta ativada.',
+				error: (err) => getApiError(err),
+			},
+		);
+
+	return (
+		<div>
+			<Title>Contas bancárias da plataforma</Title>
+
+			<form
+				className="card mb-6 max-w-2xl gap-3 p-4"
+				onSubmit={handleSubmit}
+			>
+				<h2 className="font-display text-sm font-black">
+					{editingId
+						? 'Editar conta bancária'
+						: 'Nova conta bancária'}
+				</h2>
+				<div className="grid gap-3">
+					<div>
+						<label className="label">Banco</label>
+						<input
+							className="input"
+							maxLength={120}
+							value={form.bankName}
+							onChange={(e) => patch('bankName', e.target.value)}
+							placeholder="BFA, BAI, BIC…"
+							required
+						/>
+					</div>
+					<div>
+						<label className="label">Titular da conta</label>
+						<input
+							className="input"
+							maxLength={120}
+							value={form.bankHolder}
+							onChange={(e) =>
+								patch('bankHolder', e.target.value)
+							}
+							required
+						/>
+					</div>
+					<div>
+						<label className="label">Número de conta (IBAN)</label>
+						<input
+							className="input"
+							maxLength={60}
+							value={form.bankIban}
+							onChange={(e) => patch('bankIban', e.target.value)}
+							placeholder="AO060000000000000000000001"
+							required
+						/>
+					</div>
+				</div>
+				<label className="flex items-center gap-2 text-sm font-bold">
+					<input
+						type="checkbox"
+						checked={form.isActive}
+						onChange={(e) => patch('isActive', e.target.checked)}
+					/>
+					Ativar conta (substitui a conta ativa atual)
+				</label>
+				<div className="flex gap-2">
+					<button
+						className="btn-primary"
+						disabled={create.isPending || update.isPending}
+					>
+						{(create.isPending || update.isPending) && (
+							<Spinner size={16} />
+						)}
+						{editingId ? 'Guardar alterações' : 'Criar conta'}
+					</button>
+					{editingId && (
+						<button
+							type="button"
+							className="btn-ghost"
+							onClick={startCreate}
+						>
+							Cancelar
+						</button>
+					)}
+				</div>
+			</form>
+
+			{isLoading ? (
+				<PageLoader />
+			) : (accounts ?? []).length === 0 ? (
+				<EmptyState
+					title="Sem contas bancárias"
+					description="Adiciona uma conta acima para receber os pagamentos dos planos."
+				/>
+			) : (
+				<div className="flex flex-col gap-2">
+					{(accounts ?? []).map((account) => (
+						<div
+							key={account.id}
+							className="card items-center gap-3 p-3 sm:flex-row"
+						>
+							<div className="min-w-0 flex-1">
+								<p className="flex flex-wrap items-center gap-2 text-sm font-bold">
+									<span>{account.bankName}</span>
+									{account.isActive ? (
+										<StatusPill status="ACTIVE" />
+									) : (
+										<StatusPill
+											status="HIDDEN"
+											label="Inativa"
+										/>
+									)}
+								</p>
+								<p className="text-xs text-ink/50">
+									{account.bankHolder} · {account.bankIban}
+								</p>
+							</div>
+							<div className="flex flex-wrap gap-2">
+								{!account.isActive && (
+									<button
+										onClick={() => setActive(account)}
+										className="btn-ghost !text-green"
+									>
+										Ativar
+									</button>
+								)}
+								<button
+									onClick={() => startEdit(account)}
+									className="btn-ghost !text-blue"
+								>
+									Editar
+								</button>
+								<ConfirmButton
+									title="Apagar conta?"
+									message={`A conta «${account.bankName}» (${account.bankIban}) será removida.`}
+									confirmLabel="Apagar"
+									onConfirm={() =>
+										void toast.promise(
+											del.mutateAsync(account.id),
+											{
+												loading: 'A apagar conta…',
+												success: 'Conta apagada.',
 												error: (err) =>
 													getApiError(err),
 											},

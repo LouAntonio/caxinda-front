@@ -32,13 +32,25 @@ async function uploadFile(
 		form.append('tags', sign.tags);
 	}
 
-	const uploadRes = await axios.post<{
-		secure_url: string;
-		public_id: string;
-	}>(
-		`https://api.cloudinary.com/v1_1/${sign.cloud_name}/${resourceType}/upload`,
-		form,
-	);
+	let uploadRes: { data: { secure_url: string; public_id: string } };
+	try {
+		uploadRes = await axios.post<{
+			secure_url: string;
+			public_id: string;
+		}>(
+			`https://api.cloudinary.com/v1_1/${sign.cloud_name}/${resourceType}/upload`,
+			form,
+		);
+	} catch (err) {
+		const detail =
+			typeof (err as { message?: unknown })?.message === 'string'
+				? (err as { message: string }).message
+				: 'erro desconhecido';
+		throw new Error(
+			`Falha ao carregar o ficheiro. Tenta novamente. (${detail})`,
+			{ cause: err },
+		);
+	}
 
 	return {
 		url: uploadRes.data.secure_url,

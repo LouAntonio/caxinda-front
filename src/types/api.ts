@@ -315,9 +315,13 @@ export interface Plan {
 }
 
 export interface PlatformBankAccount {
+	id: UUID;
 	bankName: string;
 	bankHolder: string;
 	bankIban: string;
+	isActive: boolean;
+	createdAt: string;
+	updatedAt: string;
 }
 
 export interface PlansResponse {

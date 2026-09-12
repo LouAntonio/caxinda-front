@@ -33,8 +33,8 @@ http.interceptors.response.use(
 );
 
 interface ApiErrorShape {
-	message?: string | string[];
-	error?: string;
+	message?: unknown;
+	error?: unknown;
 }
 
 export function getApiError(
@@ -43,21 +43,34 @@ export function getApiError(
 ): string {
 	if (axios.isAxiosError(error)) {
 		const data = error.response?.data as ApiErrorShape | undefined;
-		if (Array.isArray(data?.message)) {
-			return data.message.join(', ');
-		}
-		if (data?.message) {
-			return data.message;
-		}
-		if (data?.error) {
-			return data.error;
+		if (data) {
+			if (typeof data.message === 'string') {
+				return data.message;
+			}
+			if (Array.isArray(data.message)) {
+				return data.message.join(', ');
+			}
+			if (typeof data.error === 'string') {
+				return data.error;
+			}
+			if (
+				data.error &&
+				typeof data.error === 'object' &&
+				typeof (data.error as { message?: unknown }).message ===
+					'string'
+			) {
+				return (data.error as { message: string }).message;
+			}
 		}
 		if (error.code === 'ERR_NETWORK') {
 			return 'Não foi possível contactar o servidor. Verifique a sua ligação.';
 		}
-		return error.message;
+		if (typeof error.message === 'string' && error.message) {
+			return error.message;
+		}
+		return fallback;
 	}
-	if (error instanceof Error) {
+	if (error instanceof Error && error.message) {
 		return error.message;
 	}
 	return fallback;

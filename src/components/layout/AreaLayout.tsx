@@ -32,6 +32,7 @@ const ADMIN_LINKS = [
 	{ to: '/admin/suporte', label: 'Suporte' },
 	{ to: '/admin/categorias', label: 'Categorias' },
 	{ to: '/admin/planos', label: 'Planos' },
+	{ to: '/admin/contas-bancarias', label: 'Contas bancárias' },
 	{ to: '/admin/analiticas', label: 'Analíticas' },
 ];
 
