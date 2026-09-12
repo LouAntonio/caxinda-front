@@ -19,6 +19,7 @@ import {
 } from '../hooks/queries';
 import {
 	useBanUser,
+	useCancelPayment,
 	useCreateAd,
 	useCreateCategory,
 	useCreatePlan,
@@ -990,6 +991,7 @@ export function AdminPaymentsPage() {
 	usePageTitle('Gerir pagamentos');
 	const { data, isLoading } = useAdminPayments({ limit: 50 });
 	const review = useReviewPayment();
+	const cancel = useCancelPayment();
 
 	return (
 		<div>
@@ -1035,7 +1037,7 @@ export function AdminPaymentsPage() {
 											void toast.promise(
 												review.mutateAsync({
 													id: p.id,
-													status: 'APPROVED',
+													decision: 'APPROVED',
 												}),
 												{
 													loading:
@@ -1056,7 +1058,7 @@ export function AdminPaymentsPage() {
 											void toast.promise(
 												review.mutateAsync({
 													id: p.id,
-													status: 'REJECTED',
+													decision: 'REJECTED',
 													note: 'Comprovativo inválido.',
 												}),
 												{
@@ -1078,13 +1080,14 @@ export function AdminPaymentsPage() {
 											void toast.promise(
 												review.mutateAsync({
 													id: p.id,
-													status: 'PENDING',
+													decision: 'RETURNED',
+													note: 'Reenviar o comprovativo.',
 												}),
 												{
 													loading:
 														'A devolver pagamento…',
 													success:
-														'Pagamento devolvido.',
+														'Pagamento devolvido. O dono pode reenviar o comprovativo.',
 													error: (err) =>
 														getApiError(err),
 												},
@@ -1100,10 +1103,7 @@ export function AdminPaymentsPage() {
 									className="btn-ghost !text-red"
 									onClick={() =>
 										void toast.promise(
-											review.mutateAsync({
-												id: p.id,
-												status: 'CANCELLED',
-											}),
+											cancel.mutateAsync(p.id),
 											{
 												loading:
 													'A cancelar pagamento…',

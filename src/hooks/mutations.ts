@@ -16,7 +16,6 @@ import type {
 	MediaAsset,
 	Me,
 	Payment,
-	PaymentStatus,
 	Province,
 	ReportReason,
 	ReportStatus,
@@ -850,10 +849,8 @@ export function useSubmitPaymentProof() {
 			proofUrl: string;
 			proofId: string;
 		}) => {
-			const res = await http.post(
-				`/payments/${payload.id}/proof`,
-				payload,
-			);
+			const { id, ...data } = payload;
+			const res = await http.post(`/payments/${id}/proof`, data);
 			return res.data;
 		},
 		onSuccess: () =>
@@ -878,13 +875,11 @@ export function useReviewPayment() {
 	return useMutation({
 		mutationFn: async (payload: {
 			id: string;
-			status: PaymentStatus;
+			decision: 'APPROVED' | 'REJECTED' | 'RETURNED';
 			note?: string;
 		}) => {
-			const res = await http.patch(
-				`/payments/${payload.id}/review`,
-				payload,
-			);
+			const { id, ...data } = payload;
+			const res = await http.patch(`/payments/${id}/review`, data);
 			return res.data;
 		},
 		onSuccess: () => {
