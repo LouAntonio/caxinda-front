@@ -28,15 +28,30 @@ import {
 	useTrackBusinessClick,
 } from '../hooks/mutations';
 import { AdCard } from '../components/ads/AdCard';
+import { AdCardSkeletonGrid } from '../components/ads/AdCardSkeleton';
 import { BusinessCard } from '../components/businesses/BusinessCard';
+import { BusinessCardSkeletonGrid } from '../components/businesses/BusinessCardSkeleton';
+import { AdDetailSkeleton } from '../components/skeletons/AdDetailSkeleton';
+import { BusinessDetailSkeleton } from '../components/skeletons/BusinessDetailSkeleton';
 import { Pagination } from '../components/ui/Pagination';
 import { ButtonLoader, PageLoader } from '../components/ui/Spinner';
 import { EmptyState } from '../components/ui/EmptyState';
-import { Price } from '../components/ui/Price';
 import { StatusPill } from '../components/ui/StatusPill';
 import { Stars } from '../components/ui/Stars';
 import { Avatar } from '../components/ui/Avatar';
 import { FilterPills } from '../components/ui/FilterPills';
+import { PerfDivider } from '../components/ui/PerfDivider';
+import { Skeleton } from '../components/ui/Skeleton';
+import {
+	ChatSVG,
+	CheckSVG,
+	EyeSVG,
+	GlobeSVG,
+	PhoneSVG,
+	PinSVG,
+} from '../components/ui/icons/ExtrasSVG';
+import { EnvelopeSVG } from '../components/ui/icons/EnvelopeSVG';
+import { WhatsAppSVG } from '../components/ui/icons/WhatsAppSVG';
 import { useSession } from '../hooks/useSession';
 import {
 	formatDate,
@@ -283,7 +298,7 @@ export function AdsPage() {
 					</div>
 
 					{isLoading ? (
-						<PageLoader />
+						<AdCardSkeletonGrid count={6} />
 					) : (data?.items.length ?? 0) === 0 ? (
 						<EmptyState
 							title="Sem anúncios encontrados"
@@ -322,7 +337,7 @@ export function AdDetailPage() {
 	const user = useAuthStore((s) => s.user);
 
 	if (isLoading) {
-		return <PageLoader />;
+		return <AdDetailSkeleton />;
 	}
 	if (!ad) {
 		return (
@@ -357,105 +372,176 @@ export function AdDetailPage() {
 
 	return (
 		<div className="mx-auto max-w-6xl px-4 py-10">
-			<nav className="mb-5 text-sm text-ink/50">
-				<Link to="/anuncios" className="hover:underline">
+			<nav className="mb-5 flex flex-wrap items-center gap-1.5 text-sm text-ink/50">
+				<Link to="/anuncios" className="font-bold hover:text-red">
 					Anúncios
-				</Link>{' '}
-				/ <span className="text-ink/80">{ad.title}</span>
+				</Link>
+				<span className="text-xs text-kwanza">▸</span>
+				<span className="truncate text-ink/80">{ad.title}</span>
 			</nav>
-			<div className="grid gap-6 lg:grid-cols-[1fr_360px]">
-				<div className="overflow-hidden rounded-2xl border border-ink/10 bg-white">
-					{ad.image ? (
-						<img
-							src={ad.image}
-							alt={ad.title}
-							className="aspect-video w-full object-cover"
-						/>
-					) : (
-						<div className="flex aspect-video items-center justify-center bg-snow-dark font-display text-4xl font-black text-ink/20">
-							CX
+
+			<div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
+				<div>
+					<div className="overflow-hidden rounded-2xl border border-ink/10 bg-white">
+						<div className="relative aspect-video w-full overflow-hidden bg-snow-dark">
+							{ad.image ? (
+								<img
+									src={ad.image}
+									alt={ad.title}
+									className="h-full w-full object-cover"
+								/>
+							) : (
+								<div className="flex h-full items-center justify-center bg-snow-dark font-display text-4xl font-black text-ink/20">
+									CX
+								</div>
+							)}
 						</div>
-					)}
-					<div className="grid grid-cols-3 gap-2 p-2">
-						{(ad.gallery ?? []).slice(0, 3).map((g, idx) => (
-							<img
-								key={`${g.cloudinaryId}-${idx}`}
-								src={g.url}
-								alt=""
-								className="aspect-square w-full rounded-lg object-cover"
-							/>
-						))}
+						{(ad.gallery ?? []).length > 0 && (
+							<div className="grid grid-cols-3 gap-2 p-2">
+								{(ad.gallery ?? [])
+									.slice(0, 3)
+									.map((g, idx) => (
+										<img
+											key={`${g.cloudinaryId}-${idx}`}
+											src={g.url}
+											alt=""
+											className="aspect-square w-full rounded-lg object-cover"
+										/>
+									))}
+							</div>
+						)}
 					</div>
 				</div>
 
 				<aside className="flex flex-col gap-4">
-					<div className="card p-5">
+					<div className="card h-fit p-5 lg:sticky lg:top-20">
 						{ad.featured && (
 							<span className="tag tag-kwanza mb-3">
-								Destaque
+								★ Destaque
 							</span>
 						)}
 						<div className="flex items-start justify-between gap-2">
-							<h1 className="font-display text-xl font-black leading-tight">
+							<h1 className="text-balance font-display text-xl font-black leading-tight">
 								{ad.title}
 							</h1>
-							<div className="flex items-center gap-2">
+							<div className="flex shrink-0 flex-col items-end gap-1.5">
 								{ad.verified && (
-									<span className="rounded-full bg-blue px-2 py-0.5 text-xs font-bold text-white">
-										✔
+									<span
+										className="stamp"
+										title="Anunciante verificado"
+									>
+										<CheckSVG width={12} height={12} /> OK
 									</span>
 								)}
 								<StatusPill status={ad.status} />
 							</div>
 						</div>
-						<div className="mt-4">
-							<Price value={ad.price} />
+
+						<p className="kicker mt-4 flex flex-wrap items-center gap-x-2 gap-y-1">
+							<span>{ad.category?.name ?? 'Geral'}</span>
+							{ad.province && (
+								<>
+									<span aria-hidden>·</span>
+									<span>
+										{PROVINCE_LABELS[ad.province] ??
+											ad.province}
+									</span>
+								</>
+							)}
+							<span aria-hidden>·</span>
+							<span>Publicado {timeAgo(ad.createdAt)}</span>
+							<span aria-hidden>·</span>
+							<span>{ad.views} visualizações</span>
+						</p>
+
+						<div className="mt-5">
+							{ad.price === null ? (
+								<span className="font-mono text-xl font-bold text-ink/50">
+									Sob consulta
+								</span>
+							) : ad.price === 0 ? (
+								<span
+									className="price-tag-lg"
+									style={{
+										background: 'var(--color-blue-light)',
+										color: 'var(--color-snow)',
+									}}
+								>
+									Grátis
+								</span>
+							) : (
+								<span className="price-tag-lg">
+									{formatKz(ad.price)}
+								</span>
+							)}
 						</div>
+
 						{ad.averageRating !== null && (
-							<p className="mt-3 text-sm text-ink/60">
+							<p className="mt-4 text-sm text-ink/60">
 								<Stars value={ad.averageRating} /> ·{' '}
 								{ad.reviewCount} avaliações
 							</p>
 						)}
-						<p className="mt-3 font-mono text-xs text-ink/40">
-							Publicado {timeAgo(ad.createdAt)} · {ad.views}{' '}
-							visualizações
-						</p>
-					</div>
 
-					{!isOwner && (
-						<div className="card gap-2 p-4">
-							<button
-								className="btn-primary w-full"
-								onClick={contactSeller}
-								disabled={openConversation.isPending}
+						<PerfDivider className="my-5" />
+
+						<SellerCard userId={ad.userId} />
+
+						{!isOwner ? (
+							<div className="mt-4 flex flex-col gap-2">
+								<button
+									className="btn-primary w-full"
+									onClick={contactSeller}
+									disabled={openConversation.isPending}
+								>
+									{openConversation.isPending && (
+										<ButtonLoader />
+									)}
+									<ChatSVG width={16} height={16} /> Mensagem
+									para o vendedor
+								</button>
+								{isAuthenticated && user && (
+									<WishlistToggle
+										adId={ad.id}
+										saved={wishlistSaved ?? false}
+									/>
+								)}
+							</div>
+						) : (
+							<Link
+								to={`/area/anuncios/${ad.id}/editar`}
+								className="btn-outline mt-4 w-full"
 							>
-								{openConversation.isPending && <ButtonLoader />}{' '}
-								Mensagem para o vendedor
-							</button>
-							{isAuthenticated && user && (
-								<WishlistToggle
-									adId={ad.id}
-									saved={wishlistSaved ?? false}
-								/>
-							)}
-						</div>
-					)}
-
-					<SellerCard userId={ad.userId} />
+								Editar anúncio
+							</Link>
+						)}
+					</div>
 				</aside>
 			</div>
 
 			<section className="mt-8 grid gap-6 lg:grid-cols-[1fr_360px]">
 				<div className="card p-6">
-					<h2 className="font-display text-lg font-black">
-						Descrição
-					</h2>
+					<h2 className="kicker">Descrição</h2>
 					<p className="mt-3 whitespace-pre-line text-sm leading-relaxed text-ink/70">
 						{ad.description}
 					</p>
+					<div className="mt-6 flex flex-wrap items-center gap-x-6 gap-y-2 border-t-2 border-dashed border-ink/10 pt-4 text-xs text-ink/50">
+						<span className="flex items-center gap-1.5">
+							<PinSVG width={14} height={14} />
+							{ad.province
+								? (PROVINCE_LABELS[ad.province] ?? ad.province)
+								: 'Angola'}
+						</span>
+						<span className="flex items-center gap-1.5">
+							<EyeSVG width={14} height={14} /> {ad.views}{' '}
+							visualizações
+						</span>
+						<span className="flex items-center gap-1.5">
+							Publicado {timeAgo(ad.createdAt)}
+						</span>
+					</div>
 				</div>
-				<div className="card p-6">
+				<div className="card h-fit p-6">
 					<ReportForm
 						targetType="AD"
 						targetId={ad.id}
@@ -536,26 +622,29 @@ function SellerCard({ userId }: { userId: string }) {
 	};
 
 	return (
-		<div className="card flex items-center gap-3 p-4">
+		<div className="flex items-center gap-3">
 			<Avatar
 				src={seller.image}
 				name={fullName(seller.name, seller.surname)}
-				size="lg"
+				size="md"
 			/>
 			<div className="min-w-0 flex-1">
+				<p className="kicker">Vendedor</p>
 				<p className="truncate text-sm font-bold">
 					{fullName(seller.name, seller.surname)}
 				</p>
-				<p className="text-xs text-ink/50">
-					Vendedor {seller.isVerified && '· Verificado'}
-				</p>
 			</div>
+			{seller.isVerified && (
+				<span className="stamp shrink-0" title="Vendedor verificado">
+					<CheckSVG width={12} height={12} /> OK
+				</span>
+			)}
 			<button
-				className="btn-ghost"
+				className="btn-ghost !bg-snow"
 				title="Mensagem"
 				onClick={messageSeller}
 			>
-				✉
+				<ChatSVG width={16} height={16} />
 			</button>
 		</div>
 	);
@@ -753,7 +842,7 @@ export function BusinessesPage() {
 					</div>
 
 					{isLoading ? (
-						<PageLoader />
+						<BusinessCardSkeletonGrid count={6} />
 					) : (data?.items.length ?? 0) === 0 ? (
 						<EmptyState title="Sem empresas encontradas" />
 					) : (
@@ -785,7 +874,7 @@ export function BusinessDetailPage() {
 	const { user } = useSession();
 	const trackClick = useTrackBusinessClick();
 
-	if (isLoading) return <PageLoader />;
+	if (isLoading) return <BusinessDetailSkeleton />;
 	if (!business)
 		return (
 			<EmptyState
@@ -817,14 +906,15 @@ export function BusinessDetailPage() {
 
 	return (
 		<div className="mx-auto max-w-6xl px-4 py-10">
-			<nav className="mb-5 text-sm text-ink/50">
-				<Link to="/empresas" className="hover:underline">
+			<nav className="mb-5 flex flex-wrap items-center gap-1.5 text-sm text-ink/50">
+				<Link to="/empresas" className="font-bold hover:text-blue">
 					Empresas
-				</Link>{' '}
-				/ <span>{business.name}</span>
+				</Link>
+				<span className="text-xs text-kwanza">▸</span>
+				<span className="truncate text-ink/80">{business.name}</span>
 			</nav>
-			<div className="overflow-hidden rounded-2xl border border-ink/10 bg-white">
-				<div className="relative h-64 bg-blue">
+			<div className="rounded-2xl border border-ink/10 bg-white">
+				<div className="relative h-56 overflow-hidden rounded-t-2xl bg-blue">
 					{business.coverUrl ? (
 						<img
 							src={business.coverUrl}
@@ -836,46 +926,54 @@ export function BusinessDetailPage() {
 							{business.name}
 						</div>
 					)}
-					<div className="absolute bottom-4 left-4 flex items-end gap-3">
-						{business.logoUrl ? (
-							<img
-								src={business.logoUrl}
-								alt={business.name}
-								className="h-16 w-16 rounded-2xl border-4 border-white bg-white object-cover"
-							/>
-						) : (
-							<span className="flex h-16 w-16 items-center justify-center rounded-2xl border-4 border-white bg-ink font-display text-lg font-black text-white">
-								{business.name.slice(0, 2).toUpperCase()}
-							</span>
-						)}
-						<div className="rounded-xl bg-white/90 px-3 py-2 backdrop-blur">
-							<h1 className="font-display text-lg font-black leading-tight">
-								{business.name}
-							</h1>
-							<p className="text-xs font-semibold text-blue">
-								{business.category.name} ·{' '}
-								{business.province.replace('_', ' ')}
-							</p>
+				</div>
+
+				<div className="px-6 pt-3 pb-2">
+					<div className="flex flex-wrap items-end justify-between gap-3">
+						<div className="flex items-end gap-4">
+							{business.logoUrl ? (
+								<img
+									src={business.logoUrl}
+									alt={business.name}
+									className="-mt-12 h-20 w-20 rounded-2xl border-4 border-white bg-white object-cover shadow-sm"
+								/>
+							) : (
+								<span className="-mt-12 flex h-20 w-20 items-center justify-center rounded-2xl border-4 border-white bg-ink font-display text-xl font-black text-white shadow-sm">
+									{business.name.slice(0, 2).toUpperCase()}
+								</span>
+							)}
+							<div className="pb-1">
+								<h1 className="text-balance font-display text-xl font-black leading-tight">
+									{business.name}
+								</h1>
+								<p className="kicker mt-1.5 flex flex-wrap items-center gap-x-2">
+									<span>{business.category.name}</span>
+									<span aria-hidden>·</span>
+									<span>
+										{business.province.replace('_', ' ')}
+									</span>
+								</p>
+							</div>
 						</div>
 						{business.isVerified && (
-							<span className="tag tag-gold mb-8">
-								✔ VERIFICADA
+							<span className="stamp mb-2 shrink-0">
+								<CheckSVG width={12} height={12} /> Verificada
 							</span>
 						)}
 					</div>
+					<PerfDivider className="mt-3" />
 				</div>
 
 				<div className="grid gap-6 p-6 lg:grid-cols-[1fr_320px]">
 					<div>
-						<h2 className="font-display text-lg font-black">
-							Sobre
-						</h2>
+						<h2 className="kicker">Sobre</h2>
 						<p className="mt-3 whitespace-pre-line text-sm leading-relaxed text-ink/70">
 							{business.description}
 						</p>
 						{business.address && (
-							<p className="mt-3 text-sm text-ink/60">
-								📍 {business.address}
+							<p className="mt-3 flex items-center gap-1.5 text-sm text-ink/60">
+								<PinSVG width={15} height={15} />
+								{business.address}
 							</p>
 						)}
 						<div className="mt-4 flex items-center gap-2">
@@ -900,40 +998,55 @@ export function BusinessDetailPage() {
 					</div>
 
 					<aside className="flex flex-col gap-3">
-						<div className="card p-4">
-							<h3 className="mb-3 font-display text-sm font-black">
-								Contactos
-							</h3>
+						<div className="card gap-2 p-4">
+							<h3 className="kicker mb-2">Contactos</h3>
+							<PerfDivider className="-mt-1.5 mb-3" />
 							{business.phone && (
 								<button
-									className="btn-outline w-full"
+									className="btn-outline w-full justify-start"
 									onClick={() => contact('phone')}
 								>
-									📞 Ligar
+									<PhoneSVG width={16} height={16} /> Ligar
+									<span className="ml-auto font-mono text-[10px] opacity-70">
+										{business.phone}
+									</span>
 								</button>
 							)}
 							{business.whatsapp && (
 								<button
-									className="btn-outline w-full"
+									className="btn-outline w-full justify-start"
 									onClick={() => contact('whatsapp')}
 								>
+									<WhatsAppSVG width={16} height={16} />{' '}
 									WhatsApp
+									<span className="ml-auto font-mono text-[10px] opacity-70">
+										{business.whatsapp}
+									</span>
 								</button>
 							)}
 							{business.email && (
 								<button
-									className="btn-outline w-full"
+									className="btn-outline w-full justify-start"
 									onClick={() => contact('email')}
 								>
-									✉ Email
+									<EnvelopeSVG width={16} height={16} /> Email
+									<span className="ml-auto font-mono text-[10px] opacity-70">
+										{business.email}
+									</span>
 								</button>
 							)}
 							{business.website && (
 								<button
-									className="btn-outline w-full"
+									className="btn-outline w-full justify-start"
 									onClick={() => contact('website')}
 								>
-									🌐 Website
+									<GlobeSVG width={16} height={16} /> Website
+									<span className="ml-auto font-mono text-[10px] opacity-70">
+										{business.website.replace(
+											/^https?:\/\//,
+											'',
+										)}
+									</span>
 								</button>
 							)}
 						</div>
@@ -942,7 +1055,7 @@ export function BusinessDetailPage() {
 								to={`/auth/entrar`}
 								className="btn-blue w-full"
 							>
-								Mensagem →
+								<ChatSVG width={16} height={16} /> Mensagem →
 							</Link>
 						)}
 						{isOwner && (
@@ -992,7 +1105,8 @@ function ReviewSection({
 
 	return (
 		<section className="card p-6">
-			<h2 className="font-display text-lg font-black">Avaliações</h2>
+			<h2 className="kicker">Avaliações</h2>
+			<PerfDivider className="mt-1.5 mb-4" />
 
 			{inputDisabled ? (
 				<p className="mt-3 text-sm text-ink/50">
@@ -1189,9 +1303,7 @@ export function ReportForm({
 
 	return (
 		<form onSubmit={submit} className="flex flex-col gap-3">
-			<h3 className="font-display text-sm font-black">
-				Denunciar {targetLabel}
-			</h3>
+			<h3 className="kicker">Denunciar {targetLabel}</h3>
 			<select
 				className="input"
 				value={reason}
@@ -1373,7 +1485,22 @@ export function SearchPage() {
 
 				<div className="min-w-0 flex-1">
 					{isLoading ? (
-						<PageLoader />
+						<div className="flex flex-col gap-3" aria-hidden>
+							{Array.from({ length: 5 }).map((_, i) => (
+								<div key={i} className="card flex gap-4 p-4">
+									<Skeleton className="h-24 w-32 shrink-0 rounded-xl md:h-28 md:w-40" />
+									<div className="min-w-0 flex-1 space-y-2 py-1">
+										<Skeleton className="h-4 w-1/2 rounded" />
+										<Skeleton className="h-3 w-1/3 rounded" />
+										<Skeleton className="h-3 w-full rounded" />
+										<div className="flex items-center justify-between gap-2 pt-1">
+											<Skeleton className="h-7 w-24 rounded-md bg-kwanza/25" />
+											<Skeleton className="h-3 w-16 rounded" />
+										</div>
+									</div>
+								</div>
+							))}
+						</div>
 					) : q ? (
 						<>
 							<div className="mb-4 flex flex-wrap items-center justify-between gap-2">

@@ -3,8 +3,9 @@ import { Link } from 'react-router-dom';
 import { usePageTitle } from '../hooks/usePageTitle';
 import { useAds, useBusinesses } from '../hooks/queries';
 import { AdCard } from '../components/ads/AdCard';
+import { AdCardSkeletonGrid } from '../components/ads/AdCardSkeleton';
 import { BusinessCard } from '../components/businesses/BusinessCard';
-import { PageLoader } from '../components/ui/Spinner';
+import { BusinessCardSkeletonGrid } from '../components/businesses/BusinessCardSkeleton';
 
 const HERO_IMAGES = [
 	'https://images.unsplash.com/photo-1611348586804-61bf6c080437?w=1920&q=80',
@@ -99,7 +100,10 @@ export default function LandingPage() {
 						</Link>
 					</div>
 					{adsLoading ? (
-						<PageLoader />
+						<AdCardSkeletonGrid
+							count={4}
+							gridClassName="grid grid-cols-2 gap-4 md:grid-cols-4"
+						/>
 					) : (
 						<div className="grid grid-cols-2 gap-4 md:grid-cols-4">
 							{(ads?.items ?? []).map((ad) => (
@@ -161,7 +165,10 @@ export default function LandingPage() {
 						</Link>
 					</div>
 					{businessesLoading ? (
-						<PageLoader />
+						<BusinessCardSkeletonGrid
+							count={4}
+							gridClassName="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-4"
+						/>
 					) : (
 						<div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-4">
 							{(businesses?.items ?? []).map((b) => (

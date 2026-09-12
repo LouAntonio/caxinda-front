@@ -54,8 +54,11 @@ import { getApiError } from '../lib/api';
 import { canCreateAds } from '../lib/roles';
 import { parseUserAgent } from '../lib/userAgent';
 import { AdCard } from '../components/ads/AdCard';
+import { AdCardSkeletonGrid } from '../components/ads/AdCardSkeleton';
 import { BusinessCard } from '../components/businesses/BusinessCard';
+import { BusinessCardSkeletonGrid } from '../components/businesses/BusinessCardSkeleton';
 import { EmptyState } from '../components/ui/EmptyState';
+import { Skeleton } from '../components/ui/Skeleton';
 import { PageLoader } from '../components/ui/Spinner';
 import { Spinner } from '../components/ui/Spinner';
 import { ButtonLoader } from '../components/ui/Spinner';
@@ -277,7 +280,10 @@ export function MyAdsPage() {
 				)}
 			</div>
 			{isLoading ? (
-				<PageLoader />
+				<AdCardSkeletonGrid
+					count={6}
+					gridClassName="grid grid-cols-2 gap-4 lg:grid-cols-3"
+				/>
 			) : !canCreateAds(user?.role) ? (
 				<EmptyState
 					title="Criação de anúncios reservada"
@@ -721,7 +727,10 @@ export function MyBusinessesPage() {
 				)}
 			</div>
 			{isLoading ? (
-				<PageLoader />
+				<BusinessCardSkeletonGrid
+					count={4}
+					gridClassName="grid gap-4 sm:grid-cols-2"
+				/>
 			) : !data || data.items.length === 0 ? (
 				kycApproved ? (
 					<EmptyState
@@ -1261,7 +1270,10 @@ export function WishlistPage() {
 		<div>
 			<Title>Favoritos</Title>
 			{isLoading ? (
-				<PageLoader />
+				<AdCardSkeletonGrid
+					count={6}
+					gridClassName="grid grid-cols-2 gap-4 lg:grid-cols-3"
+				/>
 			) : !data || data.items.length === 0 ? (
 				<EmptyState
 					title="Sem favoritos ainda"
@@ -1342,7 +1354,23 @@ export function MessagesPage() {
 		<div>
 			<Title>Mensagens</Title>
 			{isLoading ? (
-				<PageLoader />
+				<div
+					className="flex flex-col gap-1 rounded-2xl border border-ink/10 bg-white p-2"
+					aria-hidden
+				>
+					{Array.from({ length: 6 }).map((_, i) => (
+						<div
+							key={i}
+							className="flex items-center gap-2 px-3 py-2"
+						>
+							<Skeleton className="h-8 w-8 shrink-0 rounded-full" />
+							<div className="min-w-0 flex-1 space-y-1.5">
+								<Skeleton className="h-3 w-2/3 rounded" />
+								<Skeleton className="h-3 w-1/3 rounded" />
+							</div>
+						</div>
+					))}
+				</div>
 			) : !convos || convos.items.length === 0 ? (
 				<EmptyState
 					title="Sem conversas"
@@ -1596,7 +1624,18 @@ export function PaymentsPage() {
 		<div>
 			<Title>Pagamentos</Title>
 			{isLoading ? (
-				<PageLoader />
+				<div className="flex flex-col gap-4" aria-hidden>
+					{Array.from({ length: 3 }).map((_, i) => (
+						<div key={i} className="card gap-3 p-5">
+							<div className="flex items-center justify-between gap-2">
+								<Skeleton className="h-4 w-40 rounded" />
+								<Skeleton className="h-6 w-20 rounded-full" />
+							</div>
+							<Skeleton className="h-3 w-64 max-w-full rounded" />
+							<Skeleton className="h-10 w-full rounded-xl" />
+						</div>
+					))}
+				</div>
 			) : !payments || payments.length === 0 ? (
 				<EmptyState
 					title="Sem pagamentos"
@@ -1764,7 +1803,15 @@ export function MySubscriptionsPage() {
 		<div>
 			<Title>Subscrições</Title>
 			{isLoading ? (
-				<PageLoader />
+				<div className="flex flex-col gap-4" aria-hidden>
+					{Array.from({ length: 3 }).map((_, i) => (
+						<div key={i} className="card gap-3 p-5">
+							<Skeleton className="h-4 w-48 rounded" />
+							<Skeleton className="h-3 w-64 max-w-full rounded" />
+							<Skeleton className="h-3 w-40 rounded" />
+						</div>
+					))}
+				</div>
 			) : !subscriptions || subscriptions.length === 0 ? (
 				<EmptyState
 					title="Sem subscrições"
