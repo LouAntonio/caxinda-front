@@ -175,6 +175,7 @@ export interface AdQueryParams {
 	minPrice?: number;
 	maxPrice?: number;
 	province?: Province;
+	provinces?: string;
 	includeInactive?: boolean;
 	featured?: boolean;
 	userId?: string;

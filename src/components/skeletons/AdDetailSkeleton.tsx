@@ -1,5 +1,4 @@
 import { Skeleton, SkeletonButton, SkeletonText } from '../ui/Skeleton';
-import { PerfDivider } from '../ui/PerfDivider';
 
 export function AdDetailSkeleton() {
 	return (
@@ -10,8 +9,8 @@ export function AdDetailSkeleton() {
 				<Skeleton className="h-4 w-44 rounded" />
 			</div>
 
-			<div className="grid gap-6 lg:grid-cols-[1fr_360px]">
-				<div>
+			<div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
+				<div className="min-w-0">
 					<div className="overflow-hidden rounded-2xl border border-ink/10 bg-white">
 						<div className="relative aspect-video w-full bg-snow-dark">
 							<Skeleton className="absolute inset-0 h-full w-full" />
@@ -25,43 +24,35 @@ export function AdDetailSkeleton() {
 							/>
 						))}
 					</div>
-				</div>
 
-				<aside className="flex flex-col gap-4 lg:sticky lg:top-20">
-					<div className="card p-5">
-						<Skeleton className="mb-3 h-6 w-24 rounded-full bg-kwanza/25" />
-						<Skeleton className="h-7 w-11/12 rounded" />
-						<div className="mt-4">
-							<Skeleton className="h-10 w-40 rounded-md bg-kwanza/25" />
-						</div>
-						<SkeletonText className="mt-4" width="w-3/4" />
-						<PerfDivider className="my-4" />
-						<div className="flex items-center gap-3">
-							<Skeleton className="h-12 w-12 rounded-full" />
-							<div className="min-w-0 flex-1 space-y-2">
-								<SkeletonText width="w-2/3" />
-								<SkeletonText width="w-1/3" />
+					<div className="mt-6 flex flex-col gap-6">
+						<div className="card p-6">
+							<Skeleton className="mb-3 h-5 w-32 rounded" />
+							<div className="space-y-2">
+								<SkeletonText />
+								<SkeletonText />
+								<SkeletonText width="w-3/4" />
 							</div>
 						</div>
+						<div className="card p-6">
+							<Skeleton className="mb-3 h-5 w-24 rounded" />
+							<SkeletonText width="w-1/2" />
+						</div>
+					</div>
+				</div>
+
+				<aside className="flex flex-col gap-4 lg:sticky lg:top-24 lg:self-start">
+					<div className="card items-stretch gap-3 p-5">
+						<Skeleton className="h-7 w-28 rounded-full bg-kwanza/25" />
+						<Skeleton className="h-10 w-32 rounded-md bg-kwanza/25" />
+						<SkeletonText width="w-3/4" />
+						<Skeleton className="h-px w-full" />
+						<SkeletonText width="w-1/2" />
+						<SkeletonText width="w-1/3" />
 					</div>
 					<SkeletonButton className="w-full" />
 					<SkeletonButton className="w-full" />
 				</aside>
-			</div>
-
-			<div className="mt-8 grid gap-6 lg:grid-cols-[1fr_360px]">
-				<div className="card p-6">
-					<Skeleton className="mb-3 h-5 w-32 rounded" />
-					<div className="space-y-2">
-						<SkeletonText />
-						<SkeletonText />
-						<SkeletonText width="w-3/4" />
-					</div>
-				</div>
-				<div className="card p-6">
-					<Skeleton className="mb-3 h-5 w-24 rounded" />
-					<SkeletonButton className="w-full" />
-				</div>
 			</div>
 		</div>
 	);

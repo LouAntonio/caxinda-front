@@ -1,10 +1,9 @@
 import { Link } from 'react-router-dom';
 import type { AdListItem } from '../../types/api';
-import { timeAgo } from '../../lib/format';
+import { PROVINCE_LABELS, timeAgo } from '../../lib/format';
 import { Price } from '../ui/Price';
 import { StatusPill } from '../ui/StatusPill';
 import { Stars } from '../ui/Stars';
-import { PROVINCE_LABELS } from '../../lib/format';
 
 export function AdCard({
 	ad,
@@ -31,55 +30,49 @@ export function AdCard({
 						CX
 					</div>
 				)}
-				<div className="absolute -left-1 top-2.5">
-					<span
-						className="inline-block bg-ink px-3 py-1 font-mono text-xs font-bold text-snow"
-						style={{
-							clipPath:
-								'polygon(0 0, 100% 0, calc(100% - 8px) 100%, 0 100%)',
-						}}
-					>
-						{ad.status === 'SOLD'
-							? 'VENDIDO'
-							: ad.featured
-								? 'DESTAQUE'
-								: 'CX'}
+				{ad.status === 'SOLD' ? (
+					<span className="absolute left-3 top-3 rounded-full bg-red px-2.5 py-1 font-mono text-[10px] font-bold uppercase tracking-wider text-white shadow">
+						Vendido
 					</span>
-				</div>
+				) : (
+					ad.featured && (
+						<span className="absolute left-3 top-3 rounded-full bg-kwanza px-2.5 py-1 font-mono text-[10px] font-bold uppercase tracking-wider text-ink shadow">
+							★ Destaque
+						</span>
+					)
+				)}
 				{showStatus && (
 					<div className="absolute right-2 top-2">
 						<StatusPill status={ad.status} />
 					</div>
 				)}
 			</Link>
-			<div className="flex flex-1 flex-col gap-2 p-4">
+			<div className="flex flex-1 flex-col gap-2.5 p-4">
 				<Link
 					to={`/anuncios/${ad.slug}`}
 					className="line-clamp-1 text-sm font-bold hover:text-red"
 				>
 					{ad.title}
 				</Link>
-				{ad.province && (
-					<p className="text-xs text-ink/50">
-						{PROVINCE_LABELS[ad.province] ?? ad.province}
-					</p>
-				)}
-				<div className="mt-auto flex items-center justify-between gap-2">
-					<Price value={ad.price} />
-					<span className="font-mono text-xs text-ink/40">
-						{timeAgo(ad.createdAt)}
-					</span>
+				<div className="flex flex-wrap items-center gap-1.5">
+					{ad.category?.name && (
+						<span className="chip border-blue/20 bg-blue/5 text-blue">
+							{ad.category.name}
+						</span>
+					)}
+					{ad.province && (
+						<span className="chip">
+							{PROVINCE_LABELS[ad.province] ?? ad.province}
+						</span>
+					)}
+					<span className="chip">{timeAgo(ad.createdAt)}</span>
 				</div>
-				{ad.averageRating !== null && (
-					<div className="flex items-center justify-between">
+				<div className="mt-auto flex items-center justify-between gap-2 pt-1">
+					<Price value={ad.price} />
+					{ad.averageRating !== null && (
 						<Stars value={ad.averageRating} size={14} />
-						{ad.user && (
-							<span className="text-xs text-ink/50">
-								{ad.user.name} {ad.user.surname}
-							</span>
-						)}
-					</div>
-				)}
+					)}
+				</div>
 			</div>
 		</article>
 	);

@@ -1,5 +1,4 @@
 import { Skeleton } from '../ui/Skeleton';
-import { PerfDivider } from '../ui/PerfDivider';
 
 export function FormSkeleton() {
 	return (
@@ -26,7 +25,7 @@ export function TextPageSkeleton() {
 				{Array.from({ length: 5 }).map((_, i) => (
 					<Skeleton key={i} className="h-3 w-full rounded" />
 				))}
-				<PerfDivider className="my-2" />
+				<Skeleton className="my-2 h-px w-full" />
 				<div className="space-y-2">
 					{Array.from({ length: 3 }).map((_, i) => (
 						<Skeleton key={i} className="h-3 w-full rounded" />

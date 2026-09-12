@@ -561,6 +561,7 @@ export interface GlobalSearchParams {
 	type?: SearchType;
 	categoryId?: string;
 	province?: string;
+	provinces?: string[];
 	sortBy?: SearchSort;
 	page?: number;
 	limit?: number;

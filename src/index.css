@@ -81,14 +81,7 @@
 
 @layer utilities {
 	.price-tag {
-		@apply relative inline-block bg-kwanza p-2 pl-4 pr-3 font-mono text-lg font-bold text-ink;
-		clip-path: polygon(
-			0 0,
-			100% 0,
-			100% 100%,
-			12px 100%,
-			0 calc(100% - 12px)
-		);
+		@apply relative inline-flex items-center rounded-lg bg-kwanza px-3 py-1 font-mono text-sm font-bold text-ink shadow-sm;
 	}
 	.text-balance {
 		text-wrap: balance;
@@ -125,23 +118,12 @@
 		animation: skeleton-shimmer 1.6s linear infinite;
 	}
 
-	.perf {
-		height: 14px;
-		background: repeating-linear-gradient(
-			90deg,
-			rgba(14, 23, 51, 0.16) 0 4px,
-			transparent 4px 12px
-		);
-		-webkit-mask-image: repeating-radial-gradient(
-			circle at 6px 50%,
-			transparent 0 4.5px,
-			#000 5px 12px
-		);
-		mask-image: repeating-radial-gradient(
-			circle at 6px 50%,
-			transparent 0 4.5px,
-			#000 5px 12px
-		);
+	.divider {
+		@apply h-px w-full border-0 bg-ink/10;
+	}
+
+	.chip {
+		@apply inline-flex items-center gap-1 rounded-full border border-ink/10 bg-snow px-2.5 py-0.5 font-mono text-[0.6rem] font-bold uppercase tracking-wider text-ink/55;
 	}
 
 	.kicker {
@@ -158,9 +140,9 @@
 		align-items: center;
 		justify-content: center;
 		gap: 0.35rem;
-		border: 2px dashed rgba(42, 75, 154, 0.55);
+		border: 1px solid rgba(42, 75, 154, 0.25);
 		border-radius: 9999px;
-		background: rgba(42, 75, 154, 0.06);
+		background: rgba(42, 75, 154, 0.08);
 		padding: 0.28rem 0.7rem;
 		font-family: var(--font-mono);
 		font-size: 0.62rem;
@@ -178,14 +160,10 @@
 		font-weight: 700;
 		color: var(--color-ink);
 		font-size: 1.55rem;
-		padding: 0.8rem 1.4rem 0.8rem 1.9rem;
-		clip-path: polygon(
-			0 0,
-			100% 0,
-			100% 100%,
-			18px 100%,
-			0 calc(100% - 18px)
-		);
+		line-height: 1.1;
+		padding: 0.75rem 1.25rem;
+		border-radius: 1rem;
+		box-shadow: 0 4px 14px rgba(242, 169, 0, 0.25);
 	}
 }
 

@@ -1,5 +1,4 @@
 import { Skeleton, SkeletonButton, SkeletonText } from '../ui/Skeleton';
-import { PerfDivider } from '../ui/PerfDivider';
 
 export function BusinessDetailSkeleton() {
 	return (
@@ -24,7 +23,7 @@ export function BusinessDetailSkeleton() {
 						<Skeleton className="mb-2 h-6 w-28 rounded-full bg-blue/20" />
 					</div>
 				</div>
-				<PerfDivider className="mx-0" />
+				<Skeleton className="mx-0 my-2 h-px w-full" />
 
 				<div className="grid gap-6 p-6 lg:grid-cols-[1fr_320px]">
 					<div>
@@ -51,7 +50,7 @@ export function BusinessDetailSkeleton() {
 							{Array.from({ length: 3 }).map((_, i) => (
 								<SkeletonButton key={i} className="w-full" />
 							))}
-							<PerfDivider className="my-3" />
+							<Skeleton className="my-3 h-px w-full" />
 							<SkeletonButton className="w-full" />
 						</div>
 					</aside>

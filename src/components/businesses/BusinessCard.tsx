@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import type { Business } from '../../types/api';
-import { timeAgo } from '../../lib/format';
+import { PROVINCE_LABELS, timeAgo } from '../../lib/format';
 import { StatusPill } from '../ui/StatusPill';
 import { Stars } from '../ui/Stars';
 
@@ -15,7 +15,7 @@ export function BusinessCard({
 		<article className="card group overflow-hidden transition hover:-translate-y-0.5 hover:shadow-md">
 			<Link
 				to={`/empresas/${business.slug}`}
-				className="relative block h-40 overflow-hidden bg-snow-dark"
+				className="relative block aspect-[16/10] overflow-hidden bg-snow-dark"
 			>
 				{business.coverUrl ? (
 					<img
@@ -30,8 +30,8 @@ export function BusinessCard({
 					</div>
 				)}
 				{business.isVerified && (
-					<span className="absolute left-2 top-2 rounded-full bg-blue px-2 py-0.5 text-[10px] font-bold text-white shadow">
-						✔ VERIFICADA
+					<span className="absolute left-3 top-3 inline-flex items-center gap-1 rounded-full bg-blue px-2.5 py-1 font-mono text-[10px] font-bold uppercase tracking-wider text-white shadow">
+						✔ Verificada
 					</span>
 				)}
 				{showStatus && (
@@ -39,18 +39,21 @@ export function BusinessCard({
 						<StatusPill status={business.status} />
 					</div>
 				)}
-				<span className="absolute bottom-2 right-2 rounded-lg border-2 border-white bg-ink px-2 py-0.5 font-mono text-[10px] font-bold text-snow shadow">
-					{business.province.replace('_', ' ')}
-				</span>
+				{business.province && (
+					<span className="absolute bottom-3 left-3 rounded-full border border-white/30 bg-ink/80 px-2.5 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider text-snow backdrop-blur">
+						{PROVINCE_LABELS[business.province] ??
+							business.province}
+					</span>
+				)}
 			</Link>
-			<div className="flex flex-1 flex-col gap-1.5 p-4">
+			<div className="flex flex-1 flex-col gap-2 p-4">
 				<Link
 					to={`/empresas/${business.slug}`}
 					className="line-clamp-1 text-sm font-bold hover:text-blue"
 				>
 					{business.name}
 				</Link>
-				<span className="text-xs font-semibold text-blue">
+				<span className="chip border-blue/20 bg-blue/5 text-blue">
 					{business.category.name}
 				</span>
 				<p className="line-clamp-2 text-sm text-ink/60">

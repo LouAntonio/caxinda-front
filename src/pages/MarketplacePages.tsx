@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { usePageTitle } from '../hooks/usePageTitle';
 import {
 	Link,
@@ -17,7 +17,6 @@ import {
 	useGlobalSearch,
 	usePlans,
 	useReviews,
-	useSellerPublic,
 } from '../hooks/queries';
 import {
 	useAddToWishlist,
@@ -40,12 +39,12 @@ import { StatusPill } from '../components/ui/StatusPill';
 import { Stars } from '../components/ui/Stars';
 import { Avatar } from '../components/ui/Avatar';
 import { FilterPills } from '../components/ui/FilterPills';
-import { PerfDivider } from '../components/ui/PerfDivider';
+import { MobileFilterDrawer } from '../components/ui/FilterDrawer';
+import { Divider } from '../components/ui/Divider';
 import { Skeleton } from '../components/ui/Skeleton';
 import {
 	ChatSVG,
 	CheckSVG,
-	EyeSVG,
 	GlobeSVG,
 	PhoneSVG,
 	PinSVG,
@@ -65,14 +64,12 @@ import {
 	REPORT_REASONS,
 	type AdSort,
 	type BusinessSort,
-	type Province,
 	type ReportReason,
 	type ReportTarget,
 	type SearchItem,
 	type SearchSort,
 	type SearchType,
 } from '../types/api';
-import { useAuthStore } from '../store/auth';
 import { useWishlistCheck } from '../hooks/queries';
 
 // ================= Anúncios (lista) =================
@@ -86,7 +83,8 @@ export function AdsPage() {
 		searchParams.get('categoryIds')?.split(',').filter(Boolean) ?? [];
 	const sortBy = searchParams.get('sortBy') ?? 'newest';
 	const onlyFeatured = searchParams.get('featured') === 'true';
-	const province = searchParams.get('province') ?? '';
+	const selectedProvinces =
+		searchParams.get('provinces')?.split(',').filter(Boolean) ?? [];
 	const minPrice = searchParams.get('minPrice')
 		? Number(searchParams.get('minPrice'))
 		: undefined;
@@ -95,6 +93,7 @@ export function AdsPage() {
 		: undefined;
 	const page = Math.max(1, Number(searchParams.get('page')) || 1);
 	const [localQ, setLocalQ] = useState(q);
+	const [filtersOpen, setFiltersOpen] = useState(false);
 
 	const applySearch = () => {
 		setParam('q', localQ || undefined);
@@ -114,7 +113,10 @@ export function AdsPage() {
 				? selectedCategoryIds.join(',')
 				: undefined,
 		featured: onlyFeatured || undefined,
-		province: (province as Province) || undefined,
+		provinces:
+			selectedProvinces.length > 0
+				? selectedProvinces.join(',')
+				: undefined,
 		minPrice,
 		maxPrice,
 		sortBy: sortBy as AdSort,
@@ -146,91 +148,87 @@ export function AdsPage() {
 		setSearchParams(nextParams);
 	};
 
+	const filtersPanel = (
+		<>
+			<input
+				className="input"
+				placeholder="Pesquisar anúncios…"
+				value={localQ}
+				onChange={(e) => setLocalQ(e.target.value)}
+				onKeyDown={(e) => {
+					if (e.key === 'Enter') {
+						e.preventDefault();
+						applySearch();
+					}
+				}}
+			/>
+			<button
+				type="button"
+				onClick={() =>
+					setParam('featured', onlyFeatured ? undefined : 'true')
+				}
+				className={`w-full rounded-xl border-2 px-3 py-2 text-xs font-bold transition ${
+					onlyFeatured
+						? 'border-kwanza bg-kwanza/15 text-ink'
+						: 'border-ink/15 text-ink/50 hover:border-ink/30'
+				}`}
+			>
+				★ Apenas destaque
+			</button>
+			{(categories ?? []).length > 0 && (
+				<FilterPills
+					label="Categorias"
+					items={(categories ?? []).map((c) => ({
+						id: c.id,
+						name: c.name,
+						count: c.adCount,
+					}))}
+					selected={selectedCategoryIds}
+					onToggle={(id) => toggleArrayParam('categoryIds', id)}
+				/>
+			)}
+			<FilterPills
+				label="Províncias"
+				items={PROVINCES.map((p) => ({
+					id: p,
+					name: PROVINCE_LABELS[p] ?? p,
+				}))}
+				selected={selectedProvinces}
+				onToggle={(id) => toggleArrayParam('provinces', id)}
+			/>
+			<div className="flex gap-2">
+				<button
+					type="button"
+					onClick={applySearch}
+					className="flex-1 rounded-xl bg-blue px-3 py-2 text-xs font-bold text-white transition hover:opacity-90"
+				>
+					Pesquisar
+				</button>
+				{(q ||
+					selectedCategoryIds.length > 0 ||
+					onlyFeatured ||
+					selectedProvinces.length > 0 ||
+					sortBy !== 'newest') && (
+					<button
+						type="button"
+						onClick={clearFilters}
+						className="flex items-center justify-center rounded-xl border-2 border-ink/15 px-3 py-2 text-xs text-ink/50 transition hover:border-red/30 hover:text-red"
+						title="Limpar filtros"
+					>
+						✕
+					</button>
+				)}
+			</div>
+		</>
+	);
+
 	return (
 		<div className="mx-auto max-w-6xl px-4 py-10">
 			<h1 className="mb-6 font-display text-3xl font-black">Anúncios</h1>
 
 			<div className="flex gap-6">
 				<aside className="nice-scroll sticky top-20 hidden w-64 shrink-0 flex-col gap-5 self-start rounded-2xl border border-ink/10 bg-white p-4 lg:flex lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto">
-					<input
-						className="input"
-						placeholder="Pesquisar anúncios…"
-						value={localQ}
-						onChange={(e) => setLocalQ(e.target.value)}
-						onKeyDown={(e) => {
-							if (e.key === 'Enter') {
-								e.preventDefault();
-								applySearch();
-							}
-						}}
-					/>
-					<button
-						type="button"
-						onClick={() =>
-							setParam(
-								'featured',
-								onlyFeatured ? undefined : 'true',
-							)
-						}
-						className={`w-full rounded-xl border-2 px-3 py-2 text-xs font-bold transition ${
-							onlyFeatured
-								? 'border-kwanza bg-kwanza/15 text-ink'
-								: 'border-ink/15 text-ink/50 hover:border-ink/30'
-						}`}
-					>
-						★ Apenas destaque
-					</button>
-					{(categories ?? []).length > 0 && (
-						<FilterPills
-							label="Categorias"
-							items={(categories ?? []).map((c) => ({
-								id: c.id,
-								name: c.name,
-								count: c.adCount,
-							}))}
-							selected={selectedCategoryIds}
-							onToggle={(id) =>
-								toggleArrayParam('categoryIds', id)
-							}
-						/>
-					)}
-					<FilterPills
-						label="Províncias"
-						items={PROVINCES.map((p) => ({
-							id: p,
-							name: PROVINCE_LABELS[p] ?? p,
-						}))}
-						selected={province ? [province] : []}
-						onToggle={(id) =>
-							setParam(
-								'province',
-								province === id ? undefined : id,
-							)
-						}
-					/>
-					<div className="flex gap-2">
-						<button
-							type="button"
-							onClick={applySearch}
-							className="flex-1 rounded-xl bg-blue px-3 py-2 text-xs font-bold text-white transition hover:opacity-90"
-						>
-							Pesquisar
-						</button>
-						{(q ||
-							selectedCategoryIds.length > 0 ||
-							onlyFeatured ||
-							province ||
-							sortBy !== 'newest') && (
-							<button
-								type="button"
-								onClick={clearFilters}
-								className="flex items-center justify-center rounded-xl border-2 border-ink/15 px-3 py-2 text-xs text-ink/50 transition hover:border-red/30 hover:text-red"
-								title="Limpar filtros"
-							>
-								✕
-							</button>
-						)}
-					</div>
+					{filtersPanel}
 				</aside>
 
 				<div className="min-w-0 flex-1">
@@ -249,6 +247,13 @@ export function AdsPage() {
 						/>
 						<button
 							type="button"
+							onClick={() => setFiltersOpen(true)}
+							className="flex shrink-0 items-center justify-center rounded-xl border-2 border-ink/15 px-3 py-2 text-xs font-bold text-ink/60 transition hover:border-ink/40"
+						>
+							☰ Filtros
+						</button>
+						<button
+							type="button"
 							onClick={applySearch}
 							className="shrink-0 rounded-xl bg-blue px-3 py-2 text-xs font-bold text-white transition hover:opacity-90"
 						>
@@ -257,7 +262,7 @@ export function AdsPage() {
 						{(q ||
 							selectedCategoryIds.length > 0 ||
 							onlyFeatured ||
-							province ||
+							selectedProvinces.length > 0 ||
 							sortBy !== 'newest') && (
 							<button
 								type="button"
@@ -320,6 +325,13 @@ export function AdsPage() {
 					)}
 				</div>
 			</div>
+
+			<MobileFilterDrawer
+				open={filtersOpen}
+				onClose={() => setFiltersOpen(false)}
+			>
+				{filtersPanel}
+			</MobileFilterDrawer>
 		</div>
 	);
 }
@@ -334,7 +346,10 @@ export function AdDetailPage() {
 	const { isAuthenticated } = useSession();
 	const openConversation = useOpenConversation();
 	const { data: wishlistSaved } = useWishlistCheck(ad?.id);
-	const user = useAuthStore((s) => s.user);
+	const [activeImg, setActiveImg] = useState<string | null>(null);
+	useEffect(() => {
+		setActiveImg(null);
+	}, [slug]);
 
 	if (isLoading) {
 		return <AdDetailSkeleton />;
@@ -352,9 +367,13 @@ export function AdDetailPage() {
 		);
 	}
 
-	const isOwner = user?.id === ad.userId;
+	const gallery = ad.gallery ?? [];
+	const adImages = [ad.image, ...gallery.map((g) => g.url)].filter(
+		(u): u is string => Boolean(u),
+	);
+	const currentImg = activeImg ?? adImages[0] ?? null;
 
-	const contactSeller = () => {
+	const contactCaxinda = () => {
 		if (!isAuthenticated) {
 			void navigate('/auth/entrar', {
 				state: { from: `/anuncios/${ad.slug}` },
@@ -362,13 +381,30 @@ export function AdDetailPage() {
 			return;
 		}
 		void toast
-			.promise(openConversation.mutateAsync({ adId: ad.id }), {
-				loading: 'A abrir conversa…',
-				success: 'Conversa aberta.',
-				error: (err) => getApiError(err),
-			})
+			.promise(
+				openConversation.mutateAsync({ type: 'SUPPORT', adId: ad.id }),
+				{
+					loading: 'A abrir conversa com a Caxinda…',
+					success: 'Conversa aberta.',
+					error: (err) => getApiError(err),
+				},
+			)
 			.then((conv) => navigate(`/area/mensagens?id=${conv.id}`));
 	};
+
+	const specRows: { label: string; value: string }[] = [
+		{ label: 'Categoria', value: ad.category?.name ?? 'Geral' },
+		{
+			label: 'Província',
+			value: ad.province
+				? (PROVINCE_LABELS[ad.province] ?? ad.province)
+				: 'Angola',
+		},
+		{ label: 'Publicado', value: timeAgo(ad.createdAt) },
+		{ label: 'Visualizações', value: `${ad.views}` },
+		{ label: 'Verificado', value: ad.verified ? 'Sim' : 'Não' },
+		{ label: 'Estado', value: ad.status },
+	];
 
 	return (
 		<div className="mx-auto max-w-6xl px-4 py-10">
@@ -381,12 +417,12 @@ export function AdDetailPage() {
 			</nav>
 
 			<div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
-				<div>
-					<div className="overflow-hidden rounded-2xl border border-ink/10 bg-white">
-						<div className="relative aspect-video w-full overflow-hidden bg-snow-dark">
-							{ad.image ? (
+				<div className="flex min-w-0 flex-col gap-6">
+					<div className="card overflow-hidden">
+						<div className="relative aspect-[16/10] w-full overflow-hidden bg-snow-dark">
+							{currentImg ? (
 								<img
-									src={ad.image}
+									src={currentImg}
 									alt={ad.title}
 									className="h-full w-full object-cover"
 								/>
@@ -395,49 +431,91 @@ export function AdDetailPage() {
 									CX
 								</div>
 							)}
+							{adImages.length > 1 && (
+								<span className="absolute right-3 bottom-3 rounded-full bg-ink/70 px-2.5 py-1 font-mono text-[10px] font-bold text-white backdrop-blur">
+									{adImages.length} fotos
+								</span>
+							)}
 						</div>
-						{(ad.gallery ?? []).length > 0 && (
-							<div className="grid grid-cols-3 gap-2 p-2">
-								{(ad.gallery ?? [])
-									.slice(0, 3)
-									.map((g, idx) => (
+						{adImages.length > 1 && (
+							<div className="nice-scroll flex gap-2 overflow-x-auto border-t border-ink/10 bg-snow p-2">
+								{adImages.map((url, idx) => (
+									<button
+										type="button"
+										key={`${url}-${idx}`}
+										onClick={() => setActiveImg(url)}
+										className={`h-16 w-20 shrink-0 overflow-hidden rounded-lg border-2 transition ${
+											currentImg === url
+												? 'border-blue'
+												: 'border-transparent hover:border-ink/20'
+										}`}
+									>
 										<img
-											key={`${g.cloudinaryId}-${idx}`}
-											src={g.url}
+											src={url}
 											alt=""
-											className="aspect-square w-full rounded-lg object-cover"
+											className="h-full w-full object-cover"
 										/>
-									))}
+									</button>
+								))}
 							</div>
 						)}
 					</div>
+
+					<div className="card p-6">
+						<h2 className="kicker">Detalhes</h2>
+						<dl className="mt-4 grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-3">
+							{specRows.map((row) => (
+								<div key={row.label}>
+									<dt className="kicker">{row.label}</dt>
+									<dd className="mt-1 text-sm font-bold text-ink">
+										{row.value}
+									</dd>
+								</div>
+							))}
+						</dl>
+					</div>
+
+					<div className="card p-6">
+						<h2 className="kicker">Descrição</h2>
+						<p className="mt-3 whitespace-pre-line text-sm leading-relaxed text-ink/70">
+							{ad.description}
+						</p>
+					</div>
+
+					<div className="card p-6">
+						<ReportForm
+							targetType="AD"
+							targetId={ad.id}
+							targetLabel={ad.title}
+						/>
+					</div>
 				</div>
 
-				<aside className="flex flex-col gap-4">
-					<div className="card h-fit p-5 lg:sticky lg:top-20">
-						{ad.featured && (
-							<span className="tag tag-kwanza mb-3">
-								★ Destaque
-							</span>
-						)}
-						<div className="flex items-start justify-between gap-2">
-							<h1 className="text-balance font-display text-xl font-black leading-tight">
-								{ad.title}
-							</h1>
-							<div className="flex shrink-0 flex-col items-end gap-1.5">
-								{ad.verified && (
-									<span
-										className="stamp"
-										title="Anunciante verificado"
-									>
-										<CheckSVG width={12} height={12} /> OK
-									</span>
-								)}
-								<StatusPill status={ad.status} />
-							</div>
+				<aside className="lg:sticky lg:top-24 lg:self-start">
+					<div className="card gap-4 p-5">
+						<div className="flex flex-wrap items-center gap-1.5">
+							{ad.featured && (
+								<span className="tag tag-kwanza !px-2.5 !py-0.5">
+									★ Destaque
+								</span>
+							)}
+							{ad.verified && (
+								<span
+									className="stamp"
+									title="Anúncio verificado"
+								>
+									<CheckSVG width={12} height={12} />{' '}
+									Verificado
+								</span>
+							)}
+							<StatusPill status={ad.status} />
 						</div>
 
-						<p className="kicker mt-4 flex flex-wrap items-center gap-x-2 gap-y-1">
+						<h1 className="text-balance font-display text-xl font-black leading-tight">
+							{ad.title}
+						</h1>
+
+						<p className="kicker flex flex-wrap items-center gap-x-2 gap-y-1">
 							<span>{ad.category?.name ?? 'Geral'}</span>
 							{ad.province && (
 								<>
@@ -454,7 +532,7 @@ export function AdDetailPage() {
 							<span>{ad.views} visualizações</span>
 						</p>
 
-						<div className="mt-5">
+						<div className="mt-4">
 							{ad.price === null ? (
 								<span className="font-mono text-xl font-bold text-ink/50">
 									Sob consulta
@@ -477,78 +555,36 @@ export function AdDetailPage() {
 						</div>
 
 						{ad.averageRating !== null && (
-							<p className="mt-4 text-sm text-ink/60">
+							<p className="text-sm text-ink/60">
 								<Stars value={ad.averageRating} /> ·{' '}
 								{ad.reviewCount} avaliações
 							</p>
 						)}
 
-						<PerfDivider className="my-5" />
+						<Divider className="my-1" />
 
-						<SellerCard userId={ad.userId} />
-
-						{!isOwner ? (
-							<div className="mt-4 flex flex-col gap-2">
-								<button
-									className="btn-primary w-full"
-									onClick={contactSeller}
-									disabled={openConversation.isPending}
-								>
-									{openConversation.isPending && (
-										<ButtonLoader />
-									)}
-									<ChatSVG width={16} height={16} /> Mensagem
-									para o vendedor
-								</button>
-								{isAuthenticated && user && (
-									<WishlistToggle
-										adId={ad.id}
-										saved={wishlistSaved ?? false}
-									/>
-								)}
-							</div>
-						) : (
-							<Link
-								to={`/area/anuncios/${ad.id}/editar`}
-								className="btn-outline mt-4 w-full"
-							>
-								Editar anúncio
-							</Link>
+						<button
+							className="btn-primary w-full"
+							onClick={contactCaxinda}
+							disabled={openConversation.isPending}
+						>
+							{openConversation.isPending && <ButtonLoader />}
+							<ChatSVG width={16} height={16} /> Contactar a
+							Caxinda
+						</button>
+						{isAuthenticated && (
+							<WishlistToggle
+								adId={ad.id}
+								saved={wishlistSaved ?? false}
+							/>
 						)}
+						<p className="text-xs leading-relaxed text-ink/40">
+							Anúncio gerido pela Caxinda. A equipa de apoio
+							responde às tuas mensagens sobre este anúncio.
+						</p>
 					</div>
 				</aside>
 			</div>
-
-			<section className="mt-8 grid gap-6 lg:grid-cols-[1fr_360px]">
-				<div className="card p-6">
-					<h2 className="kicker">Descrição</h2>
-					<p className="mt-3 whitespace-pre-line text-sm leading-relaxed text-ink/70">
-						{ad.description}
-					</p>
-					<div className="mt-6 flex flex-wrap items-center gap-x-6 gap-y-2 border-t-2 border-dashed border-ink/10 pt-4 text-xs text-ink/50">
-						<span className="flex items-center gap-1.5">
-							<PinSVG width={14} height={14} />
-							{ad.province
-								? (PROVINCE_LABELS[ad.province] ?? ad.province)
-								: 'Angola'}
-						</span>
-						<span className="flex items-center gap-1.5">
-							<EyeSVG width={14} height={14} /> {ad.views}{' '}
-							visualizações
-						</span>
-						<span className="flex items-center gap-1.5">
-							Publicado {timeAgo(ad.createdAt)}
-						</span>
-					</div>
-				</div>
-				<div className="card h-fit p-6">
-					<ReportForm
-						targetType="AD"
-						targetId={ad.id}
-						targetLabel={ad.title}
-					/>
-				</div>
-			</section>
 
 			<ReviewSection target={{ adId: ad.id }} />
 		</div>
@@ -587,66 +623,6 @@ function WishlistToggle({ adId, saved }: { adId: string; saved: boolean }) {
 		>
 			{isSaved ? '★ Guardado' : '☆ Guardar'}
 		</button>
-	);
-}
-
-// ================= Cartão vendedor =================
-
-function SellerCard({ userId }: { userId: string }) {
-	const { data: seller } = useSellerPublic(userId);
-	const navigate = useNavigate();
-	const { isAuthenticated } = useSession();
-	const openConversation = useOpenConversation();
-
-	if (!seller) {
-		return null;
-	}
-
-	const messageSeller = () => {
-		if (!isAuthenticated) {
-			void navigate('/auth/entrar');
-			return;
-		}
-		void toast.promise(
-			openConversation.mutateAsync({
-				type: 'AD',
-				adId: undefined,
-				businessId: undefined,
-			}),
-			{
-				loading: 'A abrir conversa…',
-				success: 'Conversa aberta.',
-				error: (err) => getApiError(err),
-			},
-		);
-	};
-
-	return (
-		<div className="flex items-center gap-3">
-			<Avatar
-				src={seller.image}
-				name={fullName(seller.name, seller.surname)}
-				size="md"
-			/>
-			<div className="min-w-0 flex-1">
-				<p className="kicker">Vendedor</p>
-				<p className="truncate text-sm font-bold">
-					{fullName(seller.name, seller.surname)}
-				</p>
-			</div>
-			{seller.isVerified && (
-				<span className="stamp shrink-0" title="Vendedor verificado">
-					<CheckSVG width={12} height={12} /> OK
-				</span>
-			)}
-			<button
-				className="btn-ghost !bg-snow"
-				title="Mensagem"
-				onClick={messageSeller}
-			>
-				<ChatSVG width={16} height={16} />
-			</button>
-		</div>
 	);
 }
 
@@ -712,6 +688,68 @@ export function BusinessesPage() {
 		setSearchParams(nextParams);
 	};
 
+	const [filtersOpen, setFiltersOpen] = useState(false);
+
+	const filtersPanel = (
+		<>
+			<input
+				className="input"
+				placeholder="Pesquisar empresas…"
+				value={localQ}
+				onChange={(e) => setLocalQ(e.target.value)}
+				onKeyDown={(e) => {
+					if (e.key === 'Enter') {
+						e.preventDefault();
+						applySearch();
+					}
+				}}
+			/>
+			{(categories ?? []).length > 0 && (
+				<FilterPills
+					label="Categorias"
+					items={(categories ?? []).map((c) => ({
+						id: c.id,
+						name: c.name,
+						count: c.businessCount,
+					}))}
+					selected={selectedCategoryIds}
+					onToggle={(id) => toggleArrayParam('categoryIds', id)}
+				/>
+			)}
+			<FilterPills
+				label="Províncias"
+				items={PROVINCES.map((p) => ({
+					id: p,
+					name: PROVINCE_LABELS[p] ?? p,
+				}))}
+				selected={selectedProvinces}
+				onToggle={(id) => toggleArrayParam('provinces', id)}
+			/>
+			<div className="flex gap-2">
+				<button
+					type="button"
+					onClick={applySearch}
+					className="flex-1 rounded-xl bg-blue px-3 py-2 text-xs font-bold text-white transition hover:opacity-90"
+				>
+					Pesquisar
+				</button>
+				{(q ||
+					selectedCategoryIds.length > 0 ||
+					selectedProvinces.length > 0 ||
+					sortBy !== 'newest') && (
+					<button
+						type="button"
+						onClick={clearFilters}
+						className="flex items-center justify-center rounded-xl border-2 border-ink/15 px-3 py-2 text-xs text-ink/50 transition hover:border-red/30 hover:text-red"
+						title="Limpar filtros"
+					>
+						✕
+					</button>
+				)}
+			</div>
+		</>
+	);
+
 	return (
 		<div className="mx-auto max-w-6xl px-4 py-10">
 			<div className="mb-6 flex flex-wrap items-end justify-between gap-4">
@@ -723,63 +761,7 @@ export function BusinessesPage() {
 
 			<div className="flex gap-6">
 				<aside className="nice-scroll sticky top-20 hidden w-64 shrink-0 flex-col gap-5 self-start rounded-2xl border border-ink/10 bg-white p-4 lg:flex lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto">
-					<input
-						className="input"
-						placeholder="Pesquisar empresas…"
-						value={localQ}
-						onChange={(e) => setLocalQ(e.target.value)}
-						onKeyDown={(e) => {
-							if (e.key === 'Enter') {
-								e.preventDefault();
-								applySearch();
-							}
-						}}
-					/>
-					{(categories ?? []).length > 0 && (
-						<FilterPills
-							label="Categorias"
-							items={(categories ?? []).map((c) => ({
-								id: c.id,
-								name: c.name,
-								count: c.businessCount,
-							}))}
-							selected={selectedCategoryIds}
-							onToggle={(id) =>
-								toggleArrayParam('categoryIds', id)
-							}
-						/>
-					)}
-					<FilterPills
-						label="Províncias"
-						items={PROVINCES.map((p) => ({
-							id: p,
-							name: PROVINCE_LABELS[p] ?? p,
-						}))}
-						selected={selectedProvinces}
-						onToggle={(id) => toggleArrayParam('provinces', id)}
-					/>
-					<div className="flex gap-2">
-						<button
-							type="button"
-							onClick={applySearch}
-							className="flex-1 rounded-xl bg-blue px-3 py-2 text-xs font-bold text-white transition hover:opacity-90"
-						>
-							Pesquisar
-						</button>
-						{(q ||
-							selectedCategoryIds.length > 0 ||
-							selectedProvinces.length > 0 ||
-							sortBy !== 'newest') && (
-							<button
-								type="button"
-								onClick={clearFilters}
-								className="flex items-center justify-center rounded-xl border-2 border-ink/15 px-3 py-2 text-xs text-ink/50 transition hover:border-red/30 hover:text-red"
-								title="Limpar filtros"
-							>
-								✕
-							</button>
-						)}
-					</div>
+					{filtersPanel}
 				</aside>
 
 				<div className="min-w-0 flex-1">
@@ -796,6 +778,13 @@ export function BusinessesPage() {
 								}
 							}}
 						/>
+						<button
+							type="button"
+							onClick={() => setFiltersOpen(true)}
+							className="flex shrink-0 items-center justify-center rounded-xl border-2 border-ink/15 px-3 py-2 text-xs font-bold text-ink/60 transition hover:border-ink/40"
+						>
+							☰ Filtros
+						</button>
 						<button
 							type="button"
 							onClick={applySearch}
@@ -861,6 +850,13 @@ export function BusinessesPage() {
 					)}
 				</div>
 			</div>
+
+			<MobileFilterDrawer
+				open={filtersOpen}
+				onClose={() => setFiltersOpen(false)}
+			>
+				{filtersPanel}
+			</MobileFilterDrawer>
 		</div>
 	);
 }
@@ -950,7 +946,8 @@ export function BusinessDetailPage() {
 									<span>{business.category.name}</span>
 									<span aria-hidden>·</span>
 									<span>
-										{business.province.replace('_', ' ')}
+										{PROVINCE_LABELS[business.province] ??
+											business.province}
 									</span>
 								</p>
 							</div>
@@ -961,126 +958,138 @@ export function BusinessDetailPage() {
 							</span>
 						)}
 					</div>
-					<PerfDivider className="mt-3" />
+					<Divider className="mt-3" />
 				</div>
 
-				<div className="grid gap-6 p-6 lg:grid-cols-[1fr_320px]">
-					<div>
-						<h2 className="kicker">Sobre</h2>
-						<p className="mt-3 whitespace-pre-line text-sm leading-relaxed text-ink/70">
-							{business.description}
-						</p>
-						{business.address && (
-							<p className="mt-3 flex items-center gap-1.5 text-sm text-ink/60">
-								<PinSVG width={15} height={15} />
-								{business.address}
+				<div className="grid gap-6 p-6 lg:grid-cols-[minmax(0,1fr)_340px]">
+					<div className="flex min-w-0 flex-col gap-6">
+						<section className="card gap-3 p-6">
+							<h2 className="kicker">Sobre</h2>
+							<p className="mt-2 whitespace-pre-line text-sm leading-relaxed text-ink/70">
+								{business.description}
 							</p>
-						)}
-						<div className="mt-4 flex items-center gap-2">
-							<Stars value={business.averageRating} />
-							<span className="text-xs text-ink/50">
-								· {business.reviewCount} avaliações ·{' '}
-								{business.viewCount} visualizações
-							</span>
-						</div>
-						{business.gallery.length > 0 && (
-							<div className="mt-6 grid grid-cols-3 gap-2">
-								{business.gallery.map((g, idx) => (
-									<img
-										key={`${g.cloudinaryId}-${idx}`}
-										src={g.url}
-										alt=""
-										className="aspect-square w-full rounded-xl object-cover"
-									/>
-								))}
+							{business.address && (
+								<p className="flex items-center gap-1.5 text-sm text-ink/60">
+									<PinSVG width={15} height={15} />
+									{business.address}
+								</p>
+							)}
+							<div className="flex items-center gap-2">
+								<Stars value={business.averageRating} />
+								<span className="text-xs text-ink/50">
+									· {business.reviewCount} avaliações ·{' '}
+									{business.viewCount} visualizações
+								</span>
 							</div>
+						</section>
+
+						{business.gallery.length > 0 && (
+							<section className="card p-6">
+								<h2 className="kicker">Álbum</h2>
+								<div className="mt-4 grid grid-cols-2 gap-2.5 md:grid-cols-3">
+									{business.gallery.map((g, idx) => (
+										<img
+											key={`${g.cloudinaryId}-${idx}`}
+											src={g.url}
+											alt={`${business.name} ${idx + 1}`}
+											className="aspect-square w-full rounded-xl object-cover"
+										/>
+									))}
+								</div>
+							</section>
 						)}
 					</div>
 
-					<aside className="flex flex-col gap-3">
-						<div className="card gap-2 p-4">
-							<h3 className="kicker mb-2">Contactos</h3>
-							<PerfDivider className="-mt-1.5 mb-3" />
-							{business.phone && (
-								<button
-									className="btn-outline w-full justify-start"
-									onClick={() => contact('phone')}
+					<aside className="lg:sticky lg:top-24 lg:self-start">
+						<div className="flex flex-col gap-3">
+							<div className="card gap-2 p-4">
+								<h3 className="kicker mb-1">Contactos</h3>
+								<Divider className="mb-3" />
+								{business.phone && (
+									<button
+										className="btn-outline w-full justify-start"
+										onClick={() => contact('phone')}
+									>
+										<PhoneSVG width={16} height={16} />{' '}
+										Ligar
+										<span className="ml-auto font-mono text-[10px] opacity-70">
+											{business.phone}
+										</span>
+									</button>
+								)}
+								{business.whatsapp && (
+									<button
+										className="btn-outline w-full justify-start"
+										onClick={() => contact('whatsapp')}
+									>
+										<WhatsAppSVG width={16} height={16} />{' '}
+										WhatsApp
+										<span className="ml-auto font-mono text-[10px] opacity-70">
+											{business.whatsapp}
+										</span>
+									</button>
+								)}
+								{business.email && (
+									<button
+										className="btn-outline w-full justify-start"
+										onClick={() => contact('email')}
+									>
+										<EnvelopeSVG width={16} height={16} />{' '}
+										Email
+										<span className="ml-auto font-mono text-[10px] opacity-70">
+											{business.email}
+										</span>
+									</button>
+								)}
+								{business.website && (
+									<button
+										className="btn-outline w-full justify-start"
+										onClick={() => contact('website')}
+									>
+										<GlobeSVG width={16} height={16} />{' '}
+										Website
+										<span className="ml-auto font-mono text-[10px] opacity-70">
+											{business.website.replace(
+												/^https?:\/\//,
+												'',
+											)}
+										</span>
+									</button>
+								)}
+							</div>
+							{!isOwner && (
+								<Link
+									to={`/auth/entrar`}
+									className="btn-blue w-full"
 								>
-									<PhoneSVG width={16} height={16} /> Ligar
-									<span className="ml-auto font-mono text-[10px] opacity-70">
-										{business.phone}
-									</span>
-								</button>
+									<ChatSVG width={16} height={16} /> Mensagem
+									→
+								</Link>
 							)}
-							{business.whatsapp && (
-								<button
-									className="btn-outline w-full justify-start"
-									onClick={() => contact('whatsapp')}
+							{isOwner && (
+								<Link
+									to={`/area/empresas/${business.id}/editar`}
+									className="btn-blue w-full"
 								>
-									<WhatsAppSVG width={16} height={16} />{' '}
-									WhatsApp
-									<span className="ml-auto font-mono text-[10px] opacity-70">
-										{business.whatsapp}
-									</span>
-								</button>
+									Editar empresa
+								</Link>
 							)}
-							{business.email && (
-								<button
-									className="btn-outline w-full justify-start"
-									onClick={() => contact('email')}
-								>
-									<EnvelopeSVG width={16} height={16} /> Email
-									<span className="ml-auto font-mono text-[10px] opacity-70">
-										{business.email}
-									</span>
-								</button>
-							)}
-							{business.website && (
-								<button
-									className="btn-outline w-full justify-start"
-									onClick={() => contact('website')}
-								>
-									<GlobeSVG width={16} height={16} /> Website
-									<span className="ml-auto font-mono text-[10px] opacity-70">
-										{business.website.replace(
-											/^https?:\/\//,
-											'',
-										)}
-									</span>
-								</button>
-							)}
+							<Link
+								to={{
+									pathname: `/planos`,
+									search: `?business=${business.id}`,
+								}}
+								className={
+									isOwner
+										? 'btn-kwanza w-full'
+										: 'btn-ghost w-full'
+								}
+							>
+								{isOwner
+									? 'Assinar plano para esta empresa'
+									: 'Ver planos'}
+							</Link>
 						</div>
-						{!isOwner && (
-							<Link
-								to={`/auth/entrar`}
-								className="btn-blue w-full"
-							>
-								<ChatSVG width={16} height={16} /> Mensagem →
-							</Link>
-						)}
-						{isOwner && (
-							<Link
-								to={`/area/empresas/${business.id}/editar`}
-								className="btn-blue w-full"
-							>
-								Editar empresa
-							</Link>
-						)}
-						<Link
-							to={{
-								pathname: `/planos`,
-								search: `?business=${business.id}`,
-							}}
-							className={
-								isOwner
-									? 'btn-kwanza w-full'
-									: 'btn-ghost w-full'
-							}
-						>
-							{isOwner
-								? 'Assinar plano para esta empresa'
-								: 'Ver planos'}
-						</Link>
 					</aside>
 				</div>
 			</div>
@@ -1106,7 +1115,7 @@ function ReviewSection({
 	return (
 		<section className="card p-6">
 			<h2 className="kicker">Avaliações</h2>
-			<PerfDivider className="mt-1.5 mb-4" />
+			<Divider className="mt-1.5 mb-4" />
 
 			{inputDisabled ? (
 				<p className="mt-3 text-sm text-ink/50">
@@ -1351,13 +1360,15 @@ const SEARCH_TYPES: { id: string; label: string; type?: SearchType }[] = [
 export function SearchPage() {
 	usePageTitle('Pesquisa');
 	const [searchParams, setSearchParams] = useSearchParams();
-	const navigate = useNavigate();
 	const q = searchParams.get('q') ?? '';
+	const [localQ, setLocalQ] = useState(q);
+	const [filtersOpen, setFiltersOpen] = useState(false);
 	const typeParam = searchParams.get('type');
 	const type: SearchType | null =
 		typeParam === 'AD' || typeParam === 'BUSINESS' ? typeParam : null;
 	const categoryId = searchParams.get('categoryId') ?? undefined;
-	const province = searchParams.get('province') ?? undefined;
+	const selectedProvinces =
+		searchParams.get('provinces')?.split(',').filter(Boolean) ?? [];
 	const rawSort = searchParams.get('sortBy');
 	const sortBy: SearchSort =
 		rawSort === 'newest' || rawSort === 'oldest' ? rawSort : 'relevance';
@@ -1368,7 +1379,7 @@ export function SearchPage() {
 		q,
 		type: type ?? undefined,
 		categoryId,
-		province,
+		provinces: selectedProvinces.length > 0 ? selectedProvinces : undefined,
 		sortBy,
 		page: 1,
 		limit: 20,
@@ -1385,9 +1396,90 @@ export function SearchPage() {
 		setSearchParams(next);
 	};
 
+	const toggleArrayParam = (key: string, value: string) => {
+		const current = searchParams.get(key)?.split(',').filter(Boolean) ?? [];
+		const next = new URLSearchParams(searchParams);
+		const updated = current.includes(value)
+			? current.filter((v) => v !== value)
+			: [...current, value];
+		if (updated.length === 0) next.delete(key);
+		else next.set(key, updated.join(','));
+		setSearchParams(next);
+	};
+
+	const applySearch = () => {
+		const next = new URLSearchParams(searchParams);
+		if (localQ) next.set('q', localQ);
+		else next.delete('q');
+		setSearchParams(next);
+	};
+
 	const clearFilters = () => {
 		setSearchParams(new URLSearchParams());
+		setLocalQ('');
 	};
+
+	const filtersPanel = (
+		<>
+			<div>
+				<p className="mb-2 text-xs font-bold uppercase tracking-widest text-ink/50">
+					Tipo
+				</p>
+				<div className="flex flex-wrap gap-1.5">
+					{SEARCH_TYPES.map((t) => (
+						<button
+							key={t.id}
+							type="button"
+							onClick={() => setParam('type', t.type)}
+							className={`rounded-full px-3 py-1.5 text-xs font-bold transition ${
+								activeType === t.id
+									? 'bg-ink text-white'
+									: 'bg-ink/5 text-ink/70 hover:bg-ink/10'
+							}`}
+						>
+							{t.label}
+						</button>
+					))}
+				</div>
+			</div>
+
+			{type !== 'BUSINESS' &&
+				(categoryOptions.length > 0 || adCategories.length > 0) && (
+					<FilterPills
+						label="Categorias"
+						items={categoryOptions.map((c) => ({
+							id: c.id,
+							name: c.name,
+						}))}
+						selected={categoryId ? [categoryId] : []}
+						onToggle={(id) =>
+							setParam(
+								'categoryId',
+								categoryId === id ? undefined : id,
+							)
+						}
+					/>
+				)}
+
+			<FilterPills
+				label="Províncias"
+				items={PROVINCES.map((p) => ({
+					id: p,
+					name: PROVINCE_LABELS[p] ?? p,
+				}))}
+				selected={selectedProvinces}
+				onToggle={(id) => toggleArrayParam('provinces', id)}
+			/>
+
+			<button
+				type="button"
+				onClick={clearFilters}
+				className="flex w-full items-center justify-center gap-1.5 rounded-xl border border-ink/15 px-3 py-2 text-xs font-bold text-ink/60 transition hover:border-red hover:text-red"
+			>
+				✕ Limpar filtros
+			</button>
+		</>
+	);
 
 	return (
 		<div className="mx-auto max-w-6xl px-4 py-10">
@@ -1396,94 +1488,53 @@ export function SearchPage() {
 				className="mt-4 flex gap-2"
 				onSubmit={(e) => {
 					e.preventDefault();
-					void navigate(
-						`/busca?q=${encodeURIComponent(q)}${type ? `&type=${type}` : ''}`,
-					);
+					applySearch();
 				}}
 			>
 				<input
 					className="input"
 					placeholder="O que procuras hoje?"
-					value={q}
-					onChange={(e) =>
-						setSearchParams((prev) => {
-							const next = new URLSearchParams(prev);
-							next.set('q', e.target.value);
-							return next;
-						})
-					}
+					value={localQ}
+					onChange={(e) => setLocalQ(e.target.value)}
 				/>
 				<button className="btn-primary">Buscar</button>
 			</form>
 
 			<div className="mt-8 flex flex-col gap-6 lg:flex-row">
-				<aside className="nice-scroll flex flex-col gap-5 self-start rounded-2xl border border-ink/10 bg-white p-4 lg:sticky lg:top-20 lg:w-64 lg:shrink-0 lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto">
-					<div>
-						<p className="mb-2 text-xs font-bold uppercase tracking-widest text-ink/50">
-							Tipo
-						</p>
-						<div className="flex flex-wrap gap-1.5">
-							{SEARCH_TYPES.map((t) => (
-								<button
-									key={t.id}
-									type="button"
-									onClick={() => setParam('type', t.type)}
-									className={`rounded-full px-3 py-1.5 text-xs font-bold transition ${
-										activeType === t.id
-											? 'bg-ink text-white'
-											: 'bg-ink/5 text-ink/70 hover:bg-ink/10'
-									}`}
-								>
-									{t.label}
-								</button>
-							))}
-						</div>
-					</div>
-
-					{type !== 'BUSINESS' &&
-						(categoryOptions.length > 0 ||
-							adCategories.length > 0) && (
-							<FilterPills
-								label="Categorias"
-								items={categoryOptions.map((c) => ({
-									id: c.id,
-									name: c.name,
-								}))}
-								selected={categoryId ? [categoryId] : []}
-								onToggle={(id) =>
-									setParam(
-										'categoryId',
-										categoryId === id ? undefined : id,
-									)
-								}
-							/>
-						)}
-
-					<FilterPills
-						label="Províncias"
-						items={PROVINCES.map((p) => ({
-							id: p,
-							name: PROVINCE_LABELS[p] ?? p,
-						}))}
-						selected={province ? [province] : []}
-						onToggle={(id) =>
-							setParam(
-								'province',
-								province === id ? undefined : id,
-							)
-						}
-					/>
-
-					<button
-						type="button"
-						onClick={clearFilters}
-						className="flex w-full items-center justify-center gap-1.5 rounded-xl border border-ink/15 px-3 py-2 text-xs font-bold text-ink/60 transition hover:border-red hover:text-red"
-					>
-						✕ Limpar filtros
-					</button>
+				<aside className="nice-scroll sticky top-20 hidden w-64 shrink-0 flex-col gap-5 self-start rounded-2xl border border-ink/10 bg-white p-4 lg:flex lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto">
+					{filtersPanel}
 				</aside>
 
 				<div className="min-w-0 flex-1">
+					<div className="mb-4 flex flex-wrap items-center gap-2 lg:hidden">
+						<input
+							className="input flex-1"
+							placeholder="O que procuras hoje?"
+							value={localQ}
+							onChange={(e) => setLocalQ(e.target.value)}
+							onKeyDown={(e) => {
+								if (e.key === 'Enter') {
+									e.preventDefault();
+									applySearch();
+								}
+							}}
+						/>
+						<button
+							type="button"
+							onClick={() => setFiltersOpen(true)}
+							className="flex shrink-0 items-center justify-center rounded-xl border-2 border-ink/15 px-3 py-2 text-xs font-bold text-ink/60 transition hover:border-ink/40"
+						>
+							☰ Filtros
+						</button>
+						<button
+							type="button"
+							onClick={applySearch}
+							className="shrink-0 rounded-xl bg-blue px-3 py-2 text-xs font-bold text-white transition hover:opacity-90"
+						>
+							Pesquisar
+						</button>
+					</div>
+
 					{isLoading ? (
 						<div className="flex flex-col gap-3" aria-hidden>
 							{Array.from({ length: 5 }).map((_, i) => (
@@ -1552,6 +1603,13 @@ export function SearchPage() {
 					)}
 				</div>
 			</div>
+
+			<MobileFilterDrawer
+				open={filtersOpen}
+				onClose={() => setFiltersOpen(false)}
+			>
+				{filtersPanel}
+			</MobileFilterDrawer>
 		</div>
 	);
 }

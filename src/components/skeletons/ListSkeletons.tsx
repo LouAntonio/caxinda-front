@@ -1,5 +1,4 @@
 import { Skeleton } from '../ui/Skeleton';
-import { PerfDivider } from '../ui/PerfDivider';
 import { AdCardSkeletonGrid } from '../ads/AdCardSkeleton';
 import { BusinessCardSkeletonGrid } from '../businesses/BusinessCardSkeleton';
 
@@ -91,7 +90,7 @@ export function PlansListSkeleton() {
 					<div key={i} className="card items-center p-6">
 						<Skeleton className="mb-3 h-6 w-28 rounded-full bg-kwanza/20" />
 						<Skeleton className="h-4 w-32 rounded" />
-						<PerfDivider className="my-4 w-full" />
+						<Skeleton className="my-4 h-px w-full" />
 						<div className="space-y-2">
 							<Skeleton className="h-3 w-24 rounded" />
 							<Skeleton className="h-3 w-20 rounded" />
