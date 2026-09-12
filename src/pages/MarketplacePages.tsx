@@ -34,7 +34,7 @@ import { BusinessCardSkeletonGrid } from '../components/businesses/BusinessCardS
 import { AdDetailSkeleton } from '../components/skeletons/AdDetailSkeleton';
 import { BusinessDetailSkeleton } from '../components/skeletons/BusinessDetailSkeleton';
 import { Pagination } from '../components/ui/Pagination';
-import { ButtonLoader, PageLoader } from '../components/ui/Spinner';
+import { ButtonLoader } from '../components/ui/Spinner';
 import { EmptyState } from '../components/ui/EmptyState';
 import { StatusPill } from '../components/ui/StatusPill';
 import { Stars } from '../components/ui/Stars';
@@ -1600,7 +1600,22 @@ export function PlansPage() {
 
 			<div className="mx-auto max-w-6xl px-4 py-12">
 				{isLoading ? (
-					<PageLoader />
+					<div className="grid gap-5 md:grid-cols-3" aria-hidden>
+						{[0, 1, 2].map((i) => (
+							<div
+								key={i}
+								className="overflow-hidden rounded-2xl border border-ink/10 bg-white"
+							>
+								<div className="bg-ink p-6">
+									<Skeleton className="h-6 w-28 rounded-full bg-snow/20" />
+									<Skeleton className="mt-2 h-4 w-40 rounded bg-snow/10" />
+								</div>
+								<div className="p-6">
+									<Skeleton className="h-24 w-full rounded-xl bg-kwanza/20" />
+								</div>
+							</div>
+						))}
+					</div>
 				) : (
 					<div className="grid gap-5 md:grid-cols-3">
 						{plans.map((plan) => {

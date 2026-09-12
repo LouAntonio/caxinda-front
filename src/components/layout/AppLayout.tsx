@@ -4,7 +4,7 @@ import { Footer } from './Footer';
 import { useSocketEvents } from '../../hooks/useSocketEvents';
 import { useSession } from '../../hooks/useSession';
 import { useScrollToTop } from '../../hooks/useScrollToTop';
-import { PageLoader } from '../ui/Spinner';
+import { PageShellSkeleton } from '../skeletons/ListSkeletons';
 import type { Role } from '../../types/api';
 
 export function AppLayout() {
@@ -26,7 +26,7 @@ export function RequireAuth({ children }: { children: React.ReactNode }) {
 	const location = useLocation();
 
 	if (isLoading) {
-		return <PageLoader />;
+		return <PageShellSkeleton />;
 	}
 	if (!isAuthenticated) {
 		return (
@@ -40,7 +40,7 @@ export function RequireGuest({ children }: { children: React.ReactNode }) {
 	const { isAuthenticated, isLoading } = useSession();
 
 	if (isLoading) {
-		return <PageLoader />;
+		return <PageShellSkeleton />;
 	}
 	if (isAuthenticated) {
 		return <Navigate to="/" replace />;
@@ -58,7 +58,7 @@ export function RequireRole({
 	const { user, isAuthenticated, isLoading } = useSession();
 
 	if (isLoading) {
-		return <PageLoader />;
+		return <PageShellSkeleton />;
 	}
 	if (!isAuthenticated) {
 		return <Navigate to="/auth/entrar" replace />;

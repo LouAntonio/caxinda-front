@@ -1,4 +1,4 @@
-import { lazy, Suspense, type ComponentType } from 'react';
+import { lazy, Suspense, type ComponentType, type ReactNode } from 'react';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import {
 	AppLayout,
@@ -8,45 +8,82 @@ import {
 } from './components/layout/AppLayout';
 import { AuthLayout } from './components/layout/AuthLayout';
 import { AreaLayout } from './components/layout/AreaLayout';
-import { PageLoader } from './components/ui/Spinner';
+import { AdDetailSkeleton } from './components/skeletons/AdDetailSkeleton';
+import { BusinessDetailSkeleton } from './components/skeletons/BusinessDetailSkeleton';
+import {
+	AdsListSkeleton,
+	BusinessesListSkeleton,
+	PlansListSkeleton,
+	RowsSkeleton,
+	SearchListSkeleton,
+} from './components/skeletons/ListSkeletons';
+import {
+	AuthSkeleton,
+	FormSkeleton,
+	TextPageSkeleton,
+} from './components/skeletons/FormSkeletons';
+import {
+	DashboardSkeleton,
+	TableSkeleton,
+} from './components/skeletons/SkeletonsTables';
+import {
+	ChatSkeleton,
+	LandingSkeleton,
+} from './components/skeletons/AppSkeletons';
 
-const lazyComponent = (loader: () => Promise<{ default: ComponentType }>) => {
+const lazyComponent = (
+	loader: () => Promise<{ default: ComponentType }>,
+	fallback?: ReactNode,
+) => {
 	const Comp = lazy(loader);
 	return function LazyWrapper(props: Record<string, never>) {
 		return (
-			<Suspense fallback={<PageLoader />}>
+			<Suspense fallback={fallback ?? null}>
 				<Comp {...props} />
 			</Suspense>
 		);
 	};
 };
 
-const LandingPage = lazyComponent(() => import('./pages/LandingPage'));
+const LandingPage = lazyComponent(
+	() => import('./pages/LandingPage'),
+	<LandingSkeleton />,
+);
 const { SobrePage, TermosPage, PoliticasPage, CookiesPage, ContactosPage } = {
-	SobrePage: lazyComponent(() =>
-		import('./pages/InstitutionalPages').then((m) => ({
-			default: m.SobrePage,
-		})),
+	SobrePage: lazyComponent(
+		() =>
+			import('./pages/InstitutionalPages').then((m) => ({
+				default: m.SobrePage,
+			})),
+		<TextPageSkeleton />,
 	),
-	TermosPage: lazyComponent(() =>
-		import('./pages/InstitutionalPages').then((m) => ({
-			default: m.TermosPage,
-		})),
+	TermosPage: lazyComponent(
+		() =>
+			import('./pages/InstitutionalPages').then((m) => ({
+				default: m.TermosPage,
+			})),
+		<TextPageSkeleton />,
 	),
-	PoliticasPage: lazyComponent(() =>
-		import('./pages/InstitutionalPages').then((m) => ({
-			default: m.PoliticasPage,
-		})),
+	PoliticasPage: lazyComponent(
+		() =>
+			import('./pages/InstitutionalPages').then((m) => ({
+				default: m.PoliticasPage,
+			})),
+		<TextPageSkeleton />,
 	),
-	CookiesPage: lazyComponent(() =>
-		import('./pages/InstitutionalPages').then((m) => ({
-			default: m.CookiesPage,
-		})),
+	CookiesPage: lazyComponent(
+		() =>
+			import('./pages/InstitutionalPages').then((m) => ({
+				default: m.CookiesPage,
+			})),
+		<TextPageSkeleton />,
 	),
-	ContactosPage: lazyComponent(() =>
-		import('./pages/InstitutionalPages').then((m) => ({
-			default: m.ContactosPage,
-		})),
+	ContactosPage: lazyComponent(
+		() =>
+			import('./pages/InstitutionalPages').then((m) => ({
+				default: m.ContactosPage,
+			})),
+		<TextPageSkeleton />,
 	),
 };
 const {
@@ -58,35 +95,47 @@ const {
 	PlansPage,
 	NotFoundPage,
 } = {
-	AdsPage: lazyComponent(() =>
-		import('./pages/MarketplacePages').then((m) => ({
-			default: m.AdsPage,
-		})),
+	AdsPage: lazyComponent(
+		() =>
+			import('./pages/MarketplacePages').then((m) => ({
+				default: m.AdsPage,
+			})),
+		<AdsListSkeleton />,
 	),
-	AdDetailPage: lazyComponent(() =>
-		import('./pages/MarketplacePages').then((m) => ({
-			default: m.AdDetailPage,
-		})),
+	AdDetailPage: lazyComponent(
+		() =>
+			import('./pages/MarketplacePages').then((m) => ({
+				default: m.AdDetailPage,
+			})),
+		<AdDetailSkeleton />,
 	),
-	BusinessesPage: lazyComponent(() =>
-		import('./pages/MarketplacePages').then((m) => ({
-			default: m.BusinessesPage,
-		})),
+	BusinessesPage: lazyComponent(
+		() =>
+			import('./pages/MarketplacePages').then((m) => ({
+				default: m.BusinessesPage,
+			})),
+		<BusinessesListSkeleton />,
 	),
-	BusinessDetailPage: lazyComponent(() =>
-		import('./pages/MarketplacePages').then((m) => ({
-			default: m.BusinessDetailPage,
-		})),
+	BusinessDetailPage: lazyComponent(
+		() =>
+			import('./pages/MarketplacePages').then((m) => ({
+				default: m.BusinessDetailPage,
+			})),
+		<BusinessDetailSkeleton />,
 	),
-	SearchPage: lazyComponent(() =>
-		import('./pages/MarketplacePages').then((m) => ({
-			default: m.SearchPage,
-		})),
+	SearchPage: lazyComponent(
+		() =>
+			import('./pages/MarketplacePages').then((m) => ({
+				default: m.SearchPage,
+			})),
+		<SearchListSkeleton />,
 	),
-	PlansPage: lazyComponent(() =>
-		import('./pages/MarketplacePages').then((m) => ({
-			default: m.PlansPage,
-		})),
+	PlansPage: lazyComponent(
+		() =>
+			import('./pages/MarketplacePages').then((m) => ({
+				default: m.PlansPage,
+			})),
+		<PlansListSkeleton />,
 	),
 	NotFoundPage: lazyComponent(() =>
 		import('./pages/MarketplacePages').then((m) => ({
@@ -103,29 +152,47 @@ const {
 	AuthForgotPage,
 	AuthResetPage,
 } = {
-	AuthLoginPage: lazyComponent(() =>
-		import('./pages/AuthPages').then((m) => ({ default: m.AuthLoginPage })),
+	AuthLoginPage: lazyComponent(
+		() =>
+			import('./pages/AuthPages').then((m) => ({
+				default: m.AuthLoginPage,
+			})),
+		<AuthSkeleton />,
 	),
-	AuthRegisterPage: lazyComponent(() =>
-		import('./pages/AuthPages').then((m) => ({
-			default: m.AuthRegisterPage,
-		})),
+	AuthRegisterPage: lazyComponent(
+		() =>
+			import('./pages/AuthPages').then((m) => ({
+				default: m.AuthRegisterPage,
+			})),
+		<AuthSkeleton />,
 	),
-	AuthMagicPage: lazyComponent(() =>
-		import('./pages/AuthPages').then((m) => ({ default: m.AuthMagicPage })),
+	AuthMagicPage: lazyComponent(
+		() =>
+			import('./pages/AuthPages').then((m) => ({
+				default: m.AuthMagicPage,
+			})),
+		<AuthSkeleton />,
 	),
-	AuthVerifyPage: lazyComponent(() =>
-		import('./pages/AuthPages').then((m) => ({
-			default: m.AuthVerifyPage,
-		})),
+	AuthVerifyPage: lazyComponent(
+		() =>
+			import('./pages/AuthPages').then((m) => ({
+				default: m.AuthVerifyPage,
+			})),
+		<AuthSkeleton />,
 	),
-	AuthForgotPage: lazyComponent(() =>
-		import('./pages/AuthPages').then((m) => ({
-			default: m.AuthForgotPage,
-		})),
+	AuthForgotPage: lazyComponent(
+		() =>
+			import('./pages/AuthPages').then((m) => ({
+				default: m.AuthForgotPage,
+			})),
+		<AuthSkeleton />,
 	),
-	AuthResetPage: lazyComponent(() =>
-		import('./pages/AuthPages').then((m) => ({ default: m.AuthResetPage })),
+	AuthResetPage: lazyComponent(
+		() =>
+			import('./pages/AuthPages').then((m) => ({
+				default: m.AuthResetPage,
+			})),
+		<AuthSkeleton />,
 	),
 };
 
@@ -143,49 +210,84 @@ const {
 	KycPage,
 	SettingsPage,
 } = {
-	AreaDashboardPage: lazyComponent(() =>
-		import('./pages/AreaPages').then((m) => ({
-			default: m.AreaDashboardPage,
-		})),
+	AreaDashboardPage: lazyComponent(
+		() =>
+			import('./pages/AreaPages').then((m) => ({
+				default: m.AreaDashboardPage,
+			})),
+		<DashboardSkeleton />,
 	),
-	MyAdsPage: lazyComponent(() =>
-		import('./pages/AreaPages').then((m) => ({ default: m.MyAdsPage })),
+	MyAdsPage: lazyComponent(
+		() =>
+			import('./pages/AreaPages').then((m) => ({ default: m.MyAdsPage })),
+		<AdsListSkeleton />,
 	),
-	AdFormPage: lazyComponent(() =>
-		import('./pages/AreaPages').then((m) => ({ default: m.AdFormPage })),
+	AdFormPage: lazyComponent(
+		() =>
+			import('./pages/AreaPages').then((m) => ({
+				default: m.AdFormPage,
+			})),
+		<FormSkeleton />,
 	),
-	MyBusinessesPage: lazyComponent(() =>
-		import('./pages/AreaPages').then((m) => ({
-			default: m.MyBusinessesPage,
-		})),
+	MyBusinessesPage: lazyComponent(
+		() =>
+			import('./pages/AreaPages').then((m) => ({
+				default: m.MyBusinessesPage,
+			})),
+		<BusinessesListSkeleton />,
 	),
-	BusinessFormPage: lazyComponent(() =>
-		import('./pages/AreaPages').then((m) => ({
-			default: m.BusinessFormPage,
-		})),
+	BusinessFormPage: lazyComponent(
+		() =>
+			import('./pages/AreaPages').then((m) => ({
+				default: m.BusinessFormPage,
+			})),
+		<FormSkeleton />,
 	),
-	SubscribePage: lazyComponent(() =>
-		import('./pages/AreaPages').then((m) => ({ default: m.SubscribePage })),
+	SubscribePage: lazyComponent(
+		() =>
+			import('./pages/AreaPages').then((m) => ({
+				default: m.SubscribePage,
+			})),
+		<PlansListSkeleton />,
 	),
-	WishlistPage: lazyComponent(() =>
-		import('./pages/AreaPages').then((m) => ({ default: m.WishlistPage })),
+	WishlistPage: lazyComponent(
+		() =>
+			import('./pages/AreaPages').then((m) => ({
+				default: m.WishlistPage,
+			})),
+		<AdsListSkeleton />,
 	),
-	MessagesPage: lazyComponent(() =>
-		import('./pages/AreaPages').then((m) => ({ default: m.MessagesPage })),
+	MessagesPage: lazyComponent(
+		() =>
+			import('./pages/AreaPages').then((m) => ({
+				default: m.MessagesPage,
+			})),
+		<ChatSkeleton />,
 	),
-	PaymentsPage: lazyComponent(() =>
-		import('./pages/AreaPages').then((m) => ({ default: m.PaymentsPage })),
+	PaymentsPage: lazyComponent(
+		() =>
+			import('./pages/AreaPages').then((m) => ({
+				default: m.PaymentsPage,
+			})),
+		<RowsSkeleton />,
 	),
-	MySubscriptionsPage: lazyComponent(() =>
-		import('./pages/AreaPages').then((m) => ({
-			default: m.MySubscriptionsPage,
-		})),
+	MySubscriptionsPage: lazyComponent(
+		() =>
+			import('./pages/AreaPages').then((m) => ({
+				default: m.MySubscriptionsPage,
+			})),
+		<RowsSkeleton />,
 	),
-	KycPage: lazyComponent(() =>
-		import('./pages/AreaPages').then((m) => ({ default: m.KycPage })),
+	KycPage: lazyComponent(
+		() => import('./pages/AreaPages').then((m) => ({ default: m.KycPage })),
+		<FormSkeleton />,
 	),
-	SettingsPage: lazyComponent(() =>
-		import('./pages/AreaPages').then((m) => ({ default: m.SettingsPage })),
+	SettingsPage: lazyComponent(
+		() =>
+			import('./pages/AreaPages').then((m) => ({
+				default: m.SettingsPage,
+			})),
+		<FormSkeleton />,
 	),
 };
 
@@ -205,71 +307,103 @@ const {
 	AdminBankAccountsPage,
 	AdminAnalyticsPage,
 } = {
-	AdminDashboardPage: lazyComponent(() =>
-		import('./pages/AdminPages').then((m) => ({
-			default: m.AdminDashboardPage,
-		})),
+	AdminDashboardPage: lazyComponent(
+		() =>
+			import('./pages/AdminPages').then((m) => ({
+				default: m.AdminDashboardPage,
+			})),
+		<DashboardSkeleton />,
 	),
-	AdminAdsPage: lazyComponent(() =>
-		import('./pages/AdminPages').then((m) => ({ default: m.AdminAdsPage })),
+	AdminAdsPage: lazyComponent(
+		() =>
+			import('./pages/AdminPages').then((m) => ({
+				default: m.AdminAdsPage,
+			})),
+		<TableSkeleton />,
 	),
-	AdminAdFormPage: lazyComponent(() =>
-		import('./pages/AdminPages').then((m) => ({
-			default: m.AdminAdFormPage,
-		})),
+	AdminAdFormPage: lazyComponent(
+		() =>
+			import('./pages/AdminPages').then((m) => ({
+				default: m.AdminAdFormPage,
+			})),
+		<FormSkeleton />,
 	),
-	AdminBusinessesPage: lazyComponent(() =>
-		import('./pages/AdminPages').then((m) => ({
-			default: m.AdminBusinessesPage,
-		})),
+	AdminBusinessesPage: lazyComponent(
+		() =>
+			import('./pages/AdminPages').then((m) => ({
+				default: m.AdminBusinessesPage,
+			})),
+		<TableSkeleton />,
 	),
-	AdminUsersPage: lazyComponent(() =>
-		import('./pages/AdminPages').then((m) => ({
-			default: m.AdminUsersPage,
-		})),
+	AdminUsersPage: lazyComponent(
+		() =>
+			import('./pages/AdminPages').then((m) => ({
+				default: m.AdminUsersPage,
+			})),
+		<TableSkeleton />,
 	),
-	AdminUserPage: lazyComponent(() =>
-		import('./pages/AdminPages').then((m) => ({
-			default: m.AdminUserPage,
-		})),
+	AdminUserPage: lazyComponent(
+		() =>
+			import('./pages/AdminPages').then((m) => ({
+				default: m.AdminUserPage,
+			})),
+		<FormSkeleton />,
 	),
-	AdminPaymentsPage: lazyComponent(() =>
-		import('./pages/AdminPages').then((m) => ({
-			default: m.AdminPaymentsPage,
-		})),
+	AdminPaymentsPage: lazyComponent(
+		() =>
+			import('./pages/AdminPages').then((m) => ({
+				default: m.AdminPaymentsPage,
+			})),
+		<TableSkeleton />,
 	),
-	AdminReportsPage: lazyComponent(() =>
-		import('./pages/AdminPages').then((m) => ({
-			default: m.AdminReportsPage,
-		})),
+	AdminReportsPage: lazyComponent(
+		() =>
+			import('./pages/AdminPages').then((m) => ({
+				default: m.AdminReportsPage,
+			})),
+		<TableSkeleton />,
 	),
-	AdminKycPage: lazyComponent(() =>
-		import('./pages/AdminPages').then((m) => ({ default: m.AdminKycPage })),
+	AdminKycPage: lazyComponent(
+		() =>
+			import('./pages/AdminPages').then((m) => ({
+				default: m.AdminKycPage,
+			})),
+		<TableSkeleton />,
 	),
-	AdminSupportPage: lazyComponent(() =>
-		import('./pages/AdminPages').then((m) => ({
-			default: m.AdminSupportPage,
-		})),
+	AdminSupportPage: lazyComponent(
+		() =>
+			import('./pages/AdminPages').then((m) => ({
+				default: m.AdminSupportPage,
+			})),
+		<RowsSkeleton />,
 	),
-	AdminCategoriesPage: lazyComponent(() =>
-		import('./pages/AdminPages').then((m) => ({
-			default: m.AdminCategoriesPage,
-		})),
+	AdminCategoriesPage: lazyComponent(
+		() =>
+			import('./pages/AdminPages').then((m) => ({
+				default: m.AdminCategoriesPage,
+			})),
+		<TableSkeleton />,
 	),
-	AdminPlansPage: lazyComponent(() =>
-		import('./pages/AdminPages').then((m) => ({
-			default: m.AdminPlansPage,
-		})),
+	AdminPlansPage: lazyComponent(
+		() =>
+			import('./pages/AdminPages').then((m) => ({
+				default: m.AdminPlansPage,
+			})),
+		<TableSkeleton />,
 	),
-	AdminBankAccountsPage: lazyComponent(() =>
-		import('./pages/AdminPages').then((m) => ({
-			default: m.AdminBankAccountsPage,
-		})),
+	AdminBankAccountsPage: lazyComponent(
+		() =>
+			import('./pages/AdminPages').then((m) => ({
+				default: m.AdminBankAccountsPage,
+			})),
+		<RowsSkeleton />,
 	),
-	AdminAnalyticsPage: lazyComponent(() =>
-		import('./pages/AdminPages').then((m) => ({
-			default: m.AdminAnalyticsPage,
-		})),
+	AdminAnalyticsPage: lazyComponent(
+		() =>
+			import('./pages/AdminPages').then((m) => ({
+				default: m.AdminAnalyticsPage,
+			})),
+		<DashboardSkeleton />,
 	),
 };
 

@@ -45,7 +45,9 @@ import {
 	type PlanInput,
 	type PlatformAccountInput,
 } from '../hooks/mutations';
-import { PageLoader, Spinner } from '../components/ui/Spinner';
+import { Spinner } from '../components/ui/Spinner';
+import { FormSkeleton } from '../components/skeletons/FormSkeletons';
+import { TableSkeleton } from '../components/skeletons/SkeletonsTables';
 import { EmptyState } from '../components/ui/EmptyState';
 import { StatusPill } from '../components/ui/StatusPill';
 import { Stars } from '../components/ui/Stars';
@@ -266,7 +268,7 @@ export function AdminAdsPage() {
 				onChange={(e) => setQ(e.target.value)}
 			/>
 			{isLoading ? (
-				<PageLoader />
+				<TableSkeleton />
 			) : !data || data.items.length === 0 ? (
 				<EmptyState title="Sem anúncios" />
 			) : (
@@ -665,7 +667,7 @@ export function AdminBusinessesPage() {
 		<div>
 			<Title>Verificação de empresas</Title>
 			{isLoading ? (
-				<PageLoader />
+				<TableSkeleton />
 			) : !data || (data.items ?? []).length === 0 ? (
 				<EmptyState title="Sem empresas" />
 			) : (
@@ -794,7 +796,7 @@ export function AdminUsersPage() {
 				</select>
 			</div>
 			{isLoading ? (
-				<PageLoader />
+				<TableSkeleton />
 			) : !data || data.users.length === 0 ? (
 				<EmptyState title="Sem resultados" />
 			) : (
@@ -922,7 +924,7 @@ export function AdminUserPage() {
 		<div>
 			<Title>Detalhe do utilizador</Title>
 			{isLoading ? (
-				<PageLoader />
+				<FormSkeleton />
 			) : !user ? (
 				<EmptyState title="Utilizador não encontrado" />
 			) : (
@@ -997,7 +999,7 @@ export function AdminPaymentsPage() {
 		<div>
 			<Title>Pagamentos</Title>
 			{isLoading ? (
-				<PageLoader />
+				<TableSkeleton />
 			) : !data || data.items.length === 0 ? (
 				<EmptyState title="Sem pagamentos" />
 			) : (
@@ -1136,7 +1138,7 @@ export function AdminReportsPage() {
 		<div>
 			<Title>Denúncias</Title>
 			{isLoading ? (
-				<PageLoader />
+				<TableSkeleton />
 			) : !data || data.items.length === 0 ? (
 				<EmptyState title="Sem denúncias" />
 			) : (
@@ -1230,7 +1232,7 @@ export function AdminKycPage() {
 		<div>
 			<Title>Verificações KYC</Title>
 			{isLoading ? (
-				<PageLoader />
+				<TableSkeleton />
 			) : !data || data.items.length === 0 ? (
 				<EmptyState title="Sem pedidos KYC" />
 			) : (
@@ -1362,7 +1364,7 @@ export function AdminSupportPage() {
 		<div>
 			<Title>Conversas de suporte</Title>
 			{isLoading ? (
-				<PageLoader />
+				<TableSkeleton />
 			) : !data || data.items.length === 0 ? (
 				<EmptyState title="Sem conversas de suporte" />
 			) : (
@@ -1528,7 +1530,7 @@ export function AdminCategoriesPage() {
 			</form>
 
 			{isLoading ? (
-				<PageLoader />
+				<TableSkeleton />
 			) : (
 				<div className="flex flex-col gap-2">
 					{(categories ?? []).map((c) => (
@@ -1840,7 +1842,7 @@ export function AdminPlansPage() {
 			</form>
 
 			{isLoading ? (
-				<PageLoader />
+				<TableSkeleton />
 			) : (plans ?? []).length === 0 ? (
 				<EmptyState
 					title="Sem planos"
@@ -2074,7 +2076,7 @@ export function AdminBankAccountsPage() {
 			</form>
 
 			{isLoading ? (
-				<PageLoader />
+				<TableSkeleton />
 			) : (accounts ?? []).length === 0 ? (
 				<EmptyState
 					title="Sem contas bancárias"

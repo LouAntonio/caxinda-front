@@ -59,7 +59,7 @@ import { BusinessCard } from '../components/businesses/BusinessCard';
 import { BusinessCardSkeletonGrid } from '../components/businesses/BusinessCardSkeleton';
 import { EmptyState } from '../components/ui/EmptyState';
 import { Skeleton } from '../components/ui/Skeleton';
-import { PageLoader } from '../components/ui/Spinner';
+import { FormSkeleton } from '../components/skeletons/FormSkeletons';
 import { Spinner } from '../components/ui/Spinner';
 import { ButtonLoader } from '../components/ui/Spinner';
 import { Price } from '../components/ui/Price';
@@ -420,7 +420,7 @@ export function AdFormPage() {
 	}, [ad]);
 
 	if (editing && isLoading) {
-		return <PageLoader />;
+		return <FormSkeleton />;
 	}
 
 	if (!editing && !canCreateAds(user?.role)) {
@@ -893,7 +893,7 @@ export function BusinessFormPage() {
 	}, [business]);
 
 	if (editing && isLoading) {
-		return <PageLoader />;
+		return <FormSkeleton />;
 	}
 
 	if (!editing && !kycApproved) {
