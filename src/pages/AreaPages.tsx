@@ -8,8 +8,6 @@ import {
 } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import {
-	useAd,
-	useAds,
 	useBusiness,
 	useBusinesses,
 	useCategories,
@@ -26,25 +24,19 @@ import {
 	useCancelPayment,
 	useChangeEmail,
 	useChangePassword,
-	useCreateAd,
 	useCreateBusiness,
 	useCreatePayment,
-	useDeleteAd,
 	useDeleteBusiness,
-	useFeatureAd,
 	useFeatureBusiness,
 	useMarkConversationRead,
 	useRevokeSession,
 	useSendMessage,
-	useSetAdVisibility,
 	useSetBusinessStatus,
 	useSubmitKyc,
 	useSubmitPaymentProof,
-	useUnfeatureAd,
 	useUnfeatureBusiness,
 	useUnlinkAccount,
 	useLinkGoogle,
-	useUpdateAd,
 	useUpdateBusiness,
 	useUpdateProfile,
 	useRevokeOtherSessions,
@@ -55,7 +47,6 @@ import { uploadImage, useUpload } from '../hooks/useUpload';
 import { useChatStore } from '../store/chat';
 import { useAuthStore } from '../store/auth';
 import { getApiError } from '../lib/api';
-import { canCreateAds } from '../lib/roles';
 import { parseUserAgent } from '../lib/userAgent';
 import { AdCard } from '../components/ads/AdCard';
 import { AdCardSkeletonGrid } from '../components/ads/AdCardSkeleton';
@@ -71,6 +62,7 @@ import { StatusPill } from '../components/ui/StatusPill';
 import { Avatar } from '../components/ui/Avatar';
 import { PasswordInput } from '../components/ui/PasswordInput';
 import { ConfirmButton } from '../components/ui/ConfirmButton';
+import { Lightbox } from '../components/ui/Lightbox';
 import { GoogleButton } from '../components/ui/GoogleButton';
 import { DeviceDesktopSVG } from '../components/ui/icons/DeviceDesktopSVG';
 import { DevicePhoneSVG } from '../components/ui/icons/DevicePhoneSVG';
@@ -103,12 +95,6 @@ const DEVICE_ICONS = {
 export function AreaDashboardPage() {
 	usePageTitle('Painel');
 	const { user } = useSession();
-	const { data: ads } = useAds({
-		page: 1,
-		limit: 1,
-		includeInactive: true,
-		userId: user?.id,
-	});
 	const { data: businesses } = useBusinesses({
 		page: 1,
 		limit: 1,
@@ -117,7 +103,6 @@ export function AreaDashboardPage() {
 	const { data: kyc } = useMyKyc();
 	const { data: payments } = useMyPayments();
 	const { data: subscriptions } = useMySubscriptions();
-	const creator = canCreateAds(user?.role);
 
 	const kycLabel = kyc
 		? kyc.status === 'APPROVED'
@@ -131,21 +116,12 @@ export function AreaDashboardPage() {
 		<div>
 			<Title>Visão geral</Title>
 			<div className="grid gap-4 sm:grid-cols-3">
-				{creator ? (
-					<StatCard
-						label="Meus anúncios"
-						value={ads?.total ?? 0}
-						to="/area/anuncios"
-						accent="red"
-					/>
-				) : (
-					<StatCard
-						label="Subscrições"
-						value={subscriptions?.length ?? 0}
-						to="/area/subscricoes"
-						accent="red"
-					/>
-				)}
+				<StatCard
+					label="Subscrições"
+					value={subscriptions?.length ?? 0}
+					to="/area/subscricoes"
+					accent="red"
+				/>
 				<StatCard
 					label="Empresas"
 					value={businesses?.total ?? 0}
@@ -217,11 +193,6 @@ export function AreaDashboardPage() {
 			</div>
 
 			<div className="mt-6 grid gap-3 sm:grid-cols-3">
-				{canCreateAds(user?.role) && (
-					<Link to="/area/anuncios/novo" className="btn-primary">
-						+ Novo anúncio
-					</Link>
-				)}
 				<Link to="/area/empresas/nova" className="btn-blue">
 					+ Nova empresa
 				</Link>
@@ -258,486 +229,6 @@ function StatCard({
 			<p className={`font-mono text-3xl font-bold ${color}`}>{value}</p>
 			<p className="mt-1 text-sm font-bold text-ink/60">{label}</p>
 		</Link>
-	);
-}
-
-// ================= Meus anúncios =================
-
-export function MyAdsPage() {
-	usePageTitle('Os meus anúncios');
-	const { user } = useSession();
-	const { data, isLoading } = useAds({
-		page: 1,
-		limit: 50,
-		includeInactive: true,
-		userId: user?.id,
-	});
-
-	return (
-		<div>
-			<div className="flex items-center justify-between">
-				<Title>Meus anúncios</Title>
-				{canCreateAds(user?.role) && (
-					<Link to="/area/anuncios/novo" className="btn-primary">
-						+ Novo
-					</Link>
-				)}
-			</div>
-			{isLoading ? (
-				<AdCardSkeletonGrid
-					count={6}
-					gridClassName="grid grid-cols-2 gap-4 lg:grid-cols-3"
-				/>
-			) : !canCreateAds(user?.role) ? (
-				<EmptyState
-					title="Criação de anúncios reservada"
-					description="Novos anúncios são publicados pela equipa Caxinda. Pode também contactar-nos para divulgar um anúncio."
-				/>
-			) : !data || data.items.length === 0 ? (
-				<EmptyState
-					title="Ainda não publicaste anúncios"
-					description="Cria o primeiro em menos de um minuto."
-					action={
-						<Link to="/area/anuncios/novo" className="btn-primary">
-							Publicar anúncio
-						</Link>
-					}
-				/>
-			) : (
-				<div className="grid grid-cols-2 gap-4 lg:grid-cols-3">
-					{data.items.map((ad) => (
-						<div key={ad.id} className="relative">
-							<AdCard ad={ad} showStatus />
-							<div className="absolute bottom-2 right-2 z-10 flex gap-1.5">
-								<FeatureAdButton ad={ad} />
-								<VisibilityToggle
-									id={ad.id}
-									current={ad.visibility}
-								/>
-								<Link
-									to={`/area/anuncios/${ad.id}/editar`}
-									className="btn-ghost !bg-white/90 !text-blue"
-								>
-									Editar
-								</Link>
-								<DeleteAdButton id={ad.id} title={ad.title} />
-							</div>
-						</div>
-					))}
-				</div>
-			)}
-		</div>
-	);
-}
-
-function DeleteAdButton({ id, title }: { id: string; title: string }) {
-	const deleteAd = useDeleteAd();
-	return (
-		<ConfirmButton
-			title="Apagar anúncio?"
-			message={`«${title}» será removido permanentemente.`}
-			confirmLabel="Apagar"
-			busy={deleteAd.isPending}
-			onConfirm={() =>
-				void toast.promise(deleteAd.mutateAsync(id), {
-					loading: 'A apagar…',
-					success: 'Anúncio apagado.',
-					error: (e) => getApiError(e),
-				})
-			}
-		>
-			<button className="btn-ghost !bg-white/90 !text-red">🗑</button>
-		</ConfirmButton>
-	);
-}
-
-function VisibilityToggle({ id, current }: { id: string; current: string }) {
-	const setVisibility = useSetAdVisibility();
-	const next = current === 'VISIBLE' ? 'HIDDEN' : 'VISIBLE';
-	return (
-		<button
-			className={
-				current === 'VISIBLE'
-					? 'btn-ghost !bg-white/90 !text-ink'
-					: 'btn-ghost !bg-white/90 !text-blue'
-			}
-			title={current === 'VISIBLE' ? 'Ocultar' : 'Mostrar'}
-			onClick={() =>
-				void toast.promise(
-					setVisibility.mutateAsync({ id, visibility: next }),
-					{
-						loading: 'A alterar…',
-						success: 'Visibilidade atualizada.',
-						error: (e) => getApiError(e),
-					},
-				)
-			}
-		>
-			{current === 'VISIBLE' ? 'Ocultar' : 'Mostrar'}
-		</button>
-	);
-}
-
-function FeatureAdButton({
-	ad,
-}: {
-	ad: {
-		id: string;
-		featured: boolean;
-		featuredUntil: string | null;
-	};
-}) {
-	const [open, setOpen] = useState(false);
-	const feature = useFeatureAd();
-	const unfeature = useUnfeatureAd();
-	const active =
-		ad.featured &&
-		ad.featuredUntil &&
-		new Date(ad.featuredUntil) > new Date();
-
-	const run = (days: number) => {
-		setOpen(false);
-		void toast.promise(feature.mutateAsync({ id: ad.id, days }), {
-			loading: 'A destacar…',
-			success: 'Anúncio em destaque.',
-			error: (e) => getApiError(e),
-		});
-	};
-
-	if (active) {
-		return (
-			<button
-				className="btn-ghost !bg-white/90 !text-amber-600"
-				title={`Destaque ativo até ${new Date(ad.featuredUntil!).toLocaleDateString('pt-AO')}`}
-				onClick={() =>
-					void toast.promise(unfeature.mutateAsync({ id: ad.id }), {
-						loading: 'A retirar destaque…',
-						success: 'Destaque removido.',
-						error: (e) => getApiError(e),
-					})
-				}
-			>
-				★ Ativo
-			</button>
-		);
-	}
-
-	return (
-		<div className="relative">
-			<button
-				className="btn-ghost !bg-white/90 !text-amber-600"
-				onClick={() => setOpen((v) => !v)}
-			>
-				★ Destacar
-			</button>
-			{open && (
-				<div className="absolute right-0 bottom-full z-20 mb-1 flex flex-col gap-1 rounded-lg border border-ink/10 bg-white p-1.5 shadow-lg">
-					{([7, 15, 30] as const).map((d) => (
-						<button
-							key={d}
-							className="rounded-md px-3 py-1.5 text-xs hover:bg-ink/5"
-							onClick={() => run(d)}
-						>
-							{d} dias
-						</button>
-					))}
-				</div>
-			)}
-		</div>
-	);
-}
-
-// ================= Anúncio (criar/editar) =================
-
-export function AdFormPage() {
-	usePageTitle('Anúncio');
-	const { id } = useParams();
-	const editing = Boolean(id);
-	const { data: ad, isLoading } = useAd(id);
-	const { data: categories } = useCategories('AD');
-	const createAd = useCreateAd();
-	const updateAd = useUpdateAd();
-	const navigate = useNavigate();
-	const { user } = useSession();
-
-	const [title, setTitle] = useState('');
-	const [description, setDescription] = useState('');
-	const [price, setPrice] = useState('');
-	const [categoryId, setCategoryId] = useState('');
-	const [province, setProvince] = useState<Province | ''>('');
-	const upload = useUpload('ads');
-	const [image, setImage] = useState<MediaAsset | null>(null);
-	const [gallery, setGallery] = useState<MediaAsset[]>([]);
-	const [pendingImage, setPendingImage] = useState<File | null>(null);
-	const [pendingGallery, setPendingGallery] = useState<File[]>([]);
-
-	useEffect(() => {
-		if (ad) {
-			setTitle(ad.title);
-			setDescription(ad.description);
-			setPrice(
-				ad.price !== null && ad.price !== undefined
-					? String(ad.price)
-					: '',
-			);
-			setCategoryId(ad.category?.id ?? '');
-			setProvince(ad.province ?? '');
-			setImage(
-				ad.image
-					? { url: ad.image, cloudinaryId: ad.imageId ?? ad.image }
-					: null,
-			);
-			setGallery(ad.gallery ?? []);
-			setPendingImage(null);
-			setPendingGallery([]);
-		}
-	}, [ad]);
-
-	if (editing && isLoading) {
-		return <FormSkeleton />;
-	}
-
-	if (!editing && !canCreateAds(user?.role)) {
-		return (
-			<div>
-				<Title>Novo anúncio</Title>
-				<EmptyState
-					title="Criação de anúncios reservada"
-					description="Novos anúncios são publicados pela equipa Caxinda. Pode também contactar-nos para divulgar um anúncio."
-				/>
-			</div>
-		);
-	}
-
-	const submit = async (e: React.FormEvent) => {
-		e.preventDefault();
-		if (!categoryId) {
-			toast.error('Escolhe uma categoria.');
-			return;
-		}
-		try {
-			let imageAsset = image;
-			let galleryAssets = gallery;
-
-			if (pendingImage) {
-				imageAsset = await upload.mutateAsync(pendingImage);
-				setImage(imageAsset);
-				setPendingImage(null);
-			}
-			if (pendingGallery.length > 0) {
-				galleryAssets = await Promise.all(
-					pendingGallery.map((f) => upload.mutateAsync(f)),
-				);
-				setGallery((g) => [
-					...g.filter((item) => item.cloudinaryId !== 'pending'),
-					...galleryAssets,
-				]);
-				setPendingGallery([]);
-			}
-
-			const payload = {
-				title,
-				description,
-				price: price ? Number(price) : undefined,
-				categoryIds: [categoryId],
-				...(province ? { province } : {}),
-				...(imageAsset
-					? {
-							image: imageAsset.url,
-							imageId: imageAsset.cloudinaryId,
-						}
-					: {}),
-				...(galleryAssets.length ? { gallery: galleryAssets } : {}),
-			};
-			const mutation = editing ? updateAd : createAd;
-			await toast.promise(
-				(mutation.mutateAsync as (input: unknown) => Promise<unknown>)(
-					editing ? { id: id!, ...payload } : payload,
-				),
-				{
-					loading: 'A guardar…',
-					success: editing
-						? 'Anúncio atualizado.'
-						: 'Anúncio publicado.',
-					error: (err) => getApiError(err),
-				},
-			);
-			void navigate('/area/anuncios');
-		} catch {
-			// error handled by toast.promise
-		}
-	};
-
-	const onFile = (file: File, target: 'main' | 'gallery') => {
-		const preview = URL.createObjectURL(file);
-		if (target === 'main') {
-			setPendingImage(file);
-			setImage({ url: preview, cloudinaryId: 'pending' });
-		} else {
-			setPendingGallery((g) => [...g, file]);
-			setGallery((g) => [
-				...g,
-				{ url: preview, cloudinaryId: 'pending' },
-			]);
-		}
-	};
-
-	return (
-		<div>
-			<Title>{editing ? 'Editar anúncio' : 'Novo anúncio'}</Title>
-			<form onSubmit={submit} className="card max-w-2xl gap-4 p-6">
-				<div>
-					<label className="label">Título *</label>
-					<input
-						className="input"
-						value={title}
-						onChange={(e) => setTitle(e.target.value)}
-						required
-						maxLength={140}
-					/>
-				</div>
-				<div className="grid gap-4 sm:grid-cols-2">
-					<div>
-						<label className="label">Preço (Kz)</label>
-						<input
-							className="input"
-							type="number"
-							min={0}
-							value={price}
-							onChange={(e) => setPrice(e.target.value)}
-							placeholder="0"
-						/>
-					</div>
-					<div>
-						<label className="label">Categoria *</label>
-						<select
-							className="input"
-							value={categoryId}
-							onChange={(e) => setCategoryId(e.target.value)}
-							required
-						>
-							<option value="">Escolhe…</option>
-							{(categories ?? []).map((c) => (
-								<option key={c.id} value={c.id}>
-									{c.name}
-								</option>
-							))}
-						</select>
-					</div>
-				</div>
-				<div className="grid gap-4 sm:grid-cols-2">
-					<div>
-						<label className="label">Província</label>
-						<select
-							className="input"
-							value={province}
-							onChange={(e) =>
-								setProvince(e.target.value as Province | '')
-							}
-						>
-							<option value="">Todas / Indefinida</option>
-							{PROVINCES.map((p) => (
-								<option key={p} value={p}>
-									{PROVINCE_LABELS[p] ?? p}
-								</option>
-							))}
-						</select>
-					</div>
-					<div className="hidden sm:block" />
-				</div>
-				<div>
-					<label className="label">Descrição *</label>
-					<textarea
-						className="input min-h-32"
-						value={description}
-						onChange={(e) => setDescription(e.target.value)}
-						required
-						maxLength={5000}
-					/>
-				</div>
-
-				<div>
-					<label className="label">Imagem principal</label>
-					{image ? (
-						<div className="relative inline-block">
-							<img
-								src={image.url}
-								alt="Principal"
-								className="h-40 w-52 rounded-xl object-cover"
-							/>
-							<button
-								type="button"
-								onClick={() => {
-									setImage(null);
-									setPendingImage(null);
-								}}
-								className="btn-ghost absolute -top-2 -right-2 !bg-white !text-red"
-							>
-								✕
-							</button>
-						</div>
-					) : (
-						<FilePicker
-							busy={upload.isPending}
-							onFile={(f) => onFile(f, 'main')}
-						/>
-					)}
-				</div>
-
-				<div>
-					<label className="label">Galeria (até 4)</label>
-					<div className="flex flex-wrap gap-2">
-						{gallery.map((g, idx) => (
-							<div
-								key={`${g.cloudinaryId}-${idx}`}
-								className="relative inline-block"
-							>
-								<img
-									src={g.url}
-									alt=""
-									className="h-20 w-24 rounded-lg object-cover"
-								/>
-								<button
-									type="button"
-									onClick={() => {
-										setGallery((gal) =>
-											gal.filter((_, i) => i !== idx),
-										);
-										setPendingGallery((pg) =>
-											pg.filter((_, i) => i !== idx),
-										);
-									}}
-									className="btn-ghost absolute -top-2 -right-2 !bg-white !text-red"
-								>
-									✕
-								</button>
-							</div>
-						))}
-						{gallery.length < 4 && (
-							<FilePicker
-								busy={upload.isPending}
-								onFile={(f) => onFile(f, 'gallery')}
-							/>
-						)}
-					</div>
-				</div>
-
-				<div className="flex gap-2 pt-2">
-					<button
-						className="btn-primary"
-						disabled={createAd.isPending || updateAd.isPending}
-					>
-						{(createAd.isPending || updateAd.isPending) && (
-							<ButtonLoader />
-						)}
-						{editing ? 'Guardar alterações' : 'Publicar anúncio'}
-					</button>
-					<Link to="/area/anuncios" className="btn-ghost">
-						Cancelar
-					</Link>
-				</div>
-			</form>
-		</div>
 	);
 }
 
@@ -803,7 +294,7 @@ export function MyBusinessesPage() {
 			{isLoading ? (
 				<BusinessCardSkeletonGrid
 					count={4}
-					gridClassName="grid gap-4 sm:grid-cols-2"
+					gridClassName="grid gap-4 sm:grid-cols-2 lg:items-start"
 				/>
 			) : !data || data.items.length === 0 ? (
 				kycApproved ? (
@@ -848,7 +339,7 @@ export function MyBusinessesPage() {
 					/>
 				)
 			) : (
-				<div className="grid gap-4 sm:grid-cols-2">
+				<div className="grid gap-4 sm:grid-cols-2 lg:items-start">
 					{data.items.map((b) => (
 						<div key={b.id}>
 							<BusinessCard business={b} showStatus />
@@ -930,6 +421,7 @@ function FeatureBusinessButton({
 	};
 }) {
 	const [open, setOpen] = useState(false);
+	const [endDate, setEndDate] = useState('');
 	const feature = useFeatureBusiness();
 	const unfeature = useUnfeatureBusiness();
 	const active =
@@ -937,13 +429,34 @@ function FeatureBusinessButton({
 		business.featuredUntil &&
 		new Date(business.featuredUntil) > new Date();
 
-	const run = (days: number) => {
+	const pad = (n: number) => String(n).padStart(2, '0');
+	const dateOf = (d: Date) =>
+		`${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+	const minDate = dateOf(new Date());
+
+	const openPicker = () => {
+		const ninety = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000);
+		setEndDate(dateOf(ninety));
+		setOpen((v) => !v);
+	};
+
+	const confirm = () => {
+		if (!endDate) {
+			toast.error('Escolhe a data de término do destaque.');
+			return;
+		}
 		setOpen(false);
-		void toast.promise(feature.mutateAsync({ id: business.id, days }), {
-			loading: 'A destacar…',
-			success: 'Empresa em destaque.',
-			error: (e) => getApiError(e),
-		});
+		void toast.promise(
+			feature.mutateAsync({
+				id: business.id,
+				endDate: `${endDate}T23:59:59`,
+			}),
+			{
+				loading: 'A destacar…',
+				success: 'Empresa em destaque.',
+				error: (e) => getApiError(e),
+			},
+		);
 	};
 
 	if (active) {
@@ -969,23 +482,26 @@ function FeatureBusinessButton({
 
 	return (
 		<div className="relative">
-			<button
-				className="btn-ghost !text-amber-600"
-				onClick={() => setOpen((v) => !v)}
-			>
+			<button className="btn-ghost !text-amber-600" onClick={openPicker}>
 				★ Destacar
 			</button>
 			{open && (
-				<div className="absolute right-0 bottom-full z-20 mb-1 flex flex-col gap-1 rounded-lg border border-ink/10 bg-white p-1.5 shadow-lg">
-					{([7, 15, 30] as const).map((d) => (
-						<button
-							key={d}
-							className="rounded-md px-3 py-1.5 text-xs hover:bg-ink/5"
-							onClick={() => run(d)}
-						>
-							{d} dias
-						</button>
-					))}
+				<div className="absolute right-0 bottom-full z-20 mb-1 flex w-56 flex-col gap-2 rounded-lg border border-ink/10 bg-white p-2 shadow-lg">
+					<label className="label mb-0">Até quando?</label>
+					<input
+						type="date"
+						className="input !px-2.5 !py-1.5"
+						value={endDate}
+						min={minDate}
+						onChange={(e) => setEndDate(e.target.value)}
+					/>
+					<button
+						className="btn-primary !py-1.5"
+						onClick={confirm}
+						disabled={!endDate}
+					>
+						Confirmar destaque
+					</button>
 				</div>
 			)}
 		</div>
@@ -1169,7 +685,7 @@ export function BusinessFormPage() {
 						maxLength={140}
 					/>
 				</div>
-				<div className="grid gap-4 sm:grid-cols-2">
+				<div className="grid gap-4 sm:grid-cols-2 lg:items-start">
 					<div>
 						<label className="label">Província *</label>
 						<select
@@ -1212,7 +728,7 @@ export function BusinessFormPage() {
 						maxLength={5000}
 					/>
 				</div>
-				<div className="grid gap-4 sm:grid-cols-2">
+				<div className="grid gap-4 sm:grid-cols-2 lg:items-start">
 					<div>
 						<label className="label">Telefone</label>
 						<input
@@ -1257,7 +773,7 @@ export function BusinessFormPage() {
 					/>
 				</div>
 
-				<div className="grid gap-4 sm:grid-cols-2">
+				<div className="grid gap-4 sm:grid-cols-2 lg:items-start">
 					<div>
 						<label className="label">Logótipo</label>
 						{logo ? (
@@ -1366,9 +882,7 @@ export function SubscribePage() {
 								{plan.name}
 							</p>
 							<p className="text-xs text-ink/50">
-								{plan.durationDays} dias · até{' '}
-								{plan.businessVisibilityLimit} empresas ·{' '}
-								{plan.featuredAdsLimit} destaques
+								{plan.durationDays} dias
 							</p>
 						</div>
 						<div className="flex items-center gap-3">
@@ -1425,7 +939,7 @@ export function WishlistPage() {
 			{isLoading ? (
 				<AdCardSkeletonGrid
 					count={6}
-					gridClassName="grid grid-cols-2 gap-4 lg:grid-cols-3"
+					gridClassName="grid grid-cols-2 gap-4 lg:grid-cols-3 lg:items-start"
 				/>
 			) : !data || data.items.length === 0 ? (
 				<EmptyState
@@ -1433,7 +947,7 @@ export function WishlistPage() {
 					description="Toca na estrela num anúncio para o guardar aqui."
 				/>
 			) : (
-				<div className="grid grid-cols-2 gap-4 lg:grid-cols-3">
+				<div className="grid grid-cols-2 gap-4 lg:grid-cols-3 lg:items-start">
 					{data.items.map((item) => (
 						<AdCard key={item.id} ad={item.ad} />
 					))}
@@ -2033,17 +1547,6 @@ export function MySubscriptionsPage() {
 									))}
 								</ul>
 							)}
-							<div className="flex flex-wrap gap-x-6 gap-y-1 text-xs text-ink/60">
-								<span>
-									Empresas visíveis:{' '}
-									<b>{s.plan.businessVisibilityLimit}</b>
-								</span>
-								<span>
-									Anúncios em destaque:{' '}
-									<b>{s.plan.featuredAdsLimit}</b>
-								</span>
-							</div>
-
 							{(s.payments ?? []).length > 0 && (
 								<div className="flex flex-col gap-1.5">
 									{(s.payments ?? []).map((p) => (
@@ -2104,16 +1607,6 @@ export function MySubscriptionsPage() {
 										))}
 									</ul>
 								)}
-								<div className="flex flex-wrap gap-x-6 gap-y-1 text-xs text-ink/60">
-									<span>
-										Empresas visíveis:{' '}
-										<b>{plan.businessVisibilityLimit}</b>
-									</span>
-									<span>
-										Anúncios em destaque:{' '}
-										<b>{plan.featuredAdsLimit}</b>
-									</span>
-								</div>
 							</div>
 						))}
 					</div>
@@ -2335,25 +1828,47 @@ function KycReadonlyGrid({ kyc }: { kyc: KycRecord }) {
 		{ label: 'Selfie 3', src: kyc.selfies[2]?.url ?? null },
 		{ label: 'Corpo inteiro', src: kyc.fullBodyUrl },
 	];
+	const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+	const imageUrls = items
+		.map((i) => i.src)
+		.filter((s): s is string => s !== null);
 
 	return (
-		<div className="grid max-w-3xl grid-cols-2 gap-4 sm:grid-cols-3">
-			{items.map((item) => (
-				<div key={item.label}>
-					<p className="label">{item.label}</p>
-					{item.src ? (
-						<img
-							src={item.src}
-							alt={item.label}
-							className="h-36 w-full rounded-xl border border-ink/10 bg-snow object-cover"
-						/>
-					) : (
-						<div className="flex h-36 w-full items-center justify-center rounded-2xl border-2 border-dashed border-ink/15 font-mono text-xs font-bold text-ink/30">
-							Sem imagem
-						</div>
-					)}
-				</div>
-			))}
+		<div>
+			<div className="grid max-w-3xl grid-cols-2 gap-4 sm:grid-cols-3">
+				{items.map((item) => (
+					<div key={item.label}>
+						<p className="label">{item.label}</p>
+						{item.src ? (
+							<button
+								type="button"
+								onClick={() =>
+									setLightboxIndex(
+										imageUrls.indexOf(item.src!),
+									)
+								}
+								className="w-full overflow-hidden rounded-xl border border-ink/10 bg-snow"
+								aria-label={`Ampliar ${item.label}`}
+							>
+								<img
+									src={item.src}
+									alt={item.label}
+									className="h-36 w-full object-cover transition hover:scale-105"
+								/>
+							</button>
+						) : (
+							<div className="flex h-36 w-full items-center justify-center rounded-2xl border-2 border-dashed border-ink/15 font-mono text-xs font-bold text-ink/30">
+								Sem imagem
+							</div>
+						)}
+					</div>
+				))}
+			</div>
+			<Lightbox
+				images={imageUrls}
+				index={lightboxIndex}
+				onClose={() => setLightboxIndex(null)}
+			/>
 		</div>
 	);
 }
@@ -2481,7 +1996,7 @@ export function SettingsPage() {
 					<h2 className="font-display text-sm font-black">
 						Perfil público
 					</h2>
-					<div className="grid gap-4 sm:grid-cols-2">
+					<div className="grid gap-4 sm:grid-cols-2 lg:items-start">
 						<div>
 							<label className="label">Nome</label>
 							<input
@@ -2549,7 +2064,7 @@ export function SettingsPage() {
 						<h2 className="font-display text-sm font-black">
 							Alterar palavra-passe
 						</h2>
-						<div className="grid gap-4 sm:grid-cols-2">
+						<div className="grid gap-4 sm:grid-cols-2 lg:items-start">
 							<div>
 								<label className="label">Atual</label>
 								<PasswordInput
@@ -2645,7 +2160,7 @@ export function SettingsPage() {
 							palavra-passe para poderes entrar também com email e
 							palavra-passe.
 						</p>
-						<div className="grid gap-4 sm:grid-cols-2">
+						<div className="grid gap-4 sm:grid-cols-2 lg:items-start">
 							<div>
 								<label className="label">
 									Nova palavra-passe

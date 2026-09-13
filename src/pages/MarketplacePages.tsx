@@ -9,8 +9,10 @@ import {
 import toast from 'react-hot-toast';
 import { getApiError } from '../lib/api';
 import {
+	useAdAnalytics,
 	useAdBySlug,
 	useAds,
+	useBusinessAnalytics,
 	useBusinessBySlug,
 	useBusinesses,
 	useCategories,
@@ -32,6 +34,7 @@ import { BusinessCard } from '../components/businesses/BusinessCard';
 import { BusinessCardSkeletonGrid } from '../components/businesses/BusinessCardSkeleton';
 import { AdDetailSkeleton } from '../components/skeletons/AdDetailSkeleton';
 import { BusinessDetailSkeleton } from '../components/skeletons/BusinessDetailSkeleton';
+import { MiniChart } from '../components/ui/MiniChart';
 import { Pagination } from '../components/ui/Pagination';
 import { ButtonLoader } from '../components/ui/Spinner';
 import { EmptyState } from '../components/ui/EmptyState';
@@ -62,8 +65,11 @@ import {
 import {
 	PROVINCES,
 	REPORT_REASONS,
+	type AdAnalytics,
 	type AdSort,
+	type BusinessAnalytics,
 	type BusinessSort,
+	type ContactChannel,
 	type ReportReason,
 	type ReportTarget,
 	type SearchItem,
@@ -333,7 +339,7 @@ export function AdsPage() {
 						/>
 					) : (
 						<>
-							<div className="grid grid-cols-2 gap-4 md:grid-cols-3">
+							<div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:items-start">
 								{(data?.items ?? []).map((ad) => (
 									<AdCard key={ad.id} ad={ad} />
 								))}
@@ -365,11 +371,20 @@ export function AdDetailPage() {
 	usePageTitle('Anúncio');
 	const { data: ad, isLoading } = useAdBySlug(slug);
 	const navigate = useNavigate();
-	const { isAuthenticated } = useSession();
+	const { user, isAuthenticated } = useSession();
 	const openConversation = useOpenConversation();
 	const { data: wishlistSaved } = useWishlistCheck(ad?.id);
 	const [activeImg, setActiveImg] = useState<string | null>(null);
 	const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+	const canViewAnalytics =
+		(user?.role === 'ADMIN' ||
+			user?.role === 'MODERATOR' ||
+			(!!user && !!ad && user.id === ad.userId)) &&
+		!!ad;
+	const { data: adAnalytics, isLoading: adAnalyticsLoading } = useAdAnalytics(
+		canViewAnalytics ? ad?.id : undefined,
+		'30d',
+	);
 	useEffect(() => {
 		setActiveImg(null);
 		setLightboxIndex(null);
@@ -458,14 +473,15 @@ export function AdDetailPage() {
 									CX
 								</div>
 							)}
-							{adImages.length > 1 && (
+							{adImages.length > 0 && (
 								<span className="absolute right-3 bottom-3 rounded-full bg-ink/70 px-2.5 py-1 font-mono text-[10px] font-bold text-white backdrop-blur">
-									{adImages.length} fotos
+									{adImages.length}{' '}
+									{adImages.length === 1 ? 'foto' : 'fotos'}
 								</span>
 							)}
 						</button>
 						{adImages.length > 1 && (
-							<div className="grid grid-cols-3 gap-2 border-t border-ink/10 bg-snow p-3 sm:grid-cols-4 md:grid-cols-6">
+							<div className="grid grid-cols-3 gap-2 bg-snow p-3 sm:grid-cols-4 md:grid-cols-6">
 								{adImages.map((url, idx) => (
 									<button
 										type="button"
@@ -514,97 +530,112 @@ export function AdDetailPage() {
 				</div>
 
 				<aside className="lg:sticky lg:top-24 lg:self-start">
-					<div className="card gap-4 p-5">
-						<div className="flex flex-wrap items-center gap-1.5">
-							{ad.featured && (
-								<span className="tag tag-kwanza !px-2.5 !py-0.5">
-									★ Destaque
-								</span>
-							)}
-						</div>
-
-						<h1 className="text-balance font-display text-xl font-black leading-tight">
-							{ad.title}
-						</h1>
-
-						<p className="kicker flex flex-wrap items-center gap-x-2 gap-y-1">
-							<span>{ad.category?.name ?? 'Geral'}</span>
-							{ad.province && (
-								<>
-									<span aria-hidden>·</span>
-									<span>
-										{PROVINCE_LABELS[ad.province] ??
-											ad.province}
+					<div className="flex flex-col gap-4">
+						<div className="card gap-4 p-5">
+							<div className="flex flex-wrap items-center gap-1.5">
+								{ad.featured && (
+									<span className="tag tag-kwanza !px-2.5 !py-0.5">
+										★ Destaque
 									</span>
-								</>
-							)}
-							<span aria-hidden>·</span>
-							<span>Publicado {timeAgo(ad.createdAt)}</span>
-						</p>
+								)}
+							</div>
 
-						<div className="mt-4">
-							{ad.price === null ? (
-								<span className="font-mono text-xl font-bold text-ink/50">
-									Sob consulta
-								</span>
-							) : ad.price === 0 ? (
-								<span
-									className="price-tag-lg"
-									style={{
-										background: 'var(--color-blue-light)',
-										color: 'var(--color-snow)',
-									}}
-								>
-									Grátis
-								</span>
-							) : (
-								<span className="price-tag-lg">
-									{formatKz(ad.price)}
-								</span>
+							<h1 className="text-balance font-display text-xl font-black leading-tight">
+								{ad.title}
+							</h1>
+
+							<p className="kicker flex flex-wrap items-center gap-x-2 gap-y-1">
+								<span>{ad.category?.name ?? 'Geral'}</span>
+								{ad.province && (
+									<>
+										<span aria-hidden>·</span>
+										<span>
+											{PROVINCE_LABELS[ad.province] ??
+												ad.province}
+										</span>
+									</>
+								)}
+								<span aria-hidden>·</span>
+								<span>Publicado {timeAgo(ad.createdAt)}</span>
+							</p>
+
+							<div className="mt-4">
+								{ad.price === null ? (
+									<span className="font-mono text-xl font-bold text-ink/50">
+										Sob consulta
+									</span>
+								) : ad.price === 0 ? (
+									<span
+										className="price-tag-lg"
+										style={{
+											background:
+												'var(--color-blue-light)',
+											color: 'var(--color-snow)',
+										}}
+									>
+										Grátis
+									</span>
+								) : (
+									<span className="price-tag-lg">
+										{formatKz(ad.price)}
+									</span>
+								)}
+							</div>
+
+							{ad.averageRating !== null && (
+								<p className="text-sm text-ink/60">
+									<Stars value={ad.averageRating} /> ·{' '}
+									{ad.reviewCount} avaliações
+								</p>
 							)}
+
+							<Divider className="my-1" />
+
+							<button
+								className="btn-primary w-full"
+								onClick={contactCaxinda}
+								disabled={openConversation.isPending}
+							>
+								{openConversation.isPending && <ButtonLoader />}
+								<ChatSVG width={16} height={16} /> Contactar a
+								Caxinda
+							</button>
+							{isAuthenticated && (
+								<WishlistToggle
+									adId={ad.id}
+									saved={wishlistSaved ?? false}
+								/>
+							)}
+							<p className="text-xs leading-relaxed text-ink/40">
+								Anúncio gerido pela Caxinda. A equipa de apoio
+								responde às tuas mensagens sobre este anúncio.
+							</p>
 						</div>
 
-						{ad.averageRating !== null && (
-							<p className="text-sm text-ink/60">
-								<Stars value={ad.averageRating} /> ·{' '}
-								{ad.reviewCount} avaliações
-							</p>
-						)}
-
-						<Divider className="my-1" />
-
-						<button
-							className="btn-primary w-full"
-							onClick={contactCaxinda}
-							disabled={openConversation.isPending}
-						>
-							{openConversation.isPending && <ButtonLoader />}
-							<ChatSVG width={16} height={16} /> Contactar a
-							Caxinda
-						</button>
-						{isAuthenticated && (
-							<WishlistToggle
-								adId={ad.id}
-								saved={wishlistSaved ?? false}
+						<div className="card p-5">
+							<ReportForm
+								targetType="AD"
+								targetId={ad.id}
+								targetLabel={ad.title}
 							/>
-						)}
-						<p className="text-xs leading-relaxed text-ink/40">
-							Anúncio gerido pela Caxinda. A equipa de apoio
-							responde às tuas mensagens sobre este anúncio.
-						</p>
-					</div>
-
-					<div className="card p-5">
-						<ReportForm
-							targetType="AD"
-							targetId={ad.id}
-							targetLabel={ad.title}
-						/>
+						</div>
 					</div>
 				</aside>
 			</div>
 
-			<ReviewSection target={{ adId: ad.id }} />
+			{canViewAnalytics && (
+				<div className="mt-8">
+					<ItemAnalyticsPanel
+						title="Estatísticas do anúncio"
+						data={adAnalytics}
+						isLoading={adAnalyticsLoading}
+					/>
+				</div>
+			)}
+
+			<div className="mt-8">
+				<ReviewSection target={{ adId: ad.id }} />
+			</div>
 			<Lightbox
 				images={adImages}
 				index={lightboxIndex}
@@ -646,6 +677,117 @@ function WishlistToggle({ adId, saved }: { adId: string; saved: boolean }) {
 		>
 			{isSaved ? '★ Guardado' : '☆ Guardar'}
 		</button>
+	);
+}
+
+function ItemAnalyticsPanel({
+	title,
+	data,
+	isLoading,
+}: {
+	title: string;
+	data?: AdAnalytics | BusinessAnalytics;
+	isLoading: boolean;
+}) {
+	const channelLabels: Record<ContactChannel, string> = {
+		phone: 'Telefone',
+		whatsapp: 'WhatsApp',
+		email: 'Email',
+		website: 'Website',
+	};
+	const channelMax = Math.max(
+		1,
+		...(data && 'clicksByChannel' in data.totals
+			? data.totals.clicksByChannel.map((item) => item.count)
+			: []),
+	);
+
+	return (
+		<section className="card gap-4 p-6">
+			<div className="flex items-center justify-between gap-3">
+				<div>
+					<h2 className="kicker">{title}</h2>
+					<p className="mt-1 text-xs text-ink/50">Últimos 30 dias.</p>
+				</div>
+				{isLoading && <ButtonLoader />}
+			</div>
+
+			{!data ? (
+				<p className="text-sm text-ink/50">
+					Sem dados suficientes para apresentar.
+				</p>
+			) : 'clicksByChannel' in data.totals ? (
+				<>
+					<div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+						<InfoBox
+							label="Visualizações"
+							value={String(data.totals.views)}
+						/>
+						<InfoBox
+							label="Visitas únicas"
+							value={String(data.totals.uniqueViews)}
+						/>
+						<InfoBox
+							label="Cliques"
+							value={String(data.totals.clicks)}
+						/>
+					</div>
+
+					<MiniChart data={data.daily} />
+
+					{data.totals.clicksByChannel.length > 0 && (
+						<div className="flex flex-col gap-3">
+							{data.totals.clicksByChannel.map((item) => (
+								<div key={item.channel}>
+									<div className="mb-1 flex justify-between text-xs">
+										<span className="font-bold">
+											{channelLabels[item.channel]}
+										</span>
+										<span className="font-mono text-ink/60">
+											{item.count}
+										</span>
+									</div>
+									<div className="h-2 overflow-hidden rounded-full bg-ink/10">
+										<div
+											className="h-full rounded-full bg-kwanza"
+											style={{
+												width: `${(item.count / channelMax) * 100}%`,
+											}}
+										/>
+									</div>
+								</div>
+							))}
+						</div>
+					)}
+				</>
+			) : (
+				<>
+					<div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+						<InfoBox
+							label="Visualizações"
+							value={String(data.totals.views)}
+						/>
+						<InfoBox
+							label="Visitas únicas"
+							value={String(data.totals.uniqueViews)}
+						/>
+					</div>
+
+					<MiniChart data={data.daily} />
+				</>
+			)}
+		</section>
+	);
+}
+
+function InfoBox({ label, value }: { label: string; value: string }) {
+	return (
+		<div>
+			<p className="text-xs font-bold uppercase tracking-wide text-ink/40">
+				{label}
+			</p>
+			<p className="mt-0.5 font-mono text-xl font-bold">{value}</p>
+		</div>
 	);
 }
 
@@ -878,7 +1020,7 @@ export function BusinessesPage() {
 						<EmptyState title="Sem empresas encontradas" />
 					) : (
 						<>
-							<div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3">
+							<div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:items-start">
 								{(data?.items ?? []).map((b) => (
 									<BusinessCard key={b.id} business={b} />
 								))}
@@ -914,6 +1056,17 @@ export function BusinessDetailPage() {
 	const navigate = useNavigate();
 	const openConversation = useOpenConversation();
 	const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+	const canViewAnalytics =
+		isAuthenticated &&
+		!!business &&
+		(user?.role === 'ADMIN' ||
+			user?.role === 'MODERATOR' ||
+			user?.id === business.owner.id);
+	const { data: businessAnalytics, isLoading: businessAnalyticsLoading } =
+		useBusinessAnalytics(
+			canViewAnalytics ? business?.id : undefined,
+			'30d',
+		);
 
 	useEffect(() => {
 		setLightboxIndex(null);
@@ -1074,9 +1227,9 @@ export function BusinessDetailPage() {
 						</section>
 
 						{business.gallery.length > 0 && (
-							<section className="card p-6">
+							<section className="card gap-4 p-6">
 								<h2 className="kicker">Álbum</h2>
-								<div className="mt-4 grid grid-cols-2 gap-2.5 md:grid-cols-3">
+								<div className="grid grid-cols-2 gap-2.5 md:grid-cols-3">
 									{business.gallery.map((g, idx) => (
 										<button
 											type="button"
@@ -1185,6 +1338,16 @@ export function BusinessDetailPage() {
 					</aside>
 				</div>
 			</div>
+
+			{canViewAnalytics && (
+				<div className="mt-8">
+					<ItemAnalyticsPanel
+						title="Estatísticas da empresa"
+						data={businessAnalytics}
+						isLoading={businessAnalyticsLoading}
+					/>
+				</div>
+			)}
 
 			<div className="mt-8 grid gap-6 lg:grid-cols-2">
 				<ReviewSection target={{ businessId: business.id }} />
@@ -1875,20 +2038,6 @@ export function PlansPage() {
 												{b}
 											</li>
 										))}
-										<li className="flex items-center gap-2">
-											<span className="text-kwanza">
-												✔
-											</span>{' '}
-											Até {plan.businessVisibilityLimit}{' '}
-											empresas em destaque
-										</li>
-										<li className="flex items-center gap-2">
-											<span className="text-kwanza">
-												✔
-											</span>{' '}
-											Até {plan.featuredAdsLimit} anúncios
-											em destaque
-										</li>
 									</ul>
 									<div className="p-6 pt-0">
 										<Link

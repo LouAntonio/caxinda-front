@@ -24,7 +24,7 @@ export function BusinessCardSkeleton() {
 
 export function BusinessCardSkeletonGrid({
 	count = 6,
-	gridClassName = 'grid gap-4 sm:grid-cols-2 md:grid-cols-3',
+	gridClassName = 'grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:items-start',
 }: {
 	count?: number;
 	gridClassName?: string;

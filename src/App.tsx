@@ -34,8 +34,6 @@ import {
 } from './pages/AuthPages';
 import {
 	AreaDashboardPage,
-	MyAdsPage,
-	AdFormPage,
 	MyBusinessesPage,
 	BusinessFormPage,
 	SubscribePage,
@@ -88,9 +86,6 @@ const router = createBrowserRouter([
 				),
 				children: [
 					{ index: true, element: <AreaDashboardPage /> },
-					{ path: 'anuncios', element: <MyAdsPage /> },
-					{ path: 'anuncios/novo', element: <AdFormPage /> },
-					{ path: 'anuncios/:id/editar', element: <AdFormPage /> },
 					{ path: 'empresas', element: <MyBusinessesPage /> },
 					{ path: 'empresas/nova', element: <BusinessFormPage /> },
 					{

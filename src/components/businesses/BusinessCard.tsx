@@ -35,11 +35,6 @@ export function BusinessCard({
 					</div>
 				)}
 				<div className="absolute left-3 top-3 flex flex-col items-start gap-1.5">
-					{business.isVerified && (
-						<span className="inline-flex items-center gap-1 rounded-full bg-blue px-2.5 py-1 font-mono text-[10px] font-bold uppercase tracking-wider text-white shadow">
-							✔ Verificada
-						</span>
-					)}
 					{featuredActive && (
 						<span className="inline-flex items-center gap-1 rounded-full bg-amber-500 px-2.5 py-1 font-mono text-[10px] font-bold uppercase tracking-wider text-white shadow">
 							★ Destaque
@@ -51,12 +46,6 @@ export function BusinessCard({
 						<StatusPill status={business.status} />
 					</div>
 				)}
-				{business.province && (
-					<span className="absolute bottom-3 left-3 rounded-full border border-white/30 bg-ink/80 px-2.5 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider text-snow backdrop-blur">
-						{PROVINCE_LABELS[business.province] ??
-							business.province}
-					</span>
-				)}
 			</Link>
 			<div className="flex flex-1 flex-col gap-2 p-4">
 				<Link
@@ -65,9 +54,17 @@ export function BusinessCard({
 				>
 					{business.name}
 				</Link>
-				<span className="chip self-start border-blue/20 bg-blue/5 text-blue">
-					{business.category.name}
-				</span>
+				<div className="flex flex-wrap gap-1.5">
+					<span className="chip self-start border-blue/20 bg-blue/5 text-blue">
+						{business.category.name}
+					</span>
+					{business.province && (
+						<span className="chip self-start border-ink/10 bg-ink/5 text-ink/60">
+							{PROVINCE_LABELS[business.province] ??
+								business.province}
+						</span>
+					)}
+				</div>
 				<p className="line-clamp-2 text-sm text-ink/60">
 					{business.description}
 				</p>

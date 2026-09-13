@@ -451,11 +451,24 @@ export interface MessagesResponse {
 
 export type AnalyticsRange = '7d' | '30d' | '90d' | '180d' | '365d' | '730d';
 export type ContactChannel = 'phone' | 'whatsapp' | 'email' | 'website';
+export interface AnalyticsQuery {
+	range?: AnalyticsRange;
+	from?: string;
+	to?: string;
+}
+
+export interface AnalyticsDaily {
+	date: string;
+	views: number;
+	uniqueViews: number;
+	clicks?: number;
+	clicksByChannel?: { channel: ContactChannel; count: number }[];
+}
 
 export interface AdAnalytics {
 	adId: UUID;
 	totals: { views: number; uniqueViews: number };
-	daily: { date: string; views: number; uniqueViews: number }[];
+	daily: AnalyticsDaily[];
 }
 
 export interface BusinessAnalytics {
@@ -465,12 +478,30 @@ export interface BusinessAnalytics {
 		clicks: number;
 		clicksByChannel: { channel: ContactChannel; count: number }[];
 	};
-	daily: {
-		date: string;
-		views: number;
-		uniqueViews: number;
-		clicks: number;
-	}[];
+	daily: AnalyticsDaily[];
+}
+
+export interface TopAnalyticsAd {
+	id: UUID;
+	title: string;
+	slug: string;
+	image: string | null;
+	views: number;
+	clicks: number;
+}
+
+export interface TopAnalyticsBusiness {
+	id: UUID;
+	name: string;
+	slug: string;
+	coverUrl: string | null;
+	views: number;
+	clicks: number;
+}
+
+export interface PlatformAnalytics extends BusinessAnalytics {
+	topAds: TopAnalyticsAd[];
+	topBusinesses: TopAnalyticsBusiness[];
 }
 
 // ---------------- Search ----------------

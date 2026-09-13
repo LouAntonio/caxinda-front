@@ -466,9 +466,9 @@ export function useSetAdVisibility() {
 export function useFeatureAd() {
 	const queryClient = useQueryClient();
 	return useMutation({
-		mutationFn: async (payload: { id: string; days?: number }) => {
+		mutationFn: async (payload: { id: string; endDate?: string }) => {
 			const res = await http.post(`/ads/${payload.id}/feature`, {
-				days: payload.days,
+				endDate: payload.endDate,
 			});
 			return res.data;
 		},
@@ -492,9 +492,9 @@ export function useUnfeatureAd() {
 export function useFeatureBusiness() {
 	const queryClient = useQueryClient();
 	return useMutation({
-		mutationFn: async (payload: { id: string; days?: number }) => {
+		mutationFn: async (payload: { id: string; endDate?: string }) => {
 			const res = await http.post(`/businesses/${payload.id}/feature`, {
-				days: payload.days,
+				endDate: payload.endDate,
 			});
 			return res.data;
 		},

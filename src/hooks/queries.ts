@@ -8,6 +8,7 @@ import type {
 	AdAnalytics,
 	AdListItem,
 	AdminUser,
+	AnalyticsQuery,
 	AnalyticsRange,
 	Business,
 	BusinessAnalytics,
@@ -24,6 +25,7 @@ import type {
 	Plan,
 	PlansResponse,
 	PlatformBankAccount,
+	PlatformAnalytics,
 	PublicUser,
 	Report,
 	ReportStatus,
@@ -512,12 +514,20 @@ export function useMessages(conversationId?: string, before?: string) {
 
 // ---------------- Analíticas ----------------
 
-export function useAdAnalytics(adId?: string, range: AnalyticsRange = '30d') {
+function analyticsParams(query: AnalyticsRange | AnalyticsQuery) {
+	return typeof query === 'string' ? { range: query } : query;
+}
+
+export function useAdAnalytics(
+	adId?: string,
+	query: AnalyticsRange | AnalyticsQuery = '30d',
+) {
+	const params = analyticsParams(query);
 	return useQuery({
-		queryKey: ['analytics', 'ad', adId, range],
+		queryKey: ['analytics', 'ad', adId, params],
 		queryFn: async () => {
 			const res = await http.get<AdAnalytics>(`/analytics/ad/${adId}`, {
-				params: { range },
+				params,
 			});
 			return res.data;
 		},
@@ -527,14 +537,15 @@ export function useAdAnalytics(adId?: string, range: AnalyticsRange = '30d') {
 
 export function useBusinessAnalytics(
 	businessId?: string,
-	range: AnalyticsRange = '30d',
+	query: AnalyticsRange | AnalyticsQuery = '30d',
 ) {
+	const params = analyticsParams(query);
 	return useQuery({
-		queryKey: ['analytics', 'business', businessId, range],
+		queryKey: ['analytics', 'business', businessId, params],
 		queryFn: async () => {
 			const res = await http.get<BusinessAnalytics>(
 				`/analytics/business/${businessId}`,
-				{ params: { range } },
+				{ params },
 			);
 			return res.data;
 		},
@@ -542,15 +553,34 @@ export function useBusinessAnalytics(
 	});
 }
 
-export function usePlatformAnalytics(range: AnalyticsRange = '30d') {
+export function usePlatformAnalytics(
+	query: AnalyticsRange | AnalyticsQuery = '30d',
+) {
+	const params = analyticsParams(query);
 	return useQuery({
-		queryKey: ['analytics', 'platform', range],
+		queryKey: ['analytics', 'platform', params],
 		queryFn: async () => {
 			const res = await http.get<BusinessAnalytics>(
 				'/analytics/platform',
 				{
-					params: { range },
+					params,
 				},
+			);
+			return res.data;
+		},
+	});
+}
+
+export function usePlatformAnalyticsOverview(
+	query: AnalyticsRange | AnalyticsQuery = '30d',
+) {
+	const params = analyticsParams(query);
+	return useQuery({
+		queryKey: ['analytics', 'platform', 'overview', params],
+		queryFn: async () => {
+			const res = await http.get<PlatformAnalytics>(
+				'/analytics/platform/overview',
+				{ params },
 			);
 			return res.data;
 		},

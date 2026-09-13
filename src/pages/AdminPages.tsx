@@ -3,6 +3,8 @@ import { Link, useParams, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { usePageTitle } from '../hooks/usePageTitle';
 import { useUpload } from '../hooks/useUpload';
+import { Lightbox } from '../components/ui/Lightbox';
+import { Modal } from '../components/ui/Modal';
 import {
 	useAdminConversations,
 	useAdminKycList,
@@ -15,6 +17,7 @@ import {
 	useCategories,
 	useAdminPlans,
 	usePlatformAnalytics,
+	usePlatformAnalyticsOverview,
 	usePlatformAccounts,
 } from '../hooks/queries';
 import {
@@ -46,6 +49,8 @@ import {
 	type PlatformAccountInput,
 } from '../hooks/mutations';
 import { Spinner } from '../components/ui/Spinner';
+import { MiniChart } from '../components/ui/MiniChart';
+import { RangePicker, analyticsQuery } from '../components/ui/RangePicker';
 import { FormSkeleton } from '../components/skeletons/FormSkeletons';
 import { TableSkeleton } from '../components/skeletons/SkeletonsTables';
 import { EmptyState } from '../components/ui/EmptyState';
@@ -54,7 +59,7 @@ import { Stars } from '../components/ui/Stars';
 import { Avatar } from '../components/ui/Avatar';
 import { ConfirmButton } from '../components/ui/ConfirmButton';
 import { Price } from '../components/ui/Price';
-import { getApiError } from '../lib/api';
+import { getApiError, http } from '../lib/api';
 import {
 	formatDate,
 	formatDecimal,
@@ -63,13 +68,18 @@ import {
 	PROVINCE_LABELS,
 } from '../lib/format';
 import type {
+	AnalyticsRange,
 	CategoryType,
-	PlatformBankAccount,
+	ContactChannel,
+	Payment,
 	Plan,
+	Report,
 	Role,
 	MediaAsset,
+	PlatformBankAccount,
 	Province,
 } from '../types/api';
+import type { KycListItem } from '../hooks/queries';
 import { PROVINCES } from '../types/api';
 
 function Title({ children }: { children: React.ReactNode }) {
@@ -249,6 +259,7 @@ function Row({
 export function AdminAdsPage() {
 	usePageTitle('Gerir anúncios');
 	const [q, setQ] = useState('');
+	const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 	const { data, isLoading } = useAdminAds(
 		q ? { q, limit: 25 } : { limit: 25 },
 	);
@@ -279,11 +290,18 @@ export function AdminAdsPage() {
 							className="card items-center gap-3 p-3 sm:flex-row"
 						>
 							{ad.image && (
-								<img
-									src={ad.image}
-									alt=""
-									className="h-16 w-20 rounded-lg object-cover"
-								/>
+								<button
+									type="button"
+									onClick={() => setPreviewUrl(ad.image)}
+									className="shrink-0 overflow-hidden rounded-lg"
+									aria-label="Ampliar fotografia"
+								>
+									<img
+										src={ad.image}
+										alt=""
+										className="h-16 w-20 object-cover transition hover:scale-105"
+									/>
+								</button>
 							)}
 							<div className="min-w-0 flex-1">
 								<Link
@@ -312,6 +330,11 @@ export function AdminAdsPage() {
 					))}
 				</div>
 			)}
+			<Lightbox
+				images={previewUrl ? [previewUrl] : []}
+				index={previewUrl ? 0 : null}
+				onClose={() => setPreviewUrl(null)}
+			/>
 		</div>
 	);
 }
@@ -663,6 +686,7 @@ export function AdminBusinessesPage() {
 	usePageTitle('Gerir empresas');
 	const { data, isLoading } = useBusinesses({ page: 1, limit: 50 });
 	const moderate = useModerateBusiness();
+	const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 	return (
 		<div>
 			<Title>Verificação de empresas</Title>
@@ -678,11 +702,18 @@ export function AdminBusinessesPage() {
 							className="card items-center gap-3 p-3 sm:flex-row"
 						>
 							{b.logoUrl && (
-								<img
-									src={b.logoUrl}
-									alt=""
-									className="h-14 w-14 rounded-lg object-cover"
-								/>
+								<button
+									type="button"
+									onClick={() => setPreviewUrl(b.logoUrl)}
+									className="shrink-0 overflow-hidden rounded-lg"
+									aria-label="Ampliar logótipo"
+								>
+									<img
+										src={b.logoUrl}
+										alt=""
+										className="h-14 w-14 object-cover transition hover:scale-105"
+									/>
+								</button>
 							)}
 							<div className="min-w-0 flex-1">
 								<Link
@@ -758,6 +789,11 @@ export function AdminBusinessesPage() {
 					))}
 				</div>
 			)}
+			<Lightbox
+				images={previewUrl ? [previewUrl] : []}
+				index={previewUrl ? 0 : null}
+				onClose={() => setPreviewUrl(null)}
+			/>
 		</div>
 	);
 }
@@ -992,8 +1028,8 @@ function Info({ k, v }: { k: string; v: string }) {
 export function AdminPaymentsPage() {
 	usePageTitle('Gerir pagamentos');
 	const { data, isLoading } = useAdminPayments({ limit: 50 });
-	const review = useReviewPayment();
-	const cancel = useCancelPayment();
+	const [openId, setOpenId] = useState<string | null>(null);
+	const open = data?.items.find((p) => p.id === openId) ?? null;
 
 	return (
 		<div>
@@ -1003,125 +1039,164 @@ export function AdminPaymentsPage() {
 			) : !data || data.items.length === 0 ? (
 				<EmptyState title="Sem pagamentos" />
 			) : (
-				<div className="flex flex-col gap-3">
+				<div className="flex flex-col gap-2">
 					{(data?.items ?? []).map((p) => (
-						<div key={p.id} className="card gap-3 p-4">
-							<div className="flex flex-wrap items-center justify-between gap-2">
-								<div>
-									<p className="text-sm font-bold">
-										{p.subscription.business.name}
-									</p>
-									<p className="text-xs text-ink/50">
-										Plano {p.subscription.plan.name} ·
-										criado {formatDate(p.createdAt)}
-									</p>
-								</div>
-								<div className="flex items-center gap-2">
-									<Price value={p.amount} />
-									<StatusPill status={p.status} />
-								</div>
+						<div
+							key={p.id}
+							className="card items-center gap-3 p-3 sm:flex-row"
+						>
+							<div className="min-w-0 flex-1">
+								<p className="truncate text-sm font-bold">
+									{p.subscription.business.name}
+								</p>
+								<p className="truncate text-xs text-ink/50">
+									Plano {p.subscription.plan.name} ·{' '}
+									{formatDate(p.createdAt)}
+								</p>
 							</div>
-							{p.proofUrl && (
-								<a
-									href={p.proofUrl}
-									target="_blank"
-									rel="noreferrer"
-									className="text-xs font-bold text-blue hover:underline"
-								>
-									Ver comprovativo →
-								</a>
-							)}
-							{p.status === 'UNDER_REVIEW' && (
-								<div className="flex flex-wrap gap-2">
-									<button
-										className="btn-primary"
-										onClick={() =>
-											void toast.promise(
-												review.mutateAsync({
-													id: p.id,
-													decision: 'APPROVED',
-												}),
-												{
-													loading:
-														'A aprovar pagamento…',
-													success:
-														'Pagamento aprovado. Subscrição ativada.',
-													error: (err) =>
-														getApiError(err),
-												},
-											)
-										}
-									>
-										Aprovar
-									</button>
-									<button
-										className="btn-ghost !text-red"
-										onClick={() =>
-											void toast.promise(
-												review.mutateAsync({
-													id: p.id,
-													decision: 'REJECTED',
-													note: 'Comprovativo inválido.',
-												}),
-												{
-													loading:
-														'A rejeitar pagamento…',
-													success:
-														'Pagamento rejeitado.',
-													error: (err) =>
-														getApiError(err),
-												},
-											)
-										}
-									>
-										Rejeitar
-									</button>
-									<button
-										className="btn-ghost"
-										onClick={() =>
-											void toast.promise(
-												review.mutateAsync({
-													id: p.id,
-													decision: 'RETURNED',
-													note: 'Reenviar o comprovativo.',
-												}),
-												{
-													loading:
-														'A devolver pagamento…',
-													success:
-														'Pagamento devolvido. O dono pode reenviar o comprovativo.',
-													error: (err) =>
-														getApiError(err),
-												},
-											)
-										}
-									>
-										Devolver a pedido
-									</button>
-								</div>
-							)}
-							{p.status === 'PENDING' && (
-								<button
-									className="btn-ghost !text-red"
-									onClick={() =>
-										void toast.promise(
-											cancel.mutateAsync(p.id),
-											{
-												loading:
-													'A cancelar pagamento…',
-												success: 'Pagamento cancelado.',
-												error: (err) =>
-													getApiError(err),
-											},
-										)
-									}
-								>
-									Cancelar pedido
-								</button>
-							)}
+							<Price value={p.amount} />
+							<StatusPill status={p.status} />
+							<button
+								className="btn-outline"
+								onClick={() => setOpenId(p.id)}
+							>
+								Ver
+							</button>
 						</div>
 					))}
 				</div>
+			)}
+			<Modal
+				open={!!open}
+				onClose={() => setOpenId(null)}
+				title={
+					open
+						? `Pagamento · ${open.subscription.business.name}`
+						: 'Pagamento'
+				}
+				wide
+			>
+				{open && <PaymentCard payment={open} />}
+			</Modal>
+		</div>
+	);
+}
+
+function PaymentCard({ payment: p }: { payment: Payment }) {
+	const review = useReviewPayment();
+	const cancel = useCancelPayment();
+	const [proofOpen, setProofOpen] = useState(false);
+
+	return (
+		<div className="flex flex-col gap-4">
+			<div className="flex flex-wrap items-center justify-between gap-2">
+				<div className="flex items-center gap-2">
+					<Price value={p.amount} />
+					<StatusPill status={p.status} />
+				</div>
+				<p className="text-xs text-ink/50">
+					Plano {p.subscription.plan.name} · criado{' '}
+					{formatDate(p.createdAt)}
+				</p>
+			</div>
+			{p.proofUrl && (
+				<button
+					type="button"
+					onClick={() => setProofOpen(true)}
+					className="group flex items-center gap-2 text-left"
+				>
+					<img
+						src={p.proofUrl}
+						alt="Comprovativo de pagamento"
+						className="h-20 w-32 rounded-lg border border-ink/10 object-cover transition group-hover:scale-[1.02] group-hover:opacity-90"
+					/>
+					<span className="text-xs font-bold text-blue hover:underline">
+						Ver comprovativo →
+					</span>
+				</button>
+			)}
+			{p.status === 'UNDER_REVIEW' && (
+				<div className="flex flex-wrap gap-2">
+					<button
+						className="btn-primary"
+						onClick={() =>
+							void toast.promise(
+								review.mutateAsync({
+									id: p.id,
+									decision: 'APPROVED',
+								}),
+								{
+									loading: 'A aprovar pagamento…',
+									success:
+										'Pagamento aprovado. Subscrição ativada.',
+									error: (err) => getApiError(err),
+								},
+							)
+						}
+					>
+						Aprovar
+					</button>
+					<button
+						className="btn-ghost !text-red"
+						onClick={() =>
+							void toast.promise(
+								review.mutateAsync({
+									id: p.id,
+									decision: 'REJECTED',
+									note: 'Comprovativo inválido.',
+								}),
+								{
+									loading: 'A rejeitar pagamento…',
+									success: 'Pagamento rejeitado.',
+									error: (err) => getApiError(err),
+								},
+							)
+						}
+					>
+						Rejeitar
+					</button>
+					<button
+						className="btn-ghost"
+						onClick={() =>
+							void toast.promise(
+								review.mutateAsync({
+									id: p.id,
+									decision: 'RETURNED',
+									note: 'Reenviar o comprovativo.',
+								}),
+								{
+									loading: 'A devolver pagamento…',
+									success:
+										'Pagamento devolvido. O dono pode reenviar o comprovativo.',
+									error: (err) => getApiError(err),
+								},
+							)
+						}
+					>
+						Devolver a pedido
+					</button>
+				</div>
+			)}
+			{p.status === 'PENDING' && (
+				<button
+					className="btn-ghost !text-red"
+					onClick={() =>
+						void toast.promise(cancel.mutateAsync(p.id), {
+							loading: 'A cancelar pagamento…',
+							success: 'Pagamento cancelado.',
+							error: (err) => getApiError(err),
+						})
+					}
+				>
+					Cancelar pedido
+				</button>
+			)}
+			{p.proofUrl && (
+				<Lightbox
+					images={[p.proofUrl]}
+					index={proofOpen ? 0 : null}
+					onClose={() => setProofOpen(false)}
+				/>
 			)}
 		</div>
 	);
@@ -1132,7 +1207,8 @@ export function AdminPaymentsPage() {
 export function AdminReportsPage() {
 	usePageTitle('Denúncias');
 	const { data, isLoading } = useAdminReports({ limit: 50 });
-	const moderate = useModerateReport();
+	const [openId, setOpenId] = useState<string | null>(null);
+	const open = data?.items.find((r) => r.id === openId) ?? null;
 
 	return (
 		<div>
@@ -1142,79 +1218,113 @@ export function AdminReportsPage() {
 			) : !data || data.items.length === 0 ? (
 				<EmptyState title="Sem denúncias" />
 			) : (
-				<div className="flex flex-col gap-3">
+				<div className="flex flex-col gap-2">
 					{(data?.items ?? []).map((r) => (
-						<div key={r.id} className="card gap-2 p-4">
-							<div className="flex items-center justify-between">
-								<p className="text-sm font-bold">
+						<div
+							key={r.id}
+							className="card items-center gap-3 p-3 sm:flex-row"
+						>
+							<div className="min-w-0 flex-1">
+								<p className="truncate text-sm font-bold">
 									{r.targetLabel ?? r.targetType}
 									<span className="ml-2 font-mono text-[10px] font-normal text-ink/40">
 										{r.targetType}
 									</span>
 								</p>
-								<StatusPill status={r.status} />
-							</div>
-							<p className="text-xs text-ink/50">
-								Motivo: {r.reason}
-							</p>
-							{r.description && (
-								<p className="rounded-xl bg-snow p-3 text-sm text-ink/70">
-									{r.description}
+								<p className="truncate text-xs text-ink/50">
+									{r.reason} · por{' '}
+									{fullName(
+										r.reporter.name,
+										r.reporter.surname,
+									)}
+									{' · '}
+									{formatDate(r.createdAt)}
 								</p>
-							)}
-							<p className="text-xs text-ink/40">
-								Por{' '}
-								{fullName(r.reporter.name, r.reporter.surname)}{' '}
-								· {formatDate(r.createdAt)}
-							</p>
-							{r.status === 'PENDING' && (
-								<div className="flex gap-2">
-									<button
-										className="btn-primary"
-										onClick={() =>
-											void toast.promise(
-												moderate.mutateAsync({
-													id: r.id,
-													status: 'RESOLVED',
-												}),
-												{
-													loading:
-														'A resolver denúncia…',
-													success:
-														'Denúncia resolvida.',
-													error: (err) =>
-														getApiError(err),
-												},
-											)
-										}
-									>
-										Resolver
-									</button>
-									<button
-										className="btn-ghost"
-										onClick={() =>
-											void toast.promise(
-												moderate.mutateAsync({
-													id: r.id,
-													status: 'DISMISSED',
-												}),
-												{
-													loading:
-														'A arquivar denúncia…',
-													success:
-														'Denúncia arquivada.',
-													error: (err) =>
-														getApiError(err),
-												},
-											)
-										}
-									>
-										Arquivar
-									</button>
-								</div>
-							)}
+							</div>
+							<StatusPill status={r.status} />
+							<button
+								className="btn-outline"
+								onClick={() => setOpenId(r.id)}
+							>
+								Ver
+							</button>
 						</div>
 					))}
+				</div>
+			)}
+			<Modal
+				open={!!open}
+				onClose={() => setOpenId(null)}
+				title="Detalhes da denúncia"
+			>
+				{open && <ReportCard report={open} />}
+			</Modal>
+		</div>
+	);
+}
+
+function ReportCard({ report: r }: { report: Report }) {
+	const moderate = useModerateReport();
+
+	return (
+		<div className="flex flex-col gap-3">
+			<div className="flex flex-wrap items-center justify-between gap-2">
+				<p className="text-sm font-bold">
+					{r.targetLabel ?? r.targetType}
+					<span className="ml-2 font-mono text-[10px] font-normal text-ink/40">
+						{r.targetType}
+					</span>
+				</p>
+				<StatusPill status={r.status} />
+			</div>
+			<p className="text-xs text-ink/50">Motivo: {r.reason}</p>
+			{r.description && (
+				<p className="rounded-xl bg-snow p-3 text-sm text-ink/70">
+					{r.description}
+				</p>
+			)}
+			<p className="text-xs text-ink/40">
+				Por {fullName(r.reporter.name, r.reporter.surname)} ·{' '}
+				{formatDate(r.createdAt)}
+			</p>
+			{r.status === 'PENDING' && (
+				<div className="flex gap-2">
+					<button
+						className="btn-primary"
+						onClick={() =>
+							void toast.promise(
+								moderate.mutateAsync({
+									id: r.id,
+									status: 'RESOLVED',
+								}),
+								{
+									loading: 'A resolver denúncia…',
+									success: 'Denúncia resolvida.',
+									error: (err) => getApiError(err),
+								},
+							)
+						}
+					>
+						Resolver
+					</button>
+					<button
+						className="btn-ghost"
+						onClick={() =>
+							void toast.promise(
+								moderate.mutateAsync({
+									id: r.id,
+									status: 'DISMISSED',
+								}),
+								{
+									loading: 'A arquivar denúncia…',
+									success: 'Denúncia arquivada.',
+									error: (err) => getApiError(err),
+								},
+							)
+						}
+					>
+						Arquivar
+					</button>
 				</div>
 			)}
 		</div>
@@ -1226,7 +1336,8 @@ export function AdminReportsPage() {
 export function AdminKycPage() {
 	usePageTitle('Verificações');
 	const { data, isLoading } = useAdminKycList({ limit: 50 });
-	const review = useReviewKyc();
+	const [openId, setOpenId] = useState<string | null>(null);
+	const open = data?.items.find((k) => k.id === openId) ?? null;
 
 	return (
 		<div>
@@ -1236,117 +1347,192 @@ export function AdminKycPage() {
 			) : !data || data.items.length === 0 ? (
 				<EmptyState title="Sem pedidos KYC" />
 			) : (
-				<div className="flex flex-col gap-3">
+				<div className="flex flex-col gap-2">
 					{(data?.items ?? []).map((k) => (
-						<div key={k.id} className="card gap-3 p-4">
-							<div className="flex items-center justify-between">
-								<p className="text-sm font-bold">
+						<div
+							key={k.id}
+							className="card items-center gap-3 p-3 sm:flex-row"
+						>
+							<Avatar
+								src={k.user.image}
+								name={fullName(k.user.name, k.user.surname)}
+							/>
+							<div className="min-w-0 flex-1">
+								<p className="truncate text-sm font-bold">
 									{fullName(k.user.name, k.user.surname)}
-									<span className="ml-2 font-mono text-xs font-normal text-ink/40">
-										{k.user.email}
-									</span>
 								</p>
-								<StatusPill status={k.status} />
+								<p className="truncate text-xs text-ink/50">
+									{k.user.email} · {formatDate(k.createdAt)}
+								</p>
 							</div>
-							<div className="grid grid-cols-3 gap-2">
-								<img
-									src={k.biFrontUrl}
-									alt="BI frente"
-									className="h-24 w-full rounded-lg object-cover"
-								/>
-								<img
-									src={k.biBackUrl}
-									alt="BI verso"
-									className="h-24 w-full rounded-lg object-cover"
-								/>
-								{k.fullBodyUrl ? (
-									<img
-										src={k.fullBodyUrl}
-										alt="Corpo inteiro"
-										className="h-24 w-full rounded-lg object-cover"
-									/>
-								) : (
-									<div className="flex h-24 w-full items-center justify-center rounded-lg bg-snow text-[10px] font-bold text-ink/40">
-										Sem corpo inteiro
-									</div>
-								)}
-							</div>
-							<p className="font-mono text-[10px] font-bold uppercase tracking-widest text-ink/40">
-								Selfies
-							</p>
-							<div className="grid grid-cols-3 gap-2">
-								{(k.selfies ?? []).map((s, i) => (
-									<img
-										key={s.cloudinaryId ?? i}
-										src={s.url}
-										alt={`Selfie ${i + 1}`}
-										className="h-24 w-full rounded-lg object-cover"
-									/>
-								))}
-								{k.selfies.length < 3 &&
-									Array.from({
-										length: 3 - k.selfies.length,
-									}).map((_, i) => (
-										<div
-											key={`empty-${i}`}
-											className="flex h-24 w-full items-center justify-center rounded-lg bg-snow text-[10px] font-bold text-ink/40"
-										>
-											Sem selfie
-										</div>
-									))}
-							</div>
-							{k.status === 'PENDING' && (
-								<div className="flex gap-2">
-									<button
-										className="btn-primary"
-										onClick={() =>
-											void toast.promise(
-												review.mutateAsync({
-													id: k.id,
-													status: 'APPROVED',
-												}),
-												{
-													loading:
-														'A verificar utilizador…',
-													success:
-														'Utilizador verificado.',
-													error: (err) =>
-														getApiError(err),
-												},
-											)
-										}
-									>
-										Aprovar
-									</button>
-									<button
-										className="btn-ghost !text-red"
-										onClick={() =>
-											void toast.promise(
-												review.mutateAsync({
-													id: k.id,
-													status: 'REJECTED',
-													rejectionReason:
-														'Documentos ilegíveis.',
-												}),
-												{
-													loading:
-														'A rejeitar verificação…',
-													success:
-														'Verificação rejeitada.',
-													error: (err) =>
-														getApiError(err),
-												},
-											)
-										}
-									>
-										Rejeitar
-									</button>
-								</div>
-							)}
+							<StatusPill status={k.status} />
+							{k.status === 'PENDING' && <KycActions kyc={k} />}
+							<button
+								className="btn-outline"
+								onClick={() => setOpenId(k.id)}
+							>
+								Ver
+							</button>
 						</div>
 					))}
 				</div>
 			)}
+			<Modal
+				open={!!open}
+				onClose={() => setOpenId(null)}
+				title={
+					open
+						? `KYC · ${fullName(open.user.name, open.user.surname)}`
+						: 'KYC'
+				}
+				wide
+			>
+				{open && <KycReviewCard kyc={open} />}
+			</Modal>
+		</div>
+	);
+}
+
+function KycActions({ kyc }: { kyc: KycListItem }) {
+	const review = useReviewKyc();
+
+	return (
+		<div className="flex flex-wrap gap-1.5">
+			<button
+				className="btn-primary !py-1.5"
+				onClick={() =>
+					void toast.promise(
+						review.mutateAsync({
+							id: kyc.id,
+							status: 'APPROVED',
+						}),
+						{
+							loading: 'A verificar utilizador…',
+							success: 'Utilizador verificado.',
+							error: (err) => getApiError(err),
+						},
+					)
+				}
+			>
+				Aprovar
+			</button>
+			<button
+				className="btn-ghost !py-1.5 !text-red"
+				onClick={() =>
+					void toast.promise(
+						review.mutateAsync({
+							id: kyc.id,
+							status: 'REJECTED',
+							rejectionReason: 'Documentos ilegíveis.',
+						}),
+						{
+							loading: 'A rejeitar verificação…',
+							success: 'Verificação rejeitada.',
+							error: (err) => getApiError(err),
+						},
+					)
+				}
+			>
+				Rejeitar
+			</button>
+		</div>
+	);
+}
+
+function KycReviewCard({ kyc }: { kyc: KycListItem }) {
+	const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+	const imageUrls = [
+		kyc.biFrontUrl,
+		kyc.biBackUrl,
+		...(kyc.fullBodyUrl ? [kyc.fullBodyUrl] : []),
+		...(kyc.selfies ?? []).map((s) => s.url),
+	];
+	const openImage = (url: string | null) => {
+		if (url) setLightboxIndex(imageUrls.indexOf(url));
+	};
+
+	return (
+		<div className="flex flex-col gap-3">
+			<div className="grid grid-cols-3 gap-2">
+				<button
+					type="button"
+					onClick={() => openImage(kyc.biFrontUrl)}
+					className="overflow-hidden rounded-lg"
+					aria-label="Ampliar BI frente"
+				>
+					<img
+						src={kyc.biFrontUrl}
+						alt="BI frente"
+						className="h-24 w-full object-cover transition hover:scale-105"
+					/>
+				</button>
+				<button
+					type="button"
+					onClick={() => openImage(kyc.biBackUrl)}
+					className="overflow-hidden rounded-lg"
+					aria-label="Ampliar BI verso"
+				>
+					<img
+						src={kyc.biBackUrl}
+						alt="BI verso"
+						className="h-24 w-full object-cover transition hover:scale-105"
+					/>
+				</button>
+				{kyc.fullBodyUrl ? (
+					<button
+						type="button"
+						onClick={() => openImage(kyc.fullBodyUrl)}
+						className="overflow-hidden rounded-lg"
+						aria-label="Ampliar corpo inteiro"
+					>
+						<img
+							src={kyc.fullBodyUrl}
+							alt="Corpo inteiro"
+							className="h-24 w-full object-cover transition hover:scale-105"
+						/>
+					</button>
+				) : (
+					<div className="flex h-24 w-full items-center justify-center rounded-lg bg-snow text-[10px] font-bold text-ink/40">
+						Sem corpo inteiro
+					</div>
+				)}
+			</div>
+			<p className="font-mono text-[10px] font-bold uppercase tracking-widest text-ink/40">
+				Selfies
+			</p>
+			<div className="grid grid-cols-3 gap-2">
+				{(kyc.selfies ?? []).map((s, i) => (
+					<button
+						type="button"
+						key={s.cloudinaryId ?? i}
+						onClick={() => openImage(s.url)}
+						className="overflow-hidden rounded-lg"
+						aria-label={`Ampliar selfie ${i + 1}`}
+					>
+						<img
+							src={s.url}
+							alt={`Selfie ${i + 1}`}
+							className="h-24 w-full object-cover transition hover:scale-105"
+						/>
+					</button>
+				))}
+				{kyc.selfies.length < 3 &&
+					Array.from({ length: 3 - kyc.selfies.length }).map(
+						(_, i) => (
+							<div
+								key={`empty-${i}`}
+								className="flex h-24 w-full items-center justify-center rounded-lg bg-snow text-[10px] font-bold text-ink/40"
+							>
+								Sem selfie
+							</div>
+						),
+					)}
+			</div>
+			<Lightbox
+				images={imageUrls}
+				index={lightboxIndex}
+				onClose={() => setLightboxIndex(null)}
+			/>
 		</div>
 	);
 }
@@ -2153,40 +2339,275 @@ export function AdminBankAccountsPage() {
 
 export function AdminAnalyticsPage() {
 	usePageTitle('Analíticas');
-	const { data } = usePlatformAnalytics('30d');
-	const max = Math.max(1, ...(data?.daily ?? []).map((d) => d.views));
+	const [range, setRange] = useState<AnalyticsRange>('30d');
+	const [custom, setCustom] = useState(false);
+	const [from, setFrom] = useState('');
+	const [to, setTo] = useState('');
+	const query = analyticsQuery(range, custom, from, to);
+	const { data, isLoading, isError, error, refetch } =
+		usePlatformAnalyticsOverview(query);
+
+	const exportCsv = () => {
+		void toast.promise(
+			http
+				.get('/analytics/platform/export', {
+					params: query,
+					responseType: 'blob',
+				})
+				.then((response) => {
+					const blob = response.data as Blob;
+					const url = URL.createObjectURL(blob);
+					const link = document.createElement('a');
+					link.href = url;
+					link.download = `analiticas-${new Date()
+						.toISOString()
+						.slice(0, 10)}.csv`;
+					document.body.appendChild(link);
+					link.click();
+					link.remove();
+					URL.revokeObjectURL(url);
+				}),
+			{
+				loading: 'A preparar exportação…',
+				success: 'Exportação concluída.',
+				error: (err) => getApiError(err),
+			},
+		);
+	};
+
+	const channelTotal = data?.totals.clicksByChannel ?? [];
+	const channelMax = Math.max(1, ...channelTotal.map((item) => item.count));
+	const channelLabels: Record<ContactChannel, string> = {
+		phone: 'Telefone',
+		whatsapp: 'WhatsApp',
+		email: 'Email',
+		website: 'Website',
+	};
 
 	return (
 		<div>
-			<Title>Analíticas da plataforma</Title>
-			<div className="card gap-4 p-6">
-				<div className="grid grid-cols-3 gap-3 text-sm">
-					<Info
-						k="Visualizações (30d)"
-						v={String(data?.totals.views ?? '—')}
-					/>
-					<Info
-						k="Visualizações únicas"
-						v={formatDecimal(data?.totals.uniqueViews)}
-					/>
-					<Info k="Cliques" v={String(data?.totals.clicks ?? '—')} />
-				</div>
-				<div className="flex h-40 items-end gap-1">
-					{(data?.daily ?? []).map((d) => (
-						<div
-							key={d.date}
-							className="flex flex-1 flex-col items-center gap-1"
-							title={`${d.date}: ${d.views} views`}
-						>
-							<div
-								className="w-full rounded-t bg-blue"
-								style={{ height: `${(d.views / max) * 100}%` }}
-							/>
-						</div>
-					))}
-				</div>
-				<p className="text-xs text-ink/40">Últimos 30 dias por dia.</p>
+			<div className="mb-6 flex flex-wrap items-start justify-between gap-4">
+				<Title>Analíticas da plataforma</Title>
+				<button className="btn-outline" onClick={exportCsv}>
+					Exportar CSV
+				</button>
 			</div>
+
+			<div className="card mb-5 gap-4 p-5">
+				<RangePicker
+					range={range}
+					custom={custom}
+					from={from}
+					to={to}
+					onRangeChange={(nextRange) => {
+						setRange(nextRange);
+						setCustom(false);
+					}}
+					onCustomToggle={() => setCustom((value) => !value)}
+					onFromChange={setFrom}
+					onToChange={setTo}
+				/>
+				<div className="flex flex-wrap items-center gap-2 text-xs text-ink/50">
+					<span>
+						{custom
+							? from || to
+								? `Período personalizado${from ? ` de ${from}` : ''}${to ? ` até ${to}` : ''}`
+								: 'Escolhe as datas para consultar'
+							: `Últimos ${range}`}
+					</span>
+					{custom && (from || to) && (
+						<button
+							type="button"
+							onClick={() => void refetch()}
+							className="font-bold text-blue hover:underline"
+						>
+							Atualizar
+						</button>
+					)}
+				</div>
+			</div>
+
+			{isLoading ? (
+				<TableSkeleton />
+			) : isError ? (
+				<EmptyState
+					title="Não foi possível carregar as analíticas"
+					description={getApiError(error)}
+					action={
+						<button
+							className="btn-primary"
+							onClick={() => void refetch()}
+						>
+							Tentar novamente
+						</button>
+					}
+				/>
+			) : (
+				<>
+					<div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+						<Info
+							k="Visualizações"
+							v={String(data?.totals.views ?? '—')}
+						/>
+						<Info
+							k="Visitas únicas"
+							v={formatDecimal(data?.totals.uniqueViews)}
+						/>
+						<Info
+							k="Cliques"
+							v={String(data?.totals.clicks ?? '—')}
+						/>
+						<Info
+							k="Canais registados"
+							v={String(channelTotal.length)}
+						/>
+					</div>
+
+					<div className="card mt-5 gap-4 p-5">
+						<div className="flex items-center justify-between gap-3">
+							<div>
+								<h2 className="font-display text-sm font-black">
+									Atividade por dia
+								</h2>
+								<p className="text-xs text-ink/50">
+									Evolução das visualizações no período
+									selecionado.
+								</p>
+							</div>
+						</div>
+						<MiniChart data={data?.daily ?? []} />
+					</div>
+
+					<div className="card mt-5 gap-4 p-5">
+						<div>
+							<h2 className="font-display text-sm font-black">
+								Cliques por canal
+							</h2>
+							<p className="text-xs text-ink/50">
+								Contactos iniciados a partir das empresas.
+							</p>
+						</div>
+						{channelTotal.length === 0 ? (
+							<p className="text-sm text-ink/50">
+								Sem cliques registados.
+							</p>
+						) : (
+							<div className="flex flex-col gap-3">
+								{channelTotal.map((item) => (
+									<div key={item.channel}>
+										<div className="mb-1 flex justify-between text-xs">
+											<span className="font-bold">
+												{channelLabels[item.channel]}
+											</span>
+											<span className="font-mono text-ink/60">
+												{item.count}
+											</span>
+										</div>
+										<div className="h-2 overflow-hidden rounded-full bg-ink/10">
+											<div
+												className="h-full rounded-full bg-kwanza"
+												style={{
+													width: `${(item.count / channelMax) * 100}%`,
+												}}
+											/>
+										</div>
+									</div>
+								))}
+							</div>
+						)}
+					</div>
+
+					<div className="grid gap-5 lg:grid-cols-2">
+						<TopItemsCard
+							title="Anúncios com mais visualizações"
+							empty="Sem anúncios neste período."
+							items={data?.topAds ?? []}
+							type="ad"
+						/>
+						<TopItemsCard
+							title="Empresas com mais visualizações"
+							empty="Sem empresas neste período."
+							items={data?.topBusinesses ?? []}
+							type="business"
+						/>
+					</div>
+				</>
+			)}
+		</div>
+	);
+}
+
+function TopItemsCard({
+	title,
+	empty,
+	items,
+	type,
+}: {
+	title: string;
+	empty: string;
+	items: Array<{
+		id: string;
+		title?: string;
+		name?: string;
+		slug: string;
+		image?: string | null;
+		coverUrl?: string | null;
+		views: number;
+		clicks: number;
+	}>;
+	type: 'ad' | 'business';
+}) {
+	return (
+		<div className="card gap-4 p-5">
+			<div>
+				<h2 className="font-display text-sm font-black">{title}</h2>
+				<p className="text-xs text-ink/50">
+					Ranking do período selecionado.
+				</p>
+			</div>
+			{items.length === 0 ? (
+				<p className="text-sm text-ink/50">{empty}</p>
+			) : (
+				<div className="flex flex-col gap-2">
+					{items.map((item) => {
+						const label = type === 'ad' ? item.title : item.name;
+						const image =
+							type === 'ad' ? item.image : item.coverUrl;
+						return (
+							<Link
+								key={item.id}
+								to={
+									type === 'ad'
+										? `/anuncios/${item.slug}`
+										: `/empresas/${item.slug}`
+								}
+								className="flex items-center gap-3 rounded-xl bg-snow p-2 transition hover:bg-ink/5"
+							>
+								{image ? (
+									<img
+										src={image}
+										alt=""
+										className="h-12 w-16 shrink-0 rounded-lg object-cover"
+									/>
+								) : (
+									<div className="flex h-12 w-16 shrink-0 items-center justify-center rounded-lg bg-ink/10 font-display text-xs font-black text-ink/40">
+										{type === 'ad' ? 'AD' : 'EMP'}
+									</div>
+								)}
+								<div className="min-w-0 flex-1">
+									<p className="truncate text-sm font-bold">
+										{label}
+									</p>
+									<p className="text-xs text-ink/50">
+										{item.views} views · {item.clicks}{' '}
+										cliques
+									</p>
+								</div>
+							</Link>
+						);
+					})}
+				</div>
+			)}
 		</div>
 	);
 }

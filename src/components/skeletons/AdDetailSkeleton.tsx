@@ -12,7 +12,7 @@ export function AdDetailSkeleton() {
 			<div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
 				<div className="min-w-0">
 					<div className="overflow-hidden rounded-2xl border border-ink/10 bg-white">
-						<div className="relative aspect-video w-full bg-snow-dark">
+						<div className="relative aspect-[16/10] w-full bg-snow-dark">
 							<Skeleton className="absolute inset-0 h-full w-full" />
 						</div>
 					</div>
@@ -20,7 +20,7 @@ export function AdDetailSkeleton() {
 						{Array.from({ length: 3 }).map((_, i) => (
 							<Skeleton
 								key={i}
-								className="aspect-square w-full rounded-lg"
+								className="aspect-[4/3] w-full rounded-lg"
 							/>
 						))}
 					</div>

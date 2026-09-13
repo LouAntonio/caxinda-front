@@ -22,7 +22,7 @@ export function AdCardSkeleton() {
 
 export function AdCardSkeletonGrid({
 	count = 6,
-	gridClassName = 'grid grid-cols-2 gap-4 md:grid-cols-3',
+	gridClassName = 'grid grid-cols-2 gap-4 md:grid-cols-3 lg:items-start',
 }: {
 	count?: number;
 	gridClassName?: string;

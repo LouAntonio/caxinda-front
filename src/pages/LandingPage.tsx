@@ -102,12 +102,12 @@ export default function LandingPage() {
 					{adsLoading ? (
 						<AdCardSkeletonGrid
 							count={4}
-							gridClassName="grid grid-cols-2 gap-4 md:grid-cols-4"
+							gridClassName="grid grid-cols-2 gap-4 md:grid-cols-4 lg:items-start"
 						/>
 					) : (
-						<div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-							{(ads?.items ?? []).map((ad) => (
-								<AdCard key={ad.id} ad={ad} />
+						<div className="grid grid-cols-2 gap-4 md:grid-cols-4 lg:items-start">
+							{(ads?.items ?? []).map((a) => (
+								<AdCard key={a.id} ad={a} />
 							))}
 						</div>
 					)}
@@ -167,10 +167,10 @@ export default function LandingPage() {
 					{businessesLoading ? (
 						<BusinessCardSkeletonGrid
 							count={4}
-							gridClassName="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-4"
+							gridClassName="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-4 lg:items-start"
 						/>
 					) : (
-						<div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-4">
+						<div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-4 lg:items-start">
 							{(businesses?.items ?? []).map((b) => (
 								<BusinessCard key={b.id} business={b} />
 							))}
