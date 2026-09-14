@@ -10,7 +10,6 @@ export default tseslint.config(
 	{
 		ignores: [
 			'eslint.config.js',
-			'vitest.config.ts',
 			'dist/**',
 			'coverage/**',
 			'build/**',
@@ -54,17 +53,6 @@ export default tseslint.config(
 			'react-refresh/only-export-components': 'off',
 			'@typescript-eslint/no-unnecessary-type-assertion': 'warn',
 			'prettier/prettier': ['error', { endOfLine: 'auto' }],
-		},
-	},
-	{
-		// Os testes usam mocks e helpers sem tipos completos; manter o código
-		// de produção estrito.
-		files: ['**/*.test.{ts,tsx}', '**/*.spec.{ts,tsx}', 'src/test/**/*'],
-		rules: {
-			'@typescript-eslint/no-unsafe-assignment': 'off',
-			'@typescript-eslint/no-unsafe-member-access': 'off',
-			'@typescript-eslint/no-unsafe-return': 'off',
-			'@typescript-eslint/unbound-method': 'off',
 		},
 	},
 );
