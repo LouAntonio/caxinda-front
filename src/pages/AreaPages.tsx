@@ -17,6 +17,7 @@ import {
 	useMyKyc,
 	useMyPayments,
 	useMySubscriptions,
+	usePaymentMethods,
 	usePlans,
 	useWishlist,
 } from '../hooks/queries';
@@ -1250,7 +1251,7 @@ export function PaymentsPage() {
 	const { data: payments, isLoading } = useMyPayments();
 	const submitProof = useSubmitPaymentProof();
 	const cancelPayment = useCancelPayment();
-	const { data: plans } = usePlans();
+	const { data: methods } = usePaymentMethods();
 	const upload = useUpload('payments');
 	const [proof, setProof] = useState<MediaAsset | null>(null);
 	const [pendingProof, setPendingProof] = useState<File | null>(null);
@@ -1438,7 +1439,7 @@ export function PaymentsPage() {
 							Contas da plataforma para a transferência
 						</h3>
 						<div className="mt-2 flex flex-wrap gap-3">
-							{(plans?.platformAccounts ?? []).map((acc, i) => (
+							{(methods ?? []).map((acc, i) => (
 								<div
 									key={i}
 									className="rounded-xl bg-snow p-3 font-mono text-xs"

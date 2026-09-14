@@ -10,6 +10,7 @@ import type {
 	AdminUser,
 	AnalyticsQuery,
 	AnalyticsRange,
+	BankTransferAccount,
 	Business,
 	BusinessAnalytics,
 	BusinessQueryParams,
@@ -341,6 +342,19 @@ export function usePlans() {
 			const res = await http.get<PlansResponse>('/plans');
 			return res.data;
 		},
+		staleTime: 5 * 60_000,
+	});
+}
+
+export function usePaymentMethods(enabled = true) {
+	return useQuery({
+		queryKey: ['payments', 'methods'],
+		queryFn: async () => {
+			const res =
+				await http.get<BankTransferAccount[]>('/payments/methods');
+			return res.data;
+		},
+		enabled,
 		staleTime: 5 * 60_000,
 	});
 }

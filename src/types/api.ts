@@ -327,9 +327,14 @@ export interface PlatformBankAccount {
 	updatedAt: string;
 }
 
+export interface BankTransferAccount {
+	bankName: string;
+	bankHolder: string;
+	bankIban: string;
+}
+
 export interface PlansResponse {
 	plans: Plan[];
-	platformAccounts: PlatformBankAccount[];
 }
 
 export interface Subscription {

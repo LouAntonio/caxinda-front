@@ -17,6 +17,7 @@ import {
 	useBusinesses,
 	useCategories,
 	useGlobalSearch,
+	usePaymentMethods,
 	usePlans,
 	useReviews,
 } from '../hooks/queries';
@@ -1929,6 +1930,8 @@ export function SearchPage() {
 export function PlansPage() {
 	usePageTitle('Planos');
 	const { data, isLoading } = usePlans();
+	const { isAuthenticated } = useSession();
+	const { data: methods } = usePaymentMethods(isAuthenticated);
 	const [searchParams] = useSearchParams();
 	const businessId = searchParams.get('business') ?? undefined;
 	const plans = data?.plans ?? [];
@@ -2078,20 +2081,41 @@ export function PlansPage() {
 						comprovativo na área pessoal. O plano é ativado após
 						verificação.
 					</p>
-					<div className="mt-4 flex flex-wrap gap-3">
-						{(data?.platformAccounts ?? []).map((acc, i) => (
-							<div
-								key={i}
-								className="flex-1 min-w-[240px] rounded-xl bg-snow p-4 font-mono text-xs"
+					{isAuthenticated ? (
+						<div className="mt-4 flex flex-wrap gap-3">
+							{(methods ?? []).map((acc, i) => (
+								<div
+									key={i}
+									className="flex-1 min-w-[240px] rounded-xl bg-snow p-4 font-mono text-xs"
+								>
+									<p className="font-bold text-blue">
+										{acc.bankName}
+									</p>
+									<p>{acc.bankHolder}</p>
+									<p className="text-ink/70">
+										{acc.bankIban}
+									</p>
+								</div>
+							))}
+						</div>
+					) : (
+						<div className="mt-4 flex flex-wrap items-center gap-3 rounded-xl bg-snow p-4">
+							<p className="text-sm text-ink/70">
+								Inicia sessão para veres as contas de
+								transferência e subscreveres um plano.
+							</p>
+							<Link
+								to={`/auth/entrar${
+									businessId
+										? `?next=/area/empresas/${businessId}/subscricao`
+										: ''
+								}`}
+								className="btn-primary"
 							>
-								<p className="font-bold text-blue">
-									{acc.bankName}
-								</p>
-								<p>{acc.bankHolder}</p>
-								<p className="text-ink/70">{acc.bankIban}</p>
-							</div>
-						))}
-					</div>
+								Iniciar sessão
+							</Link>
+						</div>
+					)}
 				</div>
 
 				<div className="mt-10 mx-auto max-w-2xl space-y-3">
