@@ -360,9 +360,10 @@ export default function LandingPage() {
 			</section>
 
 			{/* CTA final */}
-			<section className="mx-4 max-w-6xl overflow-hidden rounded-2xl bg-blue shadow-[0_20px_50px_rgba(14,23,51,0.2)] md:mx-auto">
-				<div className="px-6 py-16 text-center sm:px-10">
-					<span className="kicker text-kwanza">Caxinda Divulga</span>
+			<section className="mx-auto max-w-6xl px-4">
+				<div className="overflow-hidden rounded-2xl bg-blue shadow-[0_20px_50px_rgba(14,23,51,0.2)]">
+					<div className="px-6 py-16 text-center sm:px-10">
+						<span className="block kicker text-kwanza">Caxinda Divulga</span>
 					<h2 className="mt-3 text-balance font-display text-3xl font-black text-white md:text-4xl">
 						Faça a sua empresa ser vista.
 					</h2>
@@ -383,8 +384,9 @@ export default function LandingPage() {
 							className="btn-outline !border-white/45 !text-white hover:!border-white/85"
 						>
 							Ver planos
-						</Link>
+					</Link>
 					</div>
+				</div>
 				</div>
 			</section>
 		</div>

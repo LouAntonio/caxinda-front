@@ -257,18 +257,62 @@ export function AdsPage() {
 
 	return (
 		<div>
-			<section className="bg-ink">
-				<div className="mx-auto max-w-6xl px-4 py-12">
-					<span className="kicker text-kwanza">Marketplace</span>
-					<h1 className="mt-2 font-display text-3xl font-black text-white">
-						Produtos
-					</h1>
-					<p className="mt-3 max-w-xl text-sm leading-relaxed text-white/55">
-						Produtos anunciados por negócios locais em todo o país.
-						Compara, escolhe e contacta o vendedor diretamente.
-					</p>
-				</div>
-			</section>
+			<div className="mx-auto max-w-6xl px-4 pt-8 md:pt-10">
+				<section className="relative overflow-hidden rounded-2xl bg-gradient-to-b from-ink via-ink-soft to-blue-dark text-white shadow-2xl">
+					<div className="pointer-events-none absolute inset-0 overflow-hidden">
+						<svg className="absolute -top-8 -left-10 w-[120%] opacity-[0.06]" viewBox="0 0 1440 320" fill="none" xmlns="http://www.w3.org/2000/svg">
+							<path fill="#f2a900" d="M0,224L48,213.3C96,203,192,181,288,186.7C384,192,480,224,576,213.3C672,203,768,149,864,138.7C960,128,1056,160,1152,170.7C1248,181,1344,171,1392,165.3L1440,160V320H1392C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320H0V224Z" />
+						</svg>
+						<svg className="absolute -bottom-8 -right-10 w-[120%] opacity-[0.04]" viewBox="0 0 1440 320" fill="none" xmlns="http://www.w3.org/2000/svg">
+							<path fill="#f2a900" d="M0,96L48,122.7C96,149,192,203,288,208C384,213,480,171,576,149.3C672,128,768,128,864,144C960,160,1056,192,1152,192C1248,192,1344,160,1392,144L1440,128V320H1392C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320H0V96Z" />
+						</svg>
+						<div className="absolute top-0 left-1/2 h-[300px] w-[600px] -translate-x-1/2 rounded-full bg-kwanza/15 blur-[120px]" />
+					</div>
+
+					<div className="relative z-10 flex flex-col items-center justify-between px-6 py-10 md:flex-row md:px-10 md:py-12">
+						<div className="mb-6 text-center md:mb-0 md:text-left">
+							<div className="mb-4 inline-flex items-center gap-2 rounded-full border border-kwanza/30 bg-kwanza/15 px-4 py-1.5 text-xs font-semibold uppercase tracking-wider text-kwanza">
+								<span className="h-1.5 w-1.5 animate-pulse rounded-full bg-kwanza" />
+								Catálogo Completo
+							</div>
+							<h1 className="font-display text-3xl font-black tracking-tight md:text-4xl lg:text-5xl">
+								Produtos{' '}
+								<span className="text-kwanza">Disponíveis</span>
+							</h1>
+							<p className="mt-3 max-w-xl text-sm leading-relaxed text-white/55 md:text-base">
+								Produtos anunciados por negócios locais em todo o
+								país. Compara, escolhe e contacta o vendedor
+								diretamente.
+							</p>
+						</div>
+
+						<div className="min-w-[260px] rounded-xl border border-kwanza/25 bg-kwanza/10 p-6 text-center backdrop-blur-md">
+							<svg
+								xmlns="http://www.w3.org/2000/svg"
+								width="40"
+								height="40"
+								viewBox="0 0 24 24"
+								fill="none"
+								stroke="#f2a900"
+								strokeWidth="1.5"
+								strokeLinecap="round"
+								strokeLinejoin="round"
+								className="mx-auto mb-3"
+							>
+								<path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z" />
+								<path d="M3 6h18" />
+								<path d="M16 10a4 4 0 0 1-8 0" />
+							</svg>
+							<p className="mb-1 text-xs font-semibold uppercase tracking-[0.15em] text-kwanza">
+								Milhares de Produtos
+							</p>
+							<p className="text-xs text-white/50">
+								Disponíveis para si
+							</p>
+						</div>
+					</div>
+				</section>
+			</div>
 
 			<div className="mx-auto max-w-6xl px-4 py-10">
 				<div className="flex gap-6 lg:grid lg:grid-cols-[17rem_minmax(0,1fr)] lg:items-start">
@@ -955,24 +999,60 @@ export function BusinessesPage() {
 
 	return (
 		<div>
-			<section className="bg-blue">
-				<div className="mx-auto max-w-6xl px-4 py-12">
-					<span className="kicker text-kwanza">Negócios locais</span>
-					<h1 className="mt-2 font-display text-3xl font-black text-white">
-						Empresas
-					</h1>
-					<p className="mt-3 max-w-xl text-sm leading-relaxed text-white/70">
-						Milhares de negócios angolanos organizados por categoria
-						e província.
-					</p>
-					<Link
-						to="/auth/registar"
-						className="btn-kwanza mt-6 shadow-[0_8px_18px_rgba(14,23,51,0.25)]"
-					>
-						Registar a minha empresa
-					</Link>
-				</div>
-			</section>
+			<div className="mx-auto max-w-6xl px-4 pt-8 md:pt-10">
+				<section className="relative overflow-hidden rounded-2xl bg-gradient-to-b from-blue via-blue-dark to-ink text-white shadow-2xl">
+					<div className="pointer-events-none absolute inset-0 overflow-hidden">
+						<svg className="absolute -top-8 -left-10 w-[120%] opacity-[0.06]" viewBox="0 0 1440 320" fill="none" xmlns="http://www.w3.org/2000/svg">
+							<path fill="#f2a900" d="M0,224L48,213.3C96,203,192,181,288,186.7C384,192,480,224,576,213.3C672,203,768,149,864,138.7C960,128,1056,160,1152,170.7C1248,181,1344,171,1392,165.3L1440,160V320H1392C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320H0V224Z" />
+						</svg>
+						<svg className="absolute -bottom-8 -right-10 w-[120%] opacity-[0.04]" viewBox="0 0 1440 320" fill="none" xmlns="http://www.w3.org/2000/svg">
+							<path fill="#f2a900" d="M0,96L48,122.7C96,149,192,203,288,208C384,213,480,171,576,149.3C672,128,768,128,864,144C960,160,1056,192,1152,192C1248,192,1344,160,1392,144L1440,128V320H1392C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320H0V96Z" />
+						</svg>
+						<div className="absolute top-0 left-1/2 h-[300px] w-[600px] -translate-x-1/2 rounded-full bg-kwanza/15 blur-[120px]" />
+					</div>
+
+					<div className="relative z-10 flex flex-col items-center justify-between px-6 py-10 md:flex-row md:px-10 md:py-12">
+						<div className="mb-6 text-center md:mb-0 md:text-left">
+							<div className="mb-4 inline-flex items-center gap-2 rounded-full border border-kwanza/30 bg-kwanza/15 px-4 py-1.5 text-xs font-semibold uppercase tracking-wider text-kwanza">
+								<span className="h-1.5 w-1.5 animate-pulse rounded-full bg-kwanza" />
+								Negócios Locais
+							</div>
+							<h1 className="font-display text-3xl font-black tracking-tight md:text-4xl lg:text-5xl">
+								Empresas{' '}
+								<span className="text-kwanza">de Confiança</span>
+							</h1>
+							<p className="mt-3 max-w-xl text-sm leading-relaxed text-white/55 md:text-base">
+								Milhares de negócios angolanos organizados por
+								categoria e província.
+							</p>
+						</div>
+
+						<div className="min-w-[260px] rounded-xl border border-kwanza/25 bg-kwanza/10 p-6 text-center backdrop-blur-md">
+							<svg
+								xmlns="http://www.w3.org/2000/svg"
+								width="40"
+								height="40"
+								viewBox="0 0 24 24"
+								fill="none"
+								stroke="#f2a900"
+								strokeWidth="1.5"
+								strokeLinecap="round"
+								strokeLinejoin="round"
+								className="mx-auto mb-3"
+							>
+								<path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+								<polyline points="9 22 9 12 15 12 15 22" />
+							</svg>
+							<Link
+								to="/auth/registar"
+								className="btn-kwanza mt-2 w-full"
+							>
+								Registar a minha empresa
+							</Link>
+						</div>
+					</div>
+				</section>
+			</div>
 
 			<div className="mx-auto max-w-6xl px-4 py-10">
 				<div className="flex gap-6 lg:grid lg:grid-cols-[17rem_minmax(0,1fr)] lg:items-start">
