@@ -363,30 +363,32 @@ export default function LandingPage() {
 			<section className="mx-auto max-w-6xl px-4">
 				<div className="overflow-hidden rounded-2xl bg-blue shadow-[0_20px_50px_rgba(14,23,51,0.2)]">
 					<div className="px-6 py-16 text-center sm:px-10">
-						<span className="block kicker text-kwanza">Caxinda Divulga</span>
-					<h2 className="mt-3 text-balance font-display text-3xl font-black text-white md:text-4xl">
-						Faça a sua empresa ser vista.
-					</h2>
-					<p className="mx-auto mt-4 max-w-xl text-base text-white/65">
-						Regista a tua empresa na Caxinda Divulga e junta-te a
-						milhares de negócios em toda a Angola que ganham novos
-						clientes todos os dias.
-					</p>
-					<div className="mt-8 flex flex-wrap justify-center gap-3">
-						<Link
-							to="/auth/registar"
-							className="btn-kwanza shadow-[0_8px_18px_rgba(14,23,51,0.18)]"
-						>
-							Registar empresa grátis
-						</Link>
-						<Link
-							to="/planos"
-							className="btn-outline !border-white/45 !text-white hover:!border-white/85"
-						>
-							Ver planos
-					</Link>
+						<span className="block kicker text-kwanza">
+							Caxinda Divulga
+						</span>
+						<h2 className="mt-3 text-balance font-display text-3xl font-black text-white md:text-4xl">
+							Faça a sua empresa ser vista.
+						</h2>
+						<p className="mx-auto mt-4 max-w-xl text-base text-white/65">
+							Regista a tua empresa na Caxinda Divulga e junta-te
+							a milhares de negócios em toda a Angola que ganham
+							novos clientes todos os dias.
+						</p>
+						<div className="mt-8 flex flex-wrap justify-center gap-3">
+							<Link
+								to="/auth/registar"
+								className="btn-kwanza shadow-[0_8px_18px_rgba(14,23,51,0.18)]"
+							>
+								Registar empresa grátis
+							</Link>
+							<Link
+								to="/planos"
+								className="btn-outline !border-white/45 !text-white hover:!border-white/85"
+							>
+								Ver planos
+							</Link>
+						</div>
 					</div>
-				</div>
 				</div>
 			</section>
 		</div>

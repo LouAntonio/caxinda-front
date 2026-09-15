@@ -229,9 +229,7 @@ export function Header() {
 							>
 								<button
 									type="button"
-									onClick={() =>
-										setSearchMenuOpen((v) => !v)
-									}
+									onClick={() => setSearchMenuOpen((v) => !v)}
 									onKeyDown={(e) => {
 										if (e.key === 'Escape')
 											setSearchMenuOpen(false);
@@ -254,9 +252,7 @@ export function Header() {
 										strokeLinecap="round"
 										strokeLinejoin="round"
 										className={`h-3 w-3 transition-transform ${
-											searchMenuOpen
-												? 'rotate-180'
-												: ''
+											searchMenuOpen ? 'rotate-180' : ''
 										} text-kwanza`}
 									>
 										<path d="m6 9 6 6 6-6" />
