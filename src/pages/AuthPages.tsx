@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { usePageTitle } from '../hooks/usePageTitle';
 import {
 	Link,
@@ -34,6 +34,27 @@ function Divider() {
 	);
 }
 
+function AuthCard({
+	kicker,
+	title,
+	subtitle,
+	children,
+}: {
+	kicker: string;
+	title: string;
+	subtitle: string;
+	children: ReactNode;
+}) {
+	return (
+		<div className="rounded-2xl border border-ink/10 bg-white p-8 shadow-sm">
+			<span className="kicker text-kwanza">{kicker}</span>
+			<h1 className="mt-3 font-display text-2xl font-black">{title}</h1>
+			<p className="mt-1 text-sm text-ink/55">{subtitle}</p>
+			{children}
+		</div>
+	);
+}
+
 // ================= Entrar =================
 
 export function AuthLoginPage() {
@@ -49,12 +70,11 @@ export function AuthLoginPage() {
 	const done = () => navigate(from, { replace: true });
 
 	return (
-		<div>
-			<h1 className="font-display text-2xl font-black">Entrar</h1>
-			<p className="mt-1 text-sm text-ink/60">
-				Bem-vindo de volta à tua vitrine digital.
-			</p>
-
+		<AuthCard
+			kicker="Bem-vindo"
+			title="Entrar"
+			subtitle="Bem-vindo de volta à tua vitrine digital."
+		>
 			<div className="mt-6">
 				<GoogleButton
 					onSuccess={(credential) =>
@@ -141,7 +161,7 @@ export function AuthLoginPage() {
 					Criar conta
 				</Link>
 			</p>
-		</div>
+		</AuthCard>
 	);
 }
 
@@ -163,12 +183,11 @@ export function AuthRegisterPage() {
 		confirmPassword.length > 0 && password !== confirmPassword;
 
 	return (
-		<div>
-			<h1 className="font-display text-2xl font-black">Criar conta</h1>
-			<p className="mt-1 text-sm text-ink/60">
-				Grátis. O teu negócio online em minutos.
-			</p>
-
+		<AuthCard
+			kicker="Grátis"
+			title="Criar conta"
+			subtitle="O teu negócio online em minutos."
+		>
 			<div className="mt-6">
 				<GoogleButton
 					onSuccess={(credential) =>
@@ -309,7 +328,7 @@ export function AuthRegisterPage() {
 					Entrar
 				</Link>
 			</p>
-		</div>
+		</AuthCard>
 	);
 }
 
@@ -321,14 +340,11 @@ export function AuthMagicPage() {
 	const magic = useMagicLinkRequest();
 
 	return (
-		<div>
-			<h1 className="font-display text-2xl font-black">
-				Entrar por link mágico
-			</h1>
-			<p className="mt-1 text-sm text-ink/60">
-				Evita palavras-passe. Enviamos-te um link seguro para o teu
-				email.
-			</p>
+		<AuthCard
+			kicker="Sem password"
+			title="Entrar por link mágico"
+			subtitle="Evita palavras-passe. Enviamos-te um link seguro para o teu email."
+		>
 			<form
 				className="mt-6 flex flex-col gap-4"
 				onSubmit={(e) => {
@@ -370,7 +386,7 @@ export function AuthMagicPage() {
 					Entrar
 				</Link>
 			</p>
-		</div>
+		</AuthCard>
 	);
 }
 
@@ -420,16 +436,18 @@ export function AuthVerifyPage() {
 	}
 
 	return (
-		<div className="text-center">
-			<Spinner size={28} />
-			<h1 className="mt-4 font-display text-xl font-black">{message}</h1>
-			<p className="mt-2 text-sm text-ink/60">
-				Segue as instruções no teu email para continuares.
-			</p>
-			<Link to="/auth/entrar" className="btn-primary mt-6">
-				Ir para o login
-			</Link>
-		</div>
+		<AuthCard
+			kicker="A confirmar"
+			title={message}
+			subtitle="Segue as instruções no teu email para continuares."
+		>
+			<div className="mt-6 flex flex-col items-center gap-4">
+				<Spinner size={28} />
+				<Link to="/auth/entrar" className="btn-primary">
+					Ir para o login
+				</Link>
+			</div>
+		</AuthCard>
 	);
 }
 
@@ -441,14 +459,11 @@ export function AuthForgotPage() {
 	const forgot = useForgetPassword();
 
 	return (
-		<div>
-			<h1 className="font-display text-2xl font-black">
-				Recuperar conta
-			</h1>
-			<p className="mt-1 text-sm text-ink/60">
-				Indica o teu email e enviamos-te o link para definires uma nova
-				palavra-passe.
-			</p>
+		<AuthCard
+			kicker="Esqueceste?"
+			title="Recuperar conta"
+			subtitle="Indica o teu email e enviamos-te o link para definires uma nova palavra-passe."
+		>
 			<form
 				className="mt-6 flex flex-col gap-4"
 				onSubmit={(e) => {
@@ -497,7 +512,7 @@ export function AuthForgotPage() {
 					entrar
 				</Link>
 			</p>
-		</div>
+		</AuthCard>
 	);
 }
 
@@ -513,13 +528,11 @@ export function AuthResetPage() {
 	const [confirm, setConfirm] = useState('');
 
 	return (
-		<div>
-			<h1 className="font-display text-2xl font-black">
-				Nova palavra-passe
-			</h1>
-			<p className="mt-1 text-sm text-ink/60">
-				Escolhe uma palavra-passe segura.
-			</p>
+		<AuthCard
+			kicker="Redefinir"
+			title="Nova palavra-passe"
+			subtitle="Escolhe uma palavra-passe segura."
+		>
 			<form
 				className="mt-6 flex flex-col gap-4"
 				onSubmit={(e) => {
@@ -578,6 +591,6 @@ export function AuthResetPage() {
 					{reset.isPending && <ButtonLoader />} Definir palavra-passe
 				</button>
 			</form>
-		</div>
+		</AuthCard>
 	);
 }

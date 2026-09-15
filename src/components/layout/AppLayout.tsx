@@ -57,7 +57,7 @@ export function RequireGuest({ children }: { children: React.ReactNode }) {
 	const { isAuthenticated, isLoading } = useSession();
 
 	if (isLoading) {
-		return <PageShellSkeleton />;
+		return <>{children}</>;
 	}
 	if (isAuthenticated) {
 		return <Navigate to="/" replace />;

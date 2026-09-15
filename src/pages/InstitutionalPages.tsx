@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import { useState } from 'react';
 import toast from 'react-hot-toast';
 import { usePageTitle } from '../hooks/usePageTitle';
+import { useScrollSpy } from '../hooks/useScrollSpy';
 import { http, getApiError } from '../lib/api';
 import { FacebookSVG } from '../components/ui/icons/FacebookSVG';
 import { InstagramSVG } from '../components/ui/icons/InstagramSVG';
@@ -10,52 +11,49 @@ import { EnvelopeSVG } from '../components/ui/icons/EnvelopeSVG';
 
 type TocItem = { id: string; label: string };
 
-function Eyebrow({ children }: { children: ReactNode }) {
-	return (
-		<span
-			className="inline-block bg-kwanza px-3 py-1 font-mono text-xs font-bold uppercase tracking-widest text-ink"
-			style={{
-				clipPath:
-					'polygon(0 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%)',
-			}}
-		>
-			{children}
-		</span>
-	);
-}
-
 function InstitutionalShell({
-	eyebrow = 'Caxinda Divulga',
+	kicker = 'Caxinda Divulga',
 	title,
+	titleAccent,
 	lead,
+	stickerColor = 'bg-red',
 	toc,
 	children,
 }: {
-	eyebrow?: string;
+	kicker?: string;
 	title: string;
+	titleAccent?: string;
 	lead: string;
+	stickerColor?: string;
 	toc?: TocItem[];
 	children: ReactNode;
 }) {
+	const tocIds = toc?.map((s) => s.id) ?? [];
+	const activeId = useScrollSpy(tocIds);
 	return (
 		<>
-			<section className="relative overflow-hidden bg-ink text-snow">
-				<div className="mx-auto flex max-w-6xl items-stretch px-4 py-14 md:py-16">
-					<div className="flex-1">
-						<Eyebrow>{eyebrow}</Eyebrow>
-						<h1 className="mt-4 font-display text-3xl font-black leading-tight md:text-4xl">
-							{title}
-						</h1>
-						<p className="mt-3 max-w-2xl text-snow/70">{lead}</p>
-					</div>
+			<div className="mx-auto max-w-6xl px-4 pt-8 md:pt-10">
+				<section className="relative overflow-hidden rounded-3xl bg-ink text-white shadow-2xl">
 					<div
-						className="hidden items-center pl-10 md:flex"
-						aria-hidden
-					>
-						<span className="price-tag text-2xl">AO</span>
+						className={`pointer-events-none absolute -right-16 -top-16 h-40 w-40 rotate-12 rounded-3xl ${stickerColor} opacity-80`}
+					/>
+
+					<div className="relative z-10 px-6 py-8 md:px-12 md:py-10">
+						<span className="kicker text-kwanza">{kicker}</span>
+						<h1 className="mt-4 font-display text-3xl font-black leading-[1.05] tracking-tight md:text-4xl">
+							{title}
+							{titleAccent && (
+								<span className="mt-3 block w-fit -rotate-1 rounded-2xl bg-red px-4 py-1.5 text-2xl text-white shadow-[0_6px_16px_rgba(211,20,30,0.45)] md:text-3xl">
+									{titleAccent}
+								</span>
+							)}
+						</h1>
+						<p className="mt-5 max-w-xl text-base leading-relaxed text-white/55">
+							{lead}
+						</p>
 					</div>
-				</div>
-			</section>
+				</section>
+			</div>
 
 			<div className="mx-auto max-w-6xl px-4 py-12">
 				<div className="flex gap-10">
@@ -65,15 +63,25 @@ function InstitutionalShell({
 								Nesta página
 							</p>
 							<nav className="flex flex-col">
-								{toc.map((s) => (
-									<a
-										key={s.id}
-										href={`#${s.id}`}
-										className="border-l-2 border-transparent py-1.5 pl-4 text-sm text-ink/55 transition hover:border-kwanza hover:text-ink"
-									>
-										{s.label}
-									</a>
-								))}
+								{toc.map((s) => {
+									const isActive = activeId === s.id;
+									return (
+										<a
+											key={s.id}
+											href={`#${s.id}`}
+											aria-current={
+												isActive ? 'true' : undefined
+											}
+											className={`border-l-2 py-1.5 pl-4 text-sm transition-all duration-200 ${
+												isActive
+													? 'border-kwanza bg-kwanza/5 font-bold text-ink'
+													: 'border-transparent text-ink/55 hover:border-kwanza/40 hover:text-ink'
+											}`}
+										>
+											{s.label}
+										</a>
+									);
+								})}
 							</nav>
 						</aside>
 					)}
@@ -90,12 +98,15 @@ function InstitutionalShell({
 
 function H2({ id, children }: { id?: string; children: ReactNode }) {
 	return (
-		<h2
-			id={id}
-			className="scroll-mt-24 pt-4 font-display text-xl font-black text-ink md:text-2xl"
-		>
-			{children}
-		</h2>
+		<div className="pt-4">
+			<span className="mb-2.5 block h-1 w-10 rounded-full bg-kwanza" />
+			<h2
+				id={id}
+				className="scroll-mt-24 font-display text-xl font-black text-ink md:text-2xl"
+			>
+				{children}
+			</h2>
+		</div>
 	);
 }
 
@@ -103,8 +114,10 @@ function CheckList({ items }: { items: string[] }) {
 	return (
 		<ul className="space-y-1.5">
 			{items.map((item) => (
-				<li key={item} className="flex items-start gap-2">
-					<span className="mt-0.5 text-kwanza">✔</span>
+				<li key={item} className="flex items-start gap-2.5">
+					<span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-kwanza/15 text-[0.65rem] font-black text-ink">
+						✔
+					</span>
 					<span>{item}</span>
 				</li>
 			))}
@@ -130,27 +143,28 @@ export function SobrePage() {
 	];
 	return (
 		<>
-			<section className="relative overflow-hidden bg-ink text-snow">
-				<div className="mx-auto flex max-w-6xl items-stretch px-4 py-14 md:py-16">
-					<div className="flex-1">
-						<Eyebrow>Caxinda Divulga</Eyebrow>
-						<h1 className="mt-4 font-display text-3xl font-black leading-tight md:text-4xl">
+			<div className="mx-auto max-w-6xl px-4 pt-8 md:pt-10">
+				<section className="relative overflow-hidden rounded-3xl bg-ink text-white shadow-2xl">
+					<div className="pointer-events-none absolute -right-16 -top-16 h-40 w-40 rotate-12 rounded-3xl bg-red opacity-80" />
+
+					<div className="relative z-10 px-6 py-8 md:px-12 md:py-10">
+						<span className="kicker text-kwanza">
+							Caxinda Divulga
+						</span>
+						<h1 className="mt-4 font-display text-3xl font-black leading-[1.05] tracking-tight md:text-4xl">
 							Sobre nós
+							<span className="mt-3 block w-fit -rotate-1 rounded-2xl bg-red px-4 py-1.5 text-2xl text-white shadow-[0_6px_16px_rgba(211,20,30,0.45)] md:text-3xl">
+								feito em Angola
+							</span>
 						</h1>
-						<p className="mt-3 max-w-2xl text-snow/70">
+						<p className="mt-5 max-w-xl text-base leading-relaxed text-white/55">
 							A Caxinda Divulga nasceu para que qualquer negócio —
 							do barraco de jeito ao escritório de Luanda — tenha
 							vitrine, clientes e visibilidade em Angola.
 						</p>
 					</div>
-					<div
-						className="hidden items-center pl-10 md:flex"
-						aria-hidden
-					>
-						<span className="price-tag text-2xl">AO</span>
-					</div>
-				</div>
-			</section>
+				</section>
+			</div>
 
 			<div className="mx-auto max-w-6xl px-4 py-12">
 				<div className="grid gap-4 sm:grid-cols-3">
@@ -232,9 +246,11 @@ export function TermosPage() {
 	usePageTitle('Termos e Condições');
 	return (
 		<InstitutionalShell
-			eyebrow="Legal"
+			kicker="Legal"
 			title="Termos e condições"
+			titleAccent="lê antes de publicar"
 			lead="Ao usar a Caxinda Divulga aceitas estes termos. Lê com atenção antes de publicar anúncios, criar empresas ou subscrever planos."
+			stickerColor="bg-blue"
 			toc={TERMS_TOC}
 		>
 			<H2 id="plataforma">1. A plataforma</H2>
@@ -303,9 +319,11 @@ export function PoliticasPage() {
 	usePageTitle('Política de Privacidade');
 	return (
 		<InstitutionalShell
-			eyebrow="Legal"
+			kicker="Legal"
 			title="Política de privacidade"
+			titleAccent="os teus dados estão seguros"
 			lead="Explicamos como recolhemos, usamos e protegemos os teus dados pessoais quando usas a Caxinda Divulga."
+			stickerColor="bg-blue"
 			toc={PRIVACY_TOC}
 		>
 			<H2 id="dados">Dados que recolhemos</H2>
@@ -367,9 +385,11 @@ export function CookiesPage() {
 	usePageTitle('Política de Cookies');
 	return (
 		<InstitutionalShell
-			eyebrow="Legal"
+			kicker="Legal"
 			title="Política de cookies"
+			titleAccent="simples e transparente"
 			lead="Os cookies ajudam a plataforma a lembrar-se de ti e a funcionar melhor. Explicamos aqui quais usamos e porquê."
+			stickerColor="bg-blue"
 			toc={COOKIES_TOC}
 		>
 			<H2 id="o-que-sao">O que são cookies</H2>
@@ -492,26 +512,24 @@ export function ContactosPage() {
 
 	return (
 		<>
-			<section className="relative overflow-hidden bg-ink text-snow">
-				<div className="mx-auto flex max-w-6xl items-stretch px-4 py-14 md:py-16">
-					<div className="flex-1">
-						<Eyebrow>Fala connosco</Eyebrow>
-						<h1 className="mt-4 font-display text-3xl font-black leading-tight md:text-4xl">
+			<div className="mx-auto max-w-6xl px-4 pt-8 md:pt-10">
+				<section className="relative overflow-hidden rounded-3xl bg-ink text-white shadow-2xl">
+					<div className="pointer-events-none absolute -right-16 -top-16 h-40 w-40 rotate-12 rounded-3xl bg-red opacity-80" />
+
+					<div className="relative z-10 px-6 py-8 md:px-12 md:py-10">
+						<span className="kicker text-kwanza">
+							Fala connosco
+						</span>
+						<h1 className="mt-4 font-display text-3xl font-black leading-[1.05] tracking-tight md:text-4xl">
 							Contactos
 						</h1>
-						<p className="mt-3 max-w-2xl text-snow/70">
+						<p className="mt-5 max-w-xl text-base leading-relaxed text-white/55">
 							Respondemos a dúvidas sobre contas, anúncios,
 							empresas, planos e parcerias.
 						</p>
 					</div>
-					<div
-						className="hidden items-center pl-10 md:flex"
-						aria-hidden
-					>
-						<span className="price-tag text-2xl">AO</span>
-					</div>
-				</div>
-			</section>
+				</section>
+			</div>
 
 			<div className="mx-auto max-w-6xl px-4 py-12">
 				<div className="grid gap-8 lg:grid-cols-[1.3fr_1fr]">
