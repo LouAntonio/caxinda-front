@@ -9,45 +9,66 @@ export function AdDetailSkeleton() {
 				<Skeleton className="h-4 w-44 rounded" />
 			</div>
 
-			<div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
-				<div className="min-w-0">
-					<div className="overflow-hidden rounded-3xl border border-ink/10 bg-white">
-						<div className="flex items-center justify-between gap-3 bg-ink px-5 py-2.5">
-							<Skeleton className="h-3 w-16 rounded bg-white/20" />
-							<Skeleton className="h-3 w-24 rounded bg-white/20" />
-						</div>
-						<div className="bg-snow p-3">
-							<Skeleton className="aspect-[16/10] w-full rounded-2xl" />
-							<div className="mt-3 grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-6">
-								{Array.from({ length: 3 }).map((_, i) => (
-									<Skeleton
-										key={i}
-										className="aspect-[4/3] w-full rounded-lg"
-									/>
-								))}
-							</div>
+			<div className="grid gap-6 lg:grid-cols-[auto_minmax(0,1fr)_320px] lg:gap-0">
+				<div className="flex flex-col gap-3 lg:border-r lg:border-ink/10 lg:pr-6">
+					<Skeleton className="aspect-square w-full rounded-2xl sm:w-[340px] lg:w-[380px]" />
+					<div className="flex gap-2 overflow-x-auto sm:flex-col sm:overflow-x-visible">
+						{Array.from({ length: 3 }).map((_, i) => (
+							<Skeleton
+								key={i}
+								className="h-16 w-16 shrink-0 rounded-lg sm:h-20 sm:w-20"
+							/>
+						))}
+					</div>
+				</div>
+
+				<div className="flex min-w-0 flex-col gap-5 lg:px-6">
+					<Skeleton className="h-8 w-3/4 rounded-md" />
+					<Skeleton className="h-4 w-40 rounded" />
+					<div className="flex gap-1.5">
+						{Array.from({ length: 3 }).map((_, i) => (
+							<Skeleton
+								key={i}
+								className="h-6 w-20 rounded-full"
+							/>
+						))}
+					</div>
+					<Skeleton className="h-10 w-48 rounded-md bg-kwanza/25" />
+					<div className="flex gap-1.5">
+						<Skeleton className="h-6 w-24 rounded-md" />
+						<Skeleton className="h-6 w-24 rounded-md" />
+					</div>
+				</div>
+
+				<aside className="flex flex-col gap-4 lg:sticky lg:top-20 lg:self-start">
+					<div className="overflow-hidden rounded-2xl border border-ink/10 bg-white">
+						<Skeleton className="h-1.5 w-full bg-kwanza/40" />
+						<div className="flex flex-col gap-3 p-5">
+							<Skeleton className="h-6 w-32 rounded-full" />
+							<SkeletonButton className="w-full" />
+							<SkeletonButton className="w-full" />
 						</div>
 					</div>
-
-					<div className="mt-6 overflow-hidden rounded-2xl border border-ink/10 bg-white">
-						<div className="flex items-center justify-between gap-3 border-b border-ink/10 bg-snow/60 px-6 py-4">
-							<Skeleton className="h-4 w-32 rounded" />
-							<Skeleton className="h-3 w-16 rounded" />
-						</div>
-						<div className="flex flex-col divide-y divide-ink/10">
-							{Array.from({ length: 3 }).map((_, i) => (
-								<div
-									key={i}
-									className="flex items-center justify-between px-6 py-3"
-								>
-									<Skeleton className="h-3 w-16 rounded" />
-									<Skeleton className="h-4 w-24 rounded" />
-								</div>
-							))}
+					<div className="rounded-2xl border border-ink/10 bg-white p-4">
+						<div className="flex flex-col gap-3">
+							<Skeleton className="h-4 w-full rounded" />
+							<Skeleton className="h-4 w-3/4 rounded" />
+							<Skeleton className="h-4 w-5/6 rounded" />
 						</div>
 					</div>
+					<div className="overflow-hidden rounded-2xl border border-ink/10 bg-white">
+						<div className="h-9 w-full bg-kwanza/25" />
+						<div className="p-4">
+							<SkeletonText />
+							<SkeletonText width="w-3/4" />
+						</div>
+					</div>
+				</aside>
+			</div>
 
-					<div className="mt-6 rounded-2xl border border-ink/10 bg-snow-dark p-6">
+			<div className="mt-10 grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px] lg:gap-0">
+				<div className="flex flex-col gap-6 lg:border-r lg:border-ink/10 lg:pr-6">
+					<div className="rounded-2xl border border-ink/10 bg-snow-dark p-6">
 						<div className="mb-3 flex items-center gap-3">
 							<Skeleton className="h-1.5 w-14 rounded-full bg-kwanza/40" />
 							<Skeleton className="h-4 w-24 rounded" />
@@ -58,32 +79,32 @@ export function AdDetailSkeleton() {
 							<SkeletonText width="w-3/4" />
 						</div>
 					</div>
-				</div>
-
-				<aside className="flex flex-col gap-4 lg:sticky lg:top-24 lg:self-start">
 					<div className="overflow-hidden rounded-2xl border border-ink/10 bg-white">
-						<Skeleton className="h-1.5 w-full bg-kwanza/40" />
-						<div className="flex flex-col gap-3 p-5">
-							<Skeleton className="h-7 w-36 rounded-md bg-kwanza/25" />
-							<Skeleton className="h-10 w-32 rounded-md bg-kwanza/25" />
-							<Skeleton className="h-px w-full" />
-							<SkeletonText width="w-1/2" />
-							<SkeletonText width="w-1/3" />
+						<div className="border-b border-ink/10 bg-snow/60 px-6 py-4">
+							<Skeleton className="h-4 w-40 rounded" />
 						</div>
-						<div className="grid grid-cols-3 divide-x divide-ink/10 border-t border-ink/10 bg-snow">
-							{Array.from({ length: 3 }).map((_, i) => (
+						<div className="flex flex-col">
+							{Array.from({ length: 4 }).map((_, i) => (
 								<div
 									key={i}
-									className="flex flex-col items-center gap-1 px-2 py-3"
+									className="flex items-center justify-between border-b border-ink/10 px-6 py-3 even:bg-snow"
 								>
-									<Skeleton className="h-4 w-10 rounded" />
-									<Skeleton className="h-2.5 w-14 rounded" />
+									<Skeleton className="h-3 w-16 rounded" />
+									<Skeleton className="h-4 w-24 rounded" />
 								</div>
 							))}
 						</div>
 					</div>
-					<SkeletonButton className="w-full" />
-				</aside>
+				</div>
+				<div className="lg:px-6">
+					<div className="rounded-2xl border border-ink/10 bg-white p-6">
+						<Skeleton className="mb-4 h-4 w-24 rounded" />
+						<div className="space-y-2">
+							<SkeletonText />
+							<SkeletonText />
+						</div>
+					</div>
+				</div>
 			</div>
 		</div>
 	);

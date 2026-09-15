@@ -49,6 +49,7 @@ import {
 	KycPage,
 	SettingsPage,
 } from './pages/AreaPages';
+import { OwnerAnalyticsPage } from './pages/OwnerAnalyticsPage';
 import {
 	AdminDashboardPage,
 	AdminAdsPage,
@@ -114,6 +115,14 @@ const router = createBrowserRouter([
 					{ path: 'subscricoes', element: <MySubscriptionsPage /> },
 					{ path: 'verificacao', element: <KycPage /> },
 					{ path: 'definicoes', element: <SettingsPage /> },
+					{
+						path: 'analiticas/produto/:id',
+						element: <OwnerAnalyticsPage />,
+					},
+					{
+						path: 'analiticas/empresa/:id',
+						element: <OwnerAnalyticsPage />,
+					},
 				],
 			},
 			{

@@ -9,10 +9,8 @@ import {
 import toast from 'react-hot-toast';
 import { getApiError } from '../lib/api';
 import {
-	useAdAnalytics,
 	useAdBySlug,
 	useAds,
-	useBusinessAnalytics,
 	useBusinessBySlug,
 	useBusinesses,
 	useCategories,
@@ -35,7 +33,6 @@ import { BusinessCard } from '../components/businesses/BusinessCard';
 import { BusinessCardSkeletonGrid } from '../components/businesses/BusinessCardSkeleton';
 import { AdDetailSkeleton } from '../components/skeletons/AdDetailSkeleton';
 import { BusinessDetailSkeleton } from '../components/skeletons/BusinessDetailSkeleton';
-import { MiniChart } from '../components/ui/MiniChart';
 import { Pagination } from '../components/ui/Pagination';
 import { ButtonLoader } from '../components/ui/Spinner';
 import { EmptyState } from '../components/ui/EmptyState';
@@ -49,6 +46,7 @@ import { Lightbox } from '../components/ui/Lightbox';
 import {
 	ChatSVG,
 	CheckSVG,
+	ClockSVG,
 	GlobeSVG,
 	PhoneSVG,
 	PinSVG,
@@ -66,11 +64,8 @@ import {
 import {
 	PROVINCES,
 	REPORT_REASONS,
-	type AdAnalytics,
 	type AdSort,
-	type BusinessAnalytics,
 	type BusinessSort,
-	type ContactChannel,
 	type ReportReason,
 	type ReportTarget,
 	type SearchItem,
@@ -446,15 +441,6 @@ export function AdDetailPage() {
 	const { data: wishlistSaved } = useWishlistCheck(ad?.id);
 	const [activeImg, setActiveImg] = useState<string | null>(null);
 	const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
-	const canViewAnalytics =
-		(user?.role === 'ADMIN' ||
-			user?.role === 'MODERATOR' ||
-			(!!user && !!ad && user.id === ad.userId)) &&
-		!!ad;
-	const { data: adAnalytics, isLoading: adAnalyticsLoading } = useAdAnalytics(
-		canViewAnalytics ? ad?.id : undefined,
-		'30d',
-	);
 	useEffect(() => {
 		setActiveImg(null);
 		setLightboxIndex(null);
@@ -509,31 +495,6 @@ export function AdDetailPage() {
 			.then((conv) => navigate(`/area/mensagens?id=${conv.id}`));
 	};
 
-	const specRows: {
-		label: string;
-		value: string;
-		link?: string;
-	}[] = [
-		{
-			label: 'Categoria',
-			value: ad.category?.name ?? 'Geral',
-			link: ad.category?.id
-				? `/produtos?categoryIds=${ad.category.id}`
-				: undefined,
-		},
-		{
-			label: 'Província',
-			value: ad.province
-				? (PROVINCE_LABELS[ad.province] ?? ad.province)
-				: 'Angola',
-			link: ad.province
-				? `/produtos?provinces=${ad.province}`
-				: undefined,
-		},
-		{ label: 'Publicado', value: timeAgo(ad.createdAt) },
-		{ label: 'Visualizações', value: `${ad.views}` },
-	];
-
 	return (
 		<div className="mx-auto max-w-6xl px-4 py-10">
 			<nav className="mb-5 flex flex-wrap items-center gap-1.5 text-sm text-ink/50">
@@ -544,112 +505,259 @@ export function AdDetailPage() {
 				<span className="truncate text-ink/80">{ad.title}</span>
 			</nav>
 
-			<div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
-				<div className="flex min-w-0 flex-col gap-6">
-					<div className="card overflow-hidden rounded-3xl">
-						<div className="flex items-center justify-between gap-3 bg-ink px-5 py-2.5">
-							<span className="font-mono text-[11px] font-bold uppercase tracking-widest text-kwanza">
-								Galeria
-							</span>
-							<span className="font-mono text-[10px] font-bold uppercase tracking-widest text-white/50">
-								{adImages.length}{' '}
-								{adImages.length === 1
-									? 'fotografia'
-									: 'fotografias'}
-							</span>
-						</div>
-						<div className="bg-snow p-3">
-							<button
-								type="button"
-								onClick={() => setLightboxIndex(0)}
-								className="relative block aspect-[16/10] w-full overflow-hidden rounded-2xl bg-snow-dark"
-								disabled={adImages.length === 0}
-								aria-label="Ampliar fotografia"
-							>
-								{currentImg ? (
-									<img
-										src={currentImg}
-										alt={ad.title}
-										className="h-full w-full object-cover"
-									/>
-								) : (
-									<div className="flex h-full items-center justify-center bg-snow-dark font-display text-4xl font-black text-ink/20">
-										CX
-									</div>
-								)}
-								{ad.status === 'SOLD' ? (
-									<span className="absolute left-3 top-3 -rotate-3 rounded-lg bg-red px-2.5 py-1 font-mono text-[10px] font-bold uppercase tracking-wider text-white shadow">
-										Vendido
-									</span>
-								) : (
-									ad.featured && (
-										<span className="absolute left-3 top-3 -rotate-3 rounded-lg bg-kwanza px-2.5 py-1 font-mono text-[10px] font-bold uppercase tracking-wider text-ink shadow">
-											★ Destaque
-										</span>
-									)
-								)}
-								{ad.category?.name && (
-									<span className="absolute right-3 top-3 inline-flex max-w-[12rem] -rotate-3 items-center gap-1 truncate rounded-lg bg-blue px-2.5 py-1 font-mono text-[10px] font-bold uppercase tracking-wider text-white shadow-lg">
-										<span aria-hidden>▸</span>
-										<span className="truncate">
-											{ad.category.name}
-										</span>
-									</span>
-								)}
-							</button>
-							{adImages.length > 1 && (
-								<div className="mt-3 grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-6">
-									{adImages.map((url, idx) => (
-										<button
-											type="button"
-											key={`${url}-${idx}`}
-											onClick={() => {
-												setActiveImg(url);
-												setLightboxIndex(idx);
-											}}
-											className={`relative aspect-[4/3] overflow-hidden rounded-lg transition ${
-												currentImg === url
-													? 'ring-2 ring-ink ring-offset-2 ring-offset-snow'
-													: 'opacity-80 hover:opacity-100'
-											}`}
-										>
-											<img
-												src={url}
-												alt=""
-												className="h-full w-full object-cover"
-											/>
-											<span className="absolute bottom-1 left-1 rounded bg-ink/70 px-1 font-mono text-[9px] font-bold text-white">
-												{String(idx + 1).padStart(
-													2,
-													'0',
-												)}
-											</span>
-										</button>
-									))}
+			<div className="grid gap-6 lg:grid-cols-[auto_minmax(0,1fr)_320px] lg:gap-0">
+				{/* ── Gallery ── */}
+				<div className="flex flex-col gap-3 lg:border-r lg:border-ink/10 lg:pr-6">
+					<div className="relative overflow-hidden rounded-2xl bg-snow-dark">
+						<button
+							type="button"
+							onClick={() => setLightboxIndex(0)}
+							className="block aspect-square w-full cursor-zoom-in overflow-hidden"
+							disabled={adImages.length === 0}
+							aria-label="Ampliar fotografia"
+						>
+							{currentImg ? (
+								<img
+									src={currentImg}
+									alt={ad.title}
+									className="h-full w-full object-cover transition-transform duration-200 hover:scale-105"
+								/>
+							) : (
+								<div className="flex h-full items-center justify-center bg-snow-dark font-display text-5xl font-black text-ink/15">
+									CX
 								</div>
 							)}
-						</div>
-					</div>
-
-					<div className="card overflow-hidden">
-						<div className="flex items-center justify-between gap-3 border-b border-ink/10 bg-snow/60 px-6 py-4">
-							<h2 className="kicker">Dados do produto</h2>
-							<span className="font-mono text-[10px] font-bold uppercase tracking-widest text-ink/30">
-								REF {ad.id.slice(0, 8).toUpperCase()}
+						</button>
+						{ad.status === 'SOLD' ? (
+							<span className="absolute left-3 top-3 -rotate-3 rounded-lg bg-red px-2.5 py-1 font-mono text-[10px] font-bold uppercase tracking-wider text-white shadow">
+								Vendido
 							</span>
-						</div>
-						<dl className="divide-y divide-ink/10">
-							{specRows.map((row) => (
-								<SpecRow
-									key={row.label}
-									label={row.label}
-									value={row.value}
-									link={row.link}
-								/>
+						) : (
+							ad.featured && (
+								<span className="absolute left-3 top-3 -rotate-3 rounded-lg bg-kwanza px-2.5 py-1 font-mono text-[10px] font-bold uppercase tracking-wider text-ink shadow">
+									★ Destaque
+								</span>
+							)
+						)}
+						{adImages.length > 1 && (
+							<span className="absolute bottom-2 right-2 rounded-full bg-ink/70 px-2.5 py-0.5 font-mono text-[10px] font-bold text-white">
+								{adImages.length} fotos
+							</span>
+						)}
+						{isAuthenticated && (
+							<WishlistToggle
+								adId={ad.id}
+								saved={wishlistSaved ?? false}
+							/>
+						)}
+					</div>
+					{adImages.length > 1 && (
+						<div className="flex gap-2 overflow-x-auto sm:flex-col sm:overflow-x-visible">
+							{adImages.map((url, idx) => (
+								<button
+									type="button"
+									key={`${url}-${idx}`}
+									onClick={() => {
+										setActiveImg(url);
+										setLightboxIndex(idx);
+									}}
+									className={`h-16 w-16 shrink-0 overflow-hidden rounded-lg transition sm:h-20 sm:w-20 ${
+										currentImg === url
+											? 'ring-2 ring-ink ring-offset-2 ring-offset-snow'
+											: 'opacity-70 hover:opacity-100'
+									}`}
+								>
+									<img
+										src={url}
+										alt=""
+										className="h-full w-full object-cover"
+									/>
+								</button>
 							))}
-						</dl>
+						</div>
+					)}
+				</div>
+
+				{/* ── Info ── */}
+				<div className="flex min-w-0 flex-col gap-5 lg:px-6">
+					<div>
+						<h1 className="text-balance font-display text-2xl font-black leading-tight">
+							{ad.title}
+						</h1>
+						{ad.averageRating !== null && (
+							<a
+								href="#avaliacoes"
+								className="mt-2 flex items-center gap-1.5 text-sm text-ink/60 hover:text-ink"
+							>
+								<Stars value={ad.averageRating} />
+								<span>
+									· {ad.reviewCount} avaliações
+								</span>
+							</a>
+						)}
 					</div>
 
+					<div className="flex flex-wrap gap-1.5">
+						{ad.category?.name && (
+							<Link
+								to={
+									ad.category?.id
+										? `/produtos?categoryIds=${ad.category.id}`
+										: '#'
+								}
+								className="chip"
+							>
+								{ad.category.name}
+							</Link>
+						)}
+						{ad.province && (
+							<Link
+								to={`/produtos?provinces=${ad.province}`}
+								className="chip"
+							>
+								{PROVINCE_LABELS[ad.province] ?? ad.province}
+							</Link>
+						)}
+						<span className="chip">
+							Pub. {timeAgo(ad.createdAt)}
+						</span>
+					</div>
+
+					<div>
+						{ad.price === null ? (
+							<span className="font-mono text-3xl font-black text-ink/50">
+								Sob consulta
+							</span>
+						) : ad.price === 0 ? (
+							<span className="inline-block rounded-lg bg-blue px-3 py-1.5 font-mono text-3xl font-black text-white">
+								Grátis
+							</span>
+						) : (
+							<span className="font-mono text-3xl font-black text-kwanza">
+								{formatKz(ad.price)}
+							</span>
+						)}
+					</div>
+
+					<div className="flex flex-wrap gap-1.5">
+						{ad.status === 'SOLD' && (
+							<span className="tag !border-red/30 !bg-red/10 !px-2.5 !py-0.5 !text-red">
+								Vendido
+							</span>
+						)}
+						{ad.featured && (
+							<span className="tag tag-kwanza !px-2.5 !py-0.5">
+								★ Destaque
+							</span>
+						)}
+					</div>
+				</div>
+
+				{/* ── Buy box ── */}
+				<aside className="lg:sticky lg:top-20 lg:self-start">
+					<div className="flex flex-col gap-4">
+						<div className="card overflow-hidden">
+							<div className="h-1.5 bg-kwanza" />
+							<div className="flex flex-col gap-3 p-5">
+								<div className="flex flex-wrap items-center gap-1.5">
+									{ad.status === 'SOLD' ? (
+										<span className="rounded-full bg-red/10 px-2.5 py-1 font-mono text-[11px] font-bold text-red">
+											Indisponível
+										</span>
+									) : (
+										<span className="rounded-full bg-kwanza/15 px-2.5 py-1 font-mono text-[11px] font-bold text-kwanza">
+											Disponível
+										</span>
+									)}
+									{ad.featured && (
+										<span className="rounded-full bg-kwanza/15 px-2.5 py-1 font-mono text-[11px] font-bold text-kwanza">
+											★ Destaque
+										</span>
+									)}
+								</div>
+								<button
+									className="btn-primary w-full"
+									onClick={contactCaxinda}
+									disabled={openConversation.isPending}
+								>
+									{openConversation.isPending && (
+										<ButtonLoader />
+									)}
+									<ChatSVG width={16} height={16} /> Contactar a
+									Caxinda
+								</button>
+								{isAuthenticated && (
+									<WishlistToggle
+										adId={ad.id}
+										saved={wishlistSaved ?? false}
+									/>
+								)}
+							</div>
+						</div>
+
+						<div className="card p-4">
+							<div className="flex flex-col gap-3">
+								<div className="flex items-center gap-2.5 text-sm text-ink/60">
+									<ChatSVG width={14} height={14} className="shrink-0 text-red" />
+									<span>Apoio humano, sem chatbot</span>
+								</div>
+								<div className="flex items-center gap-2.5 text-sm text-ink/60">
+									<CheckSVG width={14} height={14} className="shrink-0 text-green-600" />
+									<span>Equipa Caxinda a responder</span>
+								</div>
+								<div className="flex items-center gap-2.5 text-sm text-ink/60">
+									<ClockSVG width={14} height={14} className="shrink-0 text-blue" />
+									<span>Resposta rápida garantida</span>
+								</div>
+							</div>
+						</div>
+
+						<div className="card overflow-hidden">
+							<div
+								className="flex items-center gap-3 px-4 py-2.5"
+								style={{
+									background:
+										'linear-gradient(135deg, var(--color-kwanza), var(--color-red))',
+								}}
+							>
+								<div className="flex h-7 w-7 items-center justify-center rounded-md bg-white/20 font-mono text-[10px] font-black text-white">
+									CX
+								</div>
+								<div>
+									<p className="font-mono text-[10px] font-bold uppercase tracking-wider text-white">
+										Gerido pela Caxinda — Loja oficial
+									</p>
+								</div>
+							</div>
+							<div className="p-4">
+								<p className="text-sm leading-relaxed text-ink/60">
+									Produto oficial gerido pela equipa da
+									Caxinda. As tuas mensagens são respondidas
+									pelo apoio da plataforma.
+								</p>
+								<Link
+									to="/produtos"
+									className="mt-3 block text-center text-xs font-bold text-red hover:underline"
+								>
+									Ver mais produtos →
+								</Link>
+							</div>
+						</div>
+
+						<div className="card p-4">
+							<ReportForm
+								targetType="AD"
+								targetId={ad.id}
+								targetLabel={ad.title}
+							/>
+						</div>
+					</div>
+				</aside>
+			</div>
+
+			<div className="mt-10 grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px] lg:gap-0">
+				{/* ── Description + Specs ── */}
+				<div className="flex flex-col gap-6 lg:border-r lg:border-ink/10 lg:pr-6">
 					<section className="card overflow-hidden rounded-2xl bg-snow-dark">
 						<div className="flex items-center gap-3 px-6 pt-5">
 							<span className="h-1.5 w-14 rounded-full bg-kwanza" />
@@ -674,146 +782,50 @@ export function AdDetailPage() {
 							</div>
 						</div>
 					</section>
-				</div>
 
-				<aside className="lg:sticky lg:top-24 lg:self-start">
-					<div className="flex flex-col gap-4">
-						<div className="card overflow-hidden">
-							<div className="h-1.5 bg-kwanza" />
-							<div className="flex flex-col gap-4 p-5">
-								<div className="flex flex-wrap items-center gap-1.5">
-									{ad.status === 'SOLD' && (
-										<span className="tag !border-red/30 !bg-red/10 !px-2.5 !py-0.5 !text-red">
-											Vendido
-										</span>
-									)}
-									{ad.featured && (
-										<span className="tag tag-kwanza !px-2.5 !py-0.5">
-											★ Destaque
-										</span>
-									)}
-								</div>
-
-								<h1 className="text-balance font-display text-xl font-black leading-tight">
-									{ad.title}
-								</h1>
-
-								<div className="-mt-1 flex flex-wrap items-center gap-1.5">
-									<span className="chip">
-										{ad.category?.name ?? 'Geral'}
-									</span>
-									{ad.province && (
-										<span className="chip">
-											{PROVINCE_LABELS[ad.province] ??
-												ad.province}
-										</span>
-									)}
-									<span className="chip">
-										Pub. {timeAgo(ad.createdAt)}
-									</span>
-								</div>
-
-								<div className="mt-1">
-									{ad.price === null ? (
-										<span className="font-mono text-xl font-bold text-ink/50">
-											Sob consulta
-										</span>
-									) : ad.price === 0 ? (
-										<span
-											className="price-tag-lg"
-											style={{
-												background:
-													'var(--color-blue-light)',
-												color: 'var(--color-snow)',
-											}}
-										>
-											Grátis
-										</span>
-									) : (
-										<span className="price-tag-lg">
-											{formatKz(ad.price)}
-										</span>
-									)}
-								</div>
-
-								{ad.averageRating !== null && (
-									<p className="flex items-center gap-1.5 text-sm text-ink/60">
-										<Stars value={ad.averageRating} />
-										<span>
-											· {ad.reviewCount} avaliações
-										</span>
-									</p>
-								)}
-
-								<Divider className="my-1" />
-
-								<button
-									className="btn-primary w-full"
-									onClick={contactCaxinda}
-									disabled={openConversation.isPending}
-								>
-									{openConversation.isPending && (
-										<ButtonLoader />
-									)}
-									<ChatSVG width={16} height={16} /> Contactar
-									a Caxinda
-								</button>
-								{isAuthenticated && (
-									<WishlistToggle
-										adId={ad.id}
-										saved={wishlistSaved ?? false}
-									/>
-								)}
-								<p className="text-xs leading-relaxed text-ink/40">
-									Produto gerido pela Caxinda. A equipa de
-									apoio responde às tuas mensagens.
-								</p>
-							</div>
-							<div className="grid grid-cols-3 divide-x divide-ink/10 border-t border-ink/10 bg-snow">
-								<StatCell
-									value={
-										ad.averageRating !== null
-											? ad.averageRating
-													.toFixed(1)
-													.replace('.', ',')
-											: '—'
+					<section className="card overflow-hidden">
+						<div className="border-b border-ink/10 bg-snow/60 px-6 py-4">
+							<h2 className="kicker">
+								Características principais
+							</h2>
+						</div>
+						<dl className="divide-y divide-ink/10">
+							<div className="grid grid-cols-2 divide-x divide-ink/10">
+								<SpecRow
+									label="Categoria"
+									value={ad.category?.name ?? 'Geral'}
+									link={
+										ad.category?.id
+											? `/produtos?categoryIds=${ad.category.id}`
+											: undefined
 									}
-									label="Nota"
 								/>
-								<StatCell
-									value={String(ad.reviewCount)}
-									label="Avaliações"
-								/>
-								<StatCell
-									value={String(ad.views)}
-									label="Visualizações"
+								<SpecRow
+									label="Província"
+									value={
+										ad.province
+											? (PROVINCE_LABELS[ad.province] ?? ad.province)
+											: 'Angola'
+									}
+									link={
+										ad.province
+											? `/produtos?provinces=${ad.province}`
+											: undefined
+									}
 								/>
 							</div>
-						</div>
-
-						<div className="card p-5">
-							<ReportForm
-								targetType="AD"
-								targetId={ad.id}
-								targetLabel={ad.title}
-							/>
-						</div>
-					</div>
-				</aside>
-			</div>
-
-			{canViewAnalytics && (
-				<div className="mt-8">
-					<ItemAnalyticsPanel
-						title="Estatísticas do produto"
-						data={adAnalytics}
-						isLoading={adAnalyticsLoading}
-					/>
+							<div className="grid grid-cols-2 divide-x divide-ink/10">
+								<SpecRow label="Publicado" value={timeAgo(ad.createdAt)} />
+								<SpecRow label="Visualizações" value={`${ad.views}`} />
+							</div>
+						</dl>
+					</section>
 				</div>
-			)}
 
-			<div className="mt-8">
-				<ReviewSection target={{ adId: ad.id }} />
+				{/* ── Reviews ── */}
+				<div className="lg:px-6" id="avaliacoes">
+					<ReviewSection target={{ adId: ad.id }} />
+				</div>
 			</div>
 
 			{relatedItems.length > 0 && (
@@ -883,117 +895,6 @@ function WishlistToggle({ adId, saved }: { adId: string; saved: boolean }) {
 		>
 			{isSaved ? '★ Guardado' : '☆ Guardar'}
 		</button>
-	);
-}
-
-function ItemAnalyticsPanel({
-	title,
-	data,
-	isLoading,
-}: {
-	title: string;
-	data?: AdAnalytics | BusinessAnalytics;
-	isLoading: boolean;
-}) {
-	const channelLabels: Record<ContactChannel, string> = {
-		phone: 'Telefone',
-		whatsapp: 'WhatsApp',
-		email: 'Email',
-		website: 'Website',
-	};
-	const channelMax = Math.max(
-		1,
-		...(data && 'clicksByChannel' in data.totals
-			? data.totals.clicksByChannel.map((item) => item.count)
-			: []),
-	);
-
-	return (
-		<section className="card gap-4 p-6">
-			<div className="flex items-center justify-between gap-3">
-				<div>
-					<h2 className="kicker">{title}</h2>
-					<p className="mt-1 text-xs text-ink/50">Últimos 30 dias.</p>
-				</div>
-				{isLoading && <ButtonLoader />}
-			</div>
-
-			{!data ? (
-				<p className="text-sm text-ink/50">
-					Sem dados suficientes para apresentar.
-				</p>
-			) : 'clicksByChannel' in data.totals ? (
-				<>
-					<div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-						<InfoBox
-							label="Visualizações"
-							value={String(data.totals.views)}
-						/>
-						<InfoBox
-							label="Visitas únicas"
-							value={String(data.totals.uniqueViews)}
-						/>
-						<InfoBox
-							label="Cliques"
-							value={String(data.totals.clicks)}
-						/>
-					</div>
-
-					<MiniChart data={data.daily} />
-
-					{data.totals.clicksByChannel.length > 0 && (
-						<div className="flex flex-col gap-3">
-							{data.totals.clicksByChannel.map((item) => (
-								<div key={item.channel}>
-									<div className="mb-1 flex justify-between text-xs">
-										<span className="font-bold">
-											{channelLabels[item.channel]}
-										</span>
-										<span className="font-mono text-ink/60">
-											{item.count}
-										</span>
-									</div>
-									<div className="h-2 overflow-hidden rounded-full bg-ink/10">
-										<div
-											className="h-full rounded-full bg-kwanza"
-											style={{
-												width: `${(item.count / channelMax) * 100}%`,
-											}}
-										/>
-									</div>
-								</div>
-							))}
-						</div>
-					)}
-				</>
-			) : (
-				<>
-					<div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-						<InfoBox
-							label="Visualizações"
-							value={String(data.totals.views)}
-						/>
-						<InfoBox
-							label="Visitas únicas"
-							value={String(data.totals.uniqueViews)}
-						/>
-					</div>
-
-					<MiniChart data={data.daily} />
-				</>
-			)}
-		</section>
-	);
-}
-
-function InfoBox({ label, value }: { label: string; value: string }) {
-	return (
-		<div>
-			<p className="text-xs font-bold uppercase tracking-wide text-ink/40">
-				{label}
-			</p>
-			<p className="mt-0.5 font-mono text-xl font-bold">{value}</p>
-		</div>
 	);
 }
 
@@ -1304,17 +1205,6 @@ export function BusinessDetailPage() {
 	const navigate = useNavigate();
 	const openConversation = useOpenConversation();
 	const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
-	const canViewAnalytics =
-		isAuthenticated &&
-		!!business &&
-		(user?.role === 'ADMIN' ||
-			user?.role === 'MODERATOR' ||
-			user?.id === business.owner.id);
-	const { data: businessAnalytics, isLoading: businessAnalyticsLoading } =
-		useBusinessAnalytics(
-			canViewAnalytics ? business?.id : undefined,
-			'30d',
-		);
 
 	useEffect(() => {
 		setLightboxIndex(null);
@@ -1425,7 +1315,7 @@ export function BusinessDetailPage() {
 							</div>
 						)}
 						{businessImages.length > 1 && (
-							<span className="absolute right-3 bottom-3 rounded-full bg-ink/70 px-2.5 py-1 font-mono text-[10px] font-bold text-white backdrop-blur">
+							<span className="absolute bottom-3 right-3 rounded-full bg-ink/70 px-2.5 py-1 font-mono text-[10px] font-bold text-white backdrop-blur">
 								{businessImages.length} fotos
 							</span>
 						)}
@@ -1435,6 +1325,21 @@ export function BusinessDetailPage() {
 							<CheckSVG width={12} height={12} /> Verificada
 						</span>
 					)}
+				</div>
+
+				<div
+					className="flex items-center gap-3 px-6 py-3"
+					style={{
+						background:
+							'linear-gradient(135deg, var(--color-kwanza), var(--color-red))',
+					}}
+				>
+					<div className="flex h-7 w-7 items-center justify-center rounded-md bg-white/20 font-mono text-[10px] font-black text-white">
+						CX
+					</div>
+					<p className="font-mono text-[10px] font-bold uppercase tracking-wider text-white">
+						Loja oficial — Caxinda Divulga
+					</p>
 				</div>
 
 				<div className="border-b border-ink/10 bg-snow px-6 py-5">
@@ -1487,8 +1392,8 @@ export function BusinessDetailPage() {
 					</div>
 				</div>
 
-				<div className="grid gap-6 p-6 lg:grid-cols-[minmax(0,1fr)_340px]">
-					<div className="flex min-w-0 flex-col gap-6">
+				<div className="grid gap-0 p-6 lg:grid-cols-[minmax(0,1fr)_320px]">
+					<div className="flex min-w-0 flex-col gap-6 lg:border-r lg:border-ink/10 lg:pr-6">
 						<section className="card overflow-hidden rounded-2xl bg-snow-dark">
 							<div className="flex items-center gap-3 px-6 pt-5">
 								<span className="h-1.5 w-14 rounded-full bg-kwanza" />
@@ -1553,16 +1458,25 @@ export function BusinessDetailPage() {
 						)}
 					</div>
 
-					<aside className="lg:sticky lg:top-24 lg:self-start">
-						<div className="flex flex-col gap-3">
-							<div className="card gap-2 overflow-hidden p-5">
-								<div className="mb-1 flex items-center justify-between gap-3">
-									<h3 className="kicker">Contactos</h3>
-									<span className="font-mono text-[10px] font-bold uppercase tracking-widest text-ink/30">
-										{contactCount} vias
-									</span>
-								</div>
-								<Divider className="mb-3" />
+					<aside className="flex flex-col gap-3 lg:sticky lg:top-20 lg:pl-6 lg:self-start">
+						<div className="card overflow-hidden">
+							<div
+								className="flex items-center gap-3 px-4 py-2.5"
+								style={{
+									background:
+										'linear-gradient(135deg, var(--color-kwanza), var(--color-red))',
+								}}
+							>
+								<PhoneSVG
+									width={14}
+									height={14}
+									className="text-white"
+								/>
+								<h3 className="font-mono text-[10px] font-bold uppercase tracking-wider text-white">
+									Contactos · {contactCount} vias
+								</h3>
+							</div>
+							<div className="flex flex-col gap-2 p-4">
 								{business.phone && (
 									<button
 										className="btn-outline w-full justify-start"
@@ -1615,44 +1529,42 @@ export function BusinessDetailPage() {
 									</button>
 								)}
 							</div>
-							{!isOwner && (
-								<button
-									type="button"
-									className="btn-blue w-full"
-									onClick={messageBusiness}
-									disabled={openConversation.isPending}
-								>
-									{openConversation.isPending && (
-										<ButtonLoader />
-									)}
-									<ChatSVG width={16} height={16} /> Mensagem
-									→
-								</button>
-							)}
-							{isOwner && (
-								<Link
-									to={`/area/empresas/${business.id}/editar`}
-									className="btn-blue w-full"
-								>
-									Editar empresa
-								</Link>
-							)}
+						</div>
+
+						{!isOwner && (
+							<button
+								type="button"
+								className="btn-blue w-full"
+								onClick={messageBusiness}
+								disabled={openConversation.isPending}
+							>
+								{openConversation.isPending && (
+									<ButtonLoader />
+								)}
+								<ChatSVG width={16} height={16} /> Mensagem →
+							</button>
+						)}
+						{isOwner && (
+							<Link
+								to={`/area/empresas/${business.id}/editar`}
+								className="btn-blue w-full"
+							>
+								Editar empresa
+							</Link>
+						)}
+
+						<div className="card p-4">
+							<ReportForm
+								targetType="BUSINESS"
+								targetId={business.id}
+								targetLabel={business.name}
+							/>
 						</div>
 					</aside>
 				</div>
 			</div>
 
-			{canViewAnalytics && (
-				<div className="mt-8">
-					<ItemAnalyticsPanel
-						title="Estatísticas da empresa"
-						data={businessAnalytics}
-						isLoading={businessAnalyticsLoading}
-					/>
-				</div>
-			)}
-
-			<div className="mt-8 grid gap-6 lg:grid-cols-2">
+			<div className="mt-8">
 				<ReviewSection target={{ businessId: business.id }} />
 			</div>
 
@@ -1667,7 +1579,7 @@ export function BusinessDetailPage() {
 
 // ================= Avaliações =================
 
-function ReviewSection({
+export function ReviewSection({
 	target,
 }: {
 	target: { adId?: string; businessId?: string; revieweeId?: string };

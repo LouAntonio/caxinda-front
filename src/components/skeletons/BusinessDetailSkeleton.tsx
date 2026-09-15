@@ -15,6 +15,8 @@ export function BusinessDetailSkeleton() {
 					<Skeleton className="absolute right-4 top-4 h-8 w-28 rounded-xl bg-kwanza/40" />
 				</div>
 
+				<Skeleton className="h-9 w-full bg-kwanza/25" />
+
 				<div className="border-b border-ink/10 bg-snow px-6 py-5">
 					<div className="flex items-center gap-4">
 						<Skeleton className="h-20 w-20 rounded-2xl" />
@@ -36,8 +38,8 @@ export function BusinessDetailSkeleton() {
 					</div>
 				</div>
 
-				<div className="grid gap-6 p-6 lg:grid-cols-[1fr_320px]">
-					<div>
+				<div className="grid gap-0 p-6 lg:grid-cols-[minmax(0,1fr)_320px]">
+					<div className="flex flex-col gap-6 lg:border-r lg:border-ink/10 lg:pr-6">
 						<div className="rounded-2xl border border-ink/10 bg-snow-dark p-6">
 							<div className="mb-3 flex items-center gap-3">
 								<Skeleton className="h-1.5 w-14 rounded-full bg-kwanza/40" />
@@ -49,7 +51,7 @@ export function BusinessDetailSkeleton() {
 								<SkeletonText width="w-2/3" />
 							</div>
 						</div>
-						<div className="mt-6 overflow-hidden rounded-2xl border border-ink/10 bg-white">
+						<div className="overflow-hidden rounded-2xl border border-ink/10 bg-white">
 							<div className="flex items-center justify-between gap-3 border-b border-ink/10 bg-snow/60 px-6 py-4">
 								<Skeleton className="h-4 w-28 rounded" />
 								<Skeleton className="h-3 w-12 rounded" />
@@ -65,14 +67,10 @@ export function BusinessDetailSkeleton() {
 						</div>
 					</div>
 
-					<aside className="flex flex-col gap-3">
-						<div className="overflow-hidden rounded-2xl border border-ink/10 bg-white p-5">
-							<div className="mb-1 flex items-center justify-between gap-3">
-								<Skeleton className="h-4 w-24 rounded" />
-								<Skeleton className="h-3 w-10 rounded" />
-							</div>
-							<Skeleton className="my-3 h-px w-full" />
-							<div className="flex flex-col gap-2">
+					<aside className="flex flex-col gap-3 lg:pl-6">
+						<div className="overflow-hidden rounded-2xl border border-ink/10 bg-white">
+							<div className="h-9 w-full bg-kwanza/25" />
+							<div className="flex flex-col gap-2 p-4">
 								{Array.from({ length: 3 }).map((_, i) => (
 									<SkeletonButton
 										key={i}
@@ -82,6 +80,7 @@ export function BusinessDetailSkeleton() {
 							</div>
 						</div>
 						<SkeletonButton className="w-full" />
+						<Skeleton className="h-24 w-full rounded-2xl" />
 					</aside>
 				</div>
 			</div>

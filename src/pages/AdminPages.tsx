@@ -399,6 +399,12 @@ function AdModerateActions({
 			>
 				{ad.visibility === 'VISIBLE' ? 'Destaque' : 'Retirar destaque'}
 			</button>
+			<Link
+				to={`/area/analiticas/produto/${ad.id}`}
+				className="btn-ghost"
+			>
+				Estatísticas
+			</Link>
 		</div>
 	);
 }

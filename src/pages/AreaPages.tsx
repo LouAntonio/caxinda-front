@@ -354,6 +354,12 @@ export function MyBusinessesPage() {
 									Planos
 								</Link>
 								<Link
+									to={`/area/analiticas/empresa/${b.id}`}
+									className="btn-ghost"
+								>
+									Estatísticas
+								</Link>
+								<Link
 									to={`/area/empresas/${b.id}/editar`}
 									className="btn-ghost"
 								>
