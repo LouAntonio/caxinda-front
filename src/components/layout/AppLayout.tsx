@@ -8,6 +8,7 @@ import { useScrollToTop } from '../../hooks/useScrollToTop';
 import { useConversations, useMyKyc } from '../../hooks/queries';
 import { useChatStore } from '../../store/chat';
 import { PageShellSkeleton } from '../skeletons/ListSkeletons';
+import { PanelIcon } from '../ui/icons/PanelIcons';
 import type { Role } from '../../types/api';
 
 function useUnreadSync() {
@@ -104,7 +105,9 @@ export function RequireBusiness({ children }: { children: React.ReactNode }) {
 		<div className="mx-auto max-w-6xl px-4 py-10">
 			{kyc?.status === 'PENDING' ? (
 				<div className="card flex items-start gap-4 p-6">
-					<span className="text-4xl">⏳</span>
+					<span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-kwanza/15 text-kwanza">
+						<PanelIcon name="clock" size={20} />
+					</span>
 					<div>
 						<h1 className="font-display text-xl font-black">
 							Conversão em análise

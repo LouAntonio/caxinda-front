@@ -78,6 +78,10 @@ import {
 } from '../lib/format';
 import type { KycRecord, MediaAsset, Province } from '../types/api';
 import { PROVINCES } from '../types/api';
+import {
+	PanelIcon,
+	type PanelIconName,
+} from '../components/ui/icons/PanelIcons';
 
 function Title({ children }: { children: React.ReactNode }) {
 	return (
@@ -115,36 +119,67 @@ export function AreaDashboardPage() {
 				: '⚠ Rejeitado'
 		: 'Por fazer';
 
+	const accountStatus = verified
+		? 'Conta Empresarial'
+		: kyc?.status === 'PENDING'
+			? 'Conversão em análise'
+			: kyc?.status === 'REJECTED'
+				? 'Conversão rejeitada'
+				: 'Conta pessoal';
+
+	const firstName = user?.name?.split(' ')[0] ?? '';
+
 	return (
 		<div>
-			<Title>Visão geral</Title>
-			<div className="grid gap-4 sm:grid-cols-3">
+			<div className="card flex items-center justify-between gap-4 p-6">
+				<div className="min-w-0">
+					<p className="kicker">Minha conta</p>
+					<h1 className="mt-1 font-display text-2xl font-black">
+						Olá, {firstName || fullName(user?.name, user?.surname)}
+					</h1>
+					<p className="mt-1 truncate text-sm text-ink/60">
+						{fullName(user?.name, user?.surname)} · {user?.email}
+					</p>
+				</div>
+				<span className="inline-flex shrink-0 items-center gap-2 rounded-xl bg-kwanza px-4 py-2 font-mono text-xs font-bold uppercase tracking-widest text-ink shadow-[0_4px_14px_rgba(242,169,0,0.25)]">
+					<PanelIcon name="shield" size={14} />
+					{accountStatus}
+				</span>
+			</div>
+
+			<div className="mt-6 grid gap-4 sm:grid-cols-3">
 				{verified ? (
 					<>
 						<StatCard
 							label="Subscrições"
 							value={subscriptions?.length ?? 0}
 							to="/area/subscricoes"
+							icon="layers"
 							accent="red"
 						/>
 						<StatCard
 							label="Empresas"
 							value={businesses?.total ?? 0}
 							to="/area/empresas"
+							icon="building"
 							accent="blue"
 						/>
 						<StatCard
 							label="Conta Empresarial"
 							value="✔ Ativa"
 							to="/area/verificacao"
-							accent="ink"
+							icon="shield"
+							accent="kwanza"
 						/>
 					</>
 				) : (
-					<div className="card flex flex-wrap items-center justify-between gap-4 p-5 sm:col-span-3">
+					<div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl bg-ink p-6 text-white sm:col-span-3">
 						<div>
-							<h2 className="kicker">Conta Empresarial</h2>
-							<p className="mt-1 max-w-xl text-sm text-ink/70">
+							<p className="flex items-center gap-1.5 font-mono text-[10px] font-bold uppercase tracking-widest text-kwanza">
+								<PanelIcon name="shield" size={13} />
+								Conta Empresarial
+							</p>
+							<p className="mt-2 max-w-xl text-sm text-white/70">
 								{kyc?.status === 'PENDING'
 									? 'A tua verificação está em análise. Assim que for aprovada, tens acesso a empresas, planos e pagamentos.'
 									: kyc?.status === 'REJECTED'
@@ -154,7 +189,7 @@ export function AreaDashboardPage() {
 						</div>
 						<Link
 							to="/area/verificacao"
-							className="btn-primary shrink-0"
+							className="btn-kwanza shrink-0"
 						>
 							Converter para conta Empresarial
 						</Link>
@@ -167,13 +202,26 @@ export function AreaDashboardPage() {
 					<h2 className="font-display text-sm font-black">
 						O teu perfil
 					</h2>
-					<p className="mt-2 text-sm text-ink/70">
-						{fullName(user?.name, user?.surname)} · {user?.email}
-					</p>
-					<p className="mt-1 text-xs text-ink/50">
-						{verified ? 'Conta Empresarial' : 'Conta pessoal'} ·
-						KYC: {kycLabel} · Confiança: {user?.trustScore ?? '—'}
-					</p>
+					<div className="mt-3 flex items-center gap-3">
+						<Avatar src={user?.image} name={user?.name} size="lg" />
+						<div className="min-w-0">
+							<p className="truncate text-sm font-bold">
+								{fullName(user?.name, user?.surname)}
+							</p>
+							<p className="truncate text-xs text-ink/50">
+								{user?.email}
+							</p>
+						</div>
+					</div>
+					<div className="mt-4 flex flex-wrap gap-2">
+						<span className="chip">
+							{verified ? 'Conta Empresarial' : 'Conta pessoal'}
+						</span>
+						<span className="chip">KYC: {kycLabel}</span>
+						<span className="chip">
+							Confiança: {user?.trustScore ?? '—'}
+						</span>
+					</div>
 					<div className="mt-4 flex gap-2">
 						<Link to="/area/definicoes" className="btn-outline">
 							Definições
@@ -187,9 +235,14 @@ export function AreaDashboardPage() {
 				</div>
 				{verified && (
 					<div className="card p-5">
-						<h2 className="font-display text-sm font-black">
-							Pagamentos recentes
-						</h2>
+						<div className="flex items-center gap-2">
+							<span className="flex h-8 w-8 items-center justify-center rounded-lg bg-snow text-red">
+								<PanelIcon name="card" size={16} />
+							</span>
+							<h2 className="font-display text-sm font-black">
+								Pagamentos recentes
+							</h2>
+						</div>
 						<div className="mt-2 flex flex-col gap-2">
 							{(payments ?? []).slice(0, 3).map((p) => (
 								<div
@@ -224,7 +277,7 @@ export function AreaDashboardPage() {
 			</div>
 
 			{verified && (
-				<div className="mt-6 grid gap-3 sm:grid-cols-3">
+				<div className="mt-6 grid gap-3 sm:grid-cols-2">
 					<Link to="/area/empresas/nova" className="btn-blue">
 						+ Nova empresa
 					</Link>
@@ -241,26 +294,40 @@ function StatCard({
 	label,
 	value,
 	to,
+	icon,
 	accent,
 }: {
 	label: string;
 	value: string | number;
 	to: string;
-	accent: 'red' | 'blue' | 'ink';
+	icon: PanelIconName;
+	accent: 'red' | 'blue' | 'kwanza';
 }) {
 	const color =
 		accent === 'red'
 			? 'text-red'
 			: accent === 'blue'
 				? 'text-blue'
-				: 'text-ink';
+				: 'text-kwanza';
 	return (
 		<Link
 			to={to}
-			className="card p-5 transition hover:-translate-y-0.5 hover:shadow-md"
+			className="card group p-5 transition hover:-translate-y-0.5 hover:shadow-md"
 		>
-			<p className={`font-mono text-3xl font-bold ${color}`}>{value}</p>
-			<p className="mt-1 text-sm font-bold text-ink/60">{label}</p>
+			<div className="flex items-start justify-between">
+				<span
+					className={`flex h-10 w-10 items-center justify-center rounded-xl bg-snow ${color}`}
+				>
+					<PanelIcon name={icon} size={18} />
+				</span>
+				<span className="text-xs font-bold text-ink/30 transition group-hover:translate-x-0.5">
+					→
+				</span>
+			</div>
+			<p className="mt-4 font-mono text-3xl font-bold text-ink">
+				{value}
+			</p>
+			<p className="kicker mt-1.5">{label}</p>
 		</Link>
 	);
 }
@@ -1769,8 +1836,10 @@ export function KycPage() {
 						</div>
 					</div>
 				) : (
-					<div className="card mb-6 flex items-center gap-3 p-6">
-						<p className="text-4xl">⏳</p>
+					<div className="card mb-6 flex items-center gap-4 p-6">
+						<span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-kwanza/15 text-kwanza">
+							<PanelIcon name="clock" size={20} />
+						</span>
 						<div>
 							<h1 className="font-display text-xl font-black">
 								Conversão em análise

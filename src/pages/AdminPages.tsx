@@ -61,6 +61,10 @@ import { ConfirmButton } from '../components/ui/ConfirmButton';
 import { Price } from '../components/ui/Price';
 import { getApiError, http } from '../lib/api';
 import {
+	PanelIcon,
+	type PanelIconName,
+} from '../components/ui/icons/PanelIcons';
+import {
 	formatDate,
 	formatDecimal,
 	formatKz,
@@ -101,36 +105,44 @@ export function AdminDashboardPage() {
 		limit: 5,
 	});
 
+	const pendingCount =
+		(reports?.items ?? []).length +
+		(kycs?.items ?? []).length +
+		(payments?.items ?? []).length;
+
 	return (
 		<div>
-			<Title>Dashboard</Title>
-			<div className="grid gap-4 sm:grid-cols-3">
-				<div className="card p-5">
-					<p className="font-mono text-3xl font-bold text-blue">
-						{analytics?.totals.views ?? '—'}
-					</p>
-					<p className="mt-1 text-sm font-bold text-ink/60">
-						Visualizações (30d)
-					</p>
+			<div className="card flex items-center justify-between gap-4 p-6">
+				<div className="min-w-0">
+					<p className="kicker">Painel Admin</p>
+					<h1 className="mt-1 font-display text-2xl font-black">
+						Dashboard
+					</h1>
 				</div>
-				<div className="card p-5">
-					<p className="font-mono text-3xl font-bold text-red">
-						{analytics?.totals.clicks ?? '—'}
-					</p>
-					<p className="mt-1 text-sm font-bold text-ink/60">
-						Cliques (30d)
-					</p>
-				</div>
-				<div className="card p-5">
-					<p className="font-mono text-3xl font-bold text-kwanza">
-						{(reports?.items ?? []).length +
-							(kycs?.items ?? []).length +
-							(payments?.items ?? []).length}
-					</p>
-					<p className="mt-1 text-sm font-bold text-ink/60">
-						Aguarda moderação
-					</p>
-				</div>
+				<span className="shrink-0 rounded-xl bg-blue px-4 py-2 font-mono text-xs font-bold uppercase tracking-widest text-white">
+					Admin
+				</span>
+			</div>
+
+			<div className="mt-6 grid gap-4 sm:grid-cols-3">
+				<AdminStatsCard
+					label="Visualizações (30d)"
+					value={analytics?.totals.views ?? '—'}
+					icon="eye"
+					accent="blue"
+				/>
+				<AdminStatsCard
+					label="Cliques (30d)"
+					value={analytics?.totals.clicks ?? '—'}
+					icon="cursor"
+					accent="red"
+				/>
+				<AdminStatsCard
+					label="Aguarda moderação"
+					value={pendingCount}
+					icon="clock"
+					accent="kwanza"
+				/>
 			</div>
 
 			<div className="mt-6 grid gap-4 md:grid-cols-3">
@@ -179,9 +191,10 @@ export function AdminDashboardPage() {
 			</div>
 
 			<div className="card mt-6 p-6">
-				<h2 className="mb-4 font-display text-sm font-black">
-					Ações rápidas
-				</h2>
+				<h2 className="kicker">Ações rápidas</h2>
+				<p className="mb-4 mt-1 font-display text-sm font-black">
+					Moderação e gestão
+				</p>
 				<div className="flex flex-wrap gap-2">
 					<Link to="/admin/anuncios" className="btn-outline">
 						Moderar anúncios
@@ -195,12 +208,43 @@ export function AdminDashboardPage() {
 					<Link to="/admin/categorias" className="btn-outline">
 						Categorias
 					</Link>
-					{/* Gestão de planos */}
 					<Link to="/admin/planos" className="btn-outline">
 						Gerir planos
 					</Link>
 				</div>
 			</div>
+		</div>
+	);
+}
+
+function AdminStatsCard({
+	label,
+	value,
+	icon,
+	accent,
+}: {
+	label: string;
+	value: string | number;
+	icon: PanelIconName;
+	accent: 'red' | 'blue' | 'kwanza';
+}) {
+	const color =
+		accent === 'blue'
+			? 'text-blue'
+			: accent === 'red'
+				? 'text-red'
+				: 'text-kwanza';
+	return (
+		<div className="card p-5">
+			<span
+				className={`flex h-10 w-10 items-center justify-center rounded-xl bg-snow ${color}`}
+			>
+				<PanelIcon name={icon} size={18} />
+			</span>
+			<p className="mt-4 font-mono text-3xl font-bold text-ink">
+				{value}
+			</p>
+			<p className="kicker mt-1.5">{label}</p>
 		</div>
 	);
 }
@@ -220,7 +264,7 @@ function QueueCard({
 		<div className="card flex flex-col gap-2 p-5">
 			<div className="flex items-center justify-between">
 				<h2 className="font-display text-sm font-black">{title}</h2>
-				<span className="flex h-6 min-w-6 items-center justify-center rounded-full bg-red px-2 font-mono text-xs font-bold text-white">
+				<span className="flex h-6 min-w-6 items-center justify-center rounded-full border border-blue/25 bg-blue/10 px-2 font-mono text-xs font-bold text-blue">
 					{count}
 				</span>
 			</div>
