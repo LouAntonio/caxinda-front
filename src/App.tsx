@@ -9,6 +9,7 @@ import {
 	RequireAuth,
 	RequireGuest,
 	RequireRole,
+	RequireBusiness,
 } from './components/layout/AppLayout';
 import { AuthLayout } from './components/layout/AuthLayout';
 import { AreaLayout } from './components/layout/AreaLayout';
@@ -99,29 +100,73 @@ const router = createBrowserRouter([
 				),
 				children: [
 					{ index: true, element: <AreaDashboardPage /> },
-					{ path: 'empresas', element: <MyBusinessesPage /> },
-					{ path: 'empresas/nova', element: <BusinessFormPage /> },
+					{
+						path: 'empresas',
+						element: (
+							<RequireBusiness>
+								<MyBusinessesPage />
+							</RequireBusiness>
+						),
+					},
+					{
+						path: 'empresas/nova',
+						element: (
+							<RequireBusiness>
+								<BusinessFormPage />
+							</RequireBusiness>
+						),
+					},
 					{
 						path: 'empresas/:id/editar',
-						element: <BusinessFormPage />,
+						element: (
+							<RequireBusiness>
+								<BusinessFormPage />
+							</RequireBusiness>
+						),
 					},
 					{
 						path: 'empresas/:id/subscricao',
-						element: <SubscribePage />,
+						element: (
+							<RequireBusiness>
+								<SubscribePage />
+							</RequireBusiness>
+						),
 					},
 					{ path: 'favoritos', element: <WishlistPage /> },
 					{ path: 'mensagens', element: <MessagesPage /> },
-					{ path: 'pagamentos', element: <PaymentsPage /> },
-					{ path: 'subscricoes', element: <MySubscriptionsPage /> },
+					{
+						path: 'pagamentos',
+						element: (
+							<RequireBusiness>
+								<PaymentsPage />
+							</RequireBusiness>
+						),
+					},
+					{
+						path: 'subscricoes',
+						element: (
+							<RequireBusiness>
+								<MySubscriptionsPage />
+							</RequireBusiness>
+						),
+					},
 					{ path: 'verificacao', element: <KycPage /> },
 					{ path: 'definicoes', element: <SettingsPage /> },
 					{
 						path: 'analiticas/produto/:id',
-						element: <OwnerAnalyticsPage />,
+						element: (
+							<RequireBusiness>
+								<OwnerAnalyticsPage />
+							</RequireBusiness>
+						),
 					},
 					{
 						path: 'analiticas/empresa/:id',
-						element: <OwnerAnalyticsPage />,
+						element: (
+							<RequireBusiness>
+								<OwnerAnalyticsPage />
+							</RequireBusiness>
+						),
 					},
 				],
 			},

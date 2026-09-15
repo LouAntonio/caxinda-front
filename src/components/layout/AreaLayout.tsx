@@ -1,18 +1,8 @@
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import { useSession } from '../../hooks/useSession';
+import { useMyKyc } from '../../hooks/queries';
 import { fullName } from '../../lib/format';
 import { Avatar } from '../ui/Avatar';
-
-const AREA_LINKS = [
-	{ to: '/area', label: 'Visão geral', end: true },
-	{ to: '/area/empresas', label: 'Minhas empresas' },
-	{ to: '/area/subscricoes', label: 'Subscrições' },
-	{ to: '/area/favoritos', label: 'Favoritos' },
-	{ to: '/area/mensagens', label: 'Mensagens' },
-	{ to: '/area/pagamentos', label: 'Pagamentos' },
-	{ to: '/area/verificacao', label: 'Verificação KYC' },
-	{ to: '/area/definicoes', label: 'Definições' },
-];
 
 const ADMIN_LINKS = [
 	{ to: '/admin', label: 'Dashboard', end: true },
@@ -31,8 +21,32 @@ const ADMIN_LINKS = [
 
 export function AreaLayout({ admin = false }: { admin?: boolean }) {
 	const { user } = useSession();
+	const { data: kyc } = useMyKyc();
 	const location = useLocation();
-	const links = admin ? ADMIN_LINKS : AREA_LINKS;
+
+	const verified = Boolean(user && (user.isVerified || user.role !== 'USER'));
+	const verificationLabel = verified
+		? 'Conta Empresarial ✓'
+		: kyc?.status === 'PENDING'
+			? 'Conversão em análise'
+			: 'Converter para conta Empresarial';
+
+	const areaLinks = [
+		{ to: '/area', label: 'Visão geral', end: true },
+		...(verified
+			? [
+					{ to: '/area/empresas', label: 'Minhas empresas' },
+					{ to: '/area/subscricoes', label: 'Subscrições' },
+					{ to: '/area/pagamentos', label: 'Pagamentos' },
+				]
+			: []),
+		{ to: '/area/favoritos', label: 'Favoritos' },
+		{ to: '/area/mensagens', label: 'Mensagens' },
+		{ to: '/area/verificacao', label: verificationLabel },
+		{ to: '/area/definicoes', label: 'Definições' },
+	];
+
+	const links = admin ? ADMIN_LINKS : areaLinks;
 
 	const header = admin ? 'Painel Admin' : 'Minha Conta';
 	const backLink = admin ? '/area' : null;

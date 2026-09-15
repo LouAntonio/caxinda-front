@@ -435,12 +435,15 @@ export function Header() {
 											>
 												Minha conta
 											</Link>
-											<Link
-												to="/area/empresas"
-												className="px-4 py-2 hover:bg-snow"
-											>
-												Minhas empresas
-											</Link>
+											{(user.isVerified ||
+												user.role !== 'USER') && (
+												<Link
+													to="/area/empresas"
+													className="px-4 py-2 hover:bg-snow"
+												>
+													Minhas empresas
+												</Link>
+											)}
 											<Link
 												to="/area/favoritos"
 												className="px-4 py-2 hover:bg-snow"

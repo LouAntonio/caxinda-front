@@ -621,10 +621,6 @@ export function AdDetailPage() {
 											: undefined
 									}
 								/>
-								<SpecRow
-									label="Visualizações"
-									value={`${ad.views}`}
-								/>
 							</div>
 						</div>
 					</section>
@@ -1308,15 +1304,6 @@ export function BusinessDetailPage() {
 							</span>
 							<span className="text-[10px] font-bold uppercase tracking-widest text-ink/40">
 								Avaliações
-							</span>
-						</div>
-						<div className="h-6 w-px bg-ink/10" />
-						<div>
-							<span className="block font-mono text-sm font-bold text-ink">
-								{business.viewCount}
-							</span>
-							<span className="text-[10px] font-bold uppercase tracking-widest text-ink/40">
-								Visitas
 							</span>
 						</div>
 					</div>

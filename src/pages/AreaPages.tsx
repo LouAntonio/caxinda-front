@@ -105,6 +105,8 @@ export function AreaDashboardPage() {
 	const { data: payments } = useMyPayments();
 	const { data: subscriptions } = useMySubscriptions();
 
+	const verified = Boolean(user && (user.isVerified || user.role !== 'USER'));
+
 	const kycLabel = kyc
 		? kyc.status === 'APPROVED'
 			? '✔ Aprovado'
@@ -117,24 +119,47 @@ export function AreaDashboardPage() {
 		<div>
 			<Title>Visão geral</Title>
 			<div className="grid gap-4 sm:grid-cols-3">
-				<StatCard
-					label="Subscrições"
-					value={subscriptions?.length ?? 0}
-					to="/area/subscricoes"
-					accent="red"
-				/>
-				<StatCard
-					label="Empresas"
-					value={businesses?.total ?? 0}
-					to="/area/empresas"
-					accent="blue"
-				/>
-				<StatCard
-					label="Verificação KYC"
-					value={kycLabel}
-					to="/area/verificacao"
-					accent="ink"
-				/>
+				{verified ? (
+					<>
+						<StatCard
+							label="Subscrições"
+							value={subscriptions?.length ?? 0}
+							to="/area/subscricoes"
+							accent="red"
+						/>
+						<StatCard
+							label="Empresas"
+							value={businesses?.total ?? 0}
+							to="/area/empresas"
+							accent="blue"
+						/>
+						<StatCard
+							label="Conta Empresarial"
+							value="✔ Ativa"
+							to="/area/verificacao"
+							accent="ink"
+						/>
+					</>
+				) : (
+					<div className="card flex flex-wrap items-center justify-between gap-4 p-5 sm:col-span-3">
+						<div>
+							<h2 className="kicker">Conta Empresarial</h2>
+							<p className="mt-1 max-w-xl text-sm text-ink/70">
+								{kyc?.status === 'PENDING'
+									? 'A tua verificação está em análise. Assim que for aprovada, tens acesso a empresas, planos e pagamentos.'
+									: kyc?.status === 'REJECTED'
+										? `Verificação rejeitada (${kyc.rejectionReason ?? 'documentos ilegíveis'}). Submete os documentos novamente para converteres a conta.`
+										: 'Ainda não tens conta Empresarial. Converte a tua conta para criares empresas, subscreveres planos e gerires pagamentos.'}
+							</p>
+						</div>
+						<Link
+							to="/area/verificacao"
+							className="btn-primary shrink-0"
+						>
+							Converter para conta Empresarial
+						</Link>
+					</div>
+				)}
 			</div>
 
 			<div className="mt-6 grid gap-4 md:grid-cols-2">
@@ -146,6 +171,7 @@ export function AreaDashboardPage() {
 						{fullName(user?.name, user?.surname)} · {user?.email}
 					</p>
 					<p className="mt-1 text-xs text-ink/50">
+						{verified ? 'Conta Empresarial' : 'Conta pessoal'} ·
 						KYC: {kycLabel} · Confiança: {user?.trustScore ?? '—'}
 					</p>
 					<div className="mt-4 flex gap-2">
@@ -153,54 +179,60 @@ export function AreaDashboardPage() {
 							Definições
 						</Link>
 						<Link to="/area/verificacao" className="btn-blue">
-							Verificação
+							{verified
+								? 'Conta Empresarial'
+								: 'Converter para conta Empresarial'}
 						</Link>
 					</div>
 				</div>
-				<div className="card p-5">
-					<h2 className="font-display text-sm font-black">
-						Pagamentos recentes
-					</h2>
-					<div className="mt-2 flex flex-col gap-2">
-						{(payments ?? []).slice(0, 3).map((p) => (
-							<div
-								key={p.id}
-								className="flex items-center justify-between rounded-xl bg-snow px-3 py-2 text-sm"
-							>
-								<span className="font-bold">
-									{p.subscription.business.name}
-								</span>
-								<span className="flex items-center gap-2">
-									<StatusPill status={p.status} />
-									<span className="font-mono text-xs">
-										{formatKz(p.amount)}
+				{verified && (
+					<div className="card p-5">
+						<h2 className="font-display text-sm font-black">
+							Pagamentos recentes
+						</h2>
+						<div className="mt-2 flex flex-col gap-2">
+							{(payments ?? []).slice(0, 3).map((p) => (
+								<div
+									key={p.id}
+									className="flex items-center justify-between rounded-xl bg-snow px-3 py-2 text-sm"
+								>
+									<span className="font-bold">
+										{p.subscription.business.name}
 									</span>
-								</span>
-							</div>
-						))}
-						{(payments ?? []).length === 0 && (
-							<p className="text-sm text-ink/50">
-								Sem pagamentos ainda.
-							</p>
-						)}
+									<span className="flex items-center gap-2">
+										<StatusPill status={p.status} />
+										<span className="font-mono text-xs">
+											{formatKz(p.amount)}
+										</span>
+									</span>
+								</div>
+							))}
+							{(payments ?? []).length === 0 && (
+								<p className="text-sm text-ink/50">
+									Sem pagamentos ainda.
+								</p>
+							)}
+						</div>
+						<Link
+							to="/area/pagamentos"
+							className="text-xs font-bold text-blue hover:underline"
+						>
+							Ver todos →
+						</Link>
 					</div>
-					<Link
-						to="/area/pagamentos"
-						className="text-xs font-bold text-blue hover:underline"
-					>
-						Ver todos →
-					</Link>
-				</div>
+				)}
 			</div>
 
-			<div className="mt-6 grid gap-3 sm:grid-cols-3">
-				<Link to="/area/empresas/nova" className="btn-blue">
-					+ Nova empresa
-				</Link>
-				<Link to="/planos" className="btn-kwanza">
-					Ver planos
-				</Link>
-			</div>
+			{verified && (
+				<div className="mt-6 grid gap-3 sm:grid-cols-3">
+					<Link to="/area/empresas/nova" className="btn-blue">
+						+ Nova empresa
+					</Link>
+					<Link to="/planos" className="btn-kwanza">
+						Ver planos
+					</Link>
+				</div>
+			)}
 		</div>
 	);
 }
@@ -1633,7 +1665,7 @@ interface KycFile {
 }
 
 export function KycPage() {
-	usePageTitle('Verificação');
+	usePageTitle('Converter para conta Empresarial');
 	const { data: kyc } = useMyKyc();
 	const submitKyc = useSubmitKyc();
 	const previewsRef = useRef<Set<string>>(new Set());
@@ -1708,7 +1740,8 @@ export function KycPage() {
 				})(),
 				{
 					loading: 'A enviar…',
-					success: 'Documentos enviados. A análise leva até 48h.',
+					success:
+						'Documentos enviados. A conversão para conta Empresarial leva até 48h.',
 					error: (err) => getApiError(err),
 				},
 			)
@@ -1718,20 +1751,20 @@ export function KycPage() {
 	if (kyc && (kyc.status === 'APPROVED' || kyc.status === 'PENDING')) {
 		return (
 			<div>
-				<Title>Verificação de identidade (KYC)</Title>
+				<Title>Conta Empresarial</Title>
 				{kyc.status === 'APPROVED' ? (
 					<div className="card mb-6 flex items-center gap-3 p-6">
 						<p className="text-4xl">✔</p>
 						<div>
 							<h1 className="font-display text-xl font-black text-green-700">
-								Conta verificada
+								Conta Empresarial ativa
 							</h1>
 							<p className="mt-1 text-sm text-ink/60">
 								Verificada em{' '}
 								{kyc.verifiedAt
 									? formatDate(kyc.verifiedAt)
 									: 'data desconhecida'}
-								.
+								. Já podes criar empresas e subscrever planos.
 							</p>
 						</div>
 					</div>
@@ -1740,11 +1773,13 @@ export function KycPage() {
 						<p className="text-4xl">⏳</p>
 						<div>
 							<h1 className="font-display text-xl font-black">
-								Em análise
+								Conversão em análise
 							</h1>
 							<p className="mt-1 text-sm text-ink/60">
-								Os teus documentos estão a ser verificados. A
-								análise demora até 48h.
+								Os teus documentos estão a ser verificados.
+								Assim que for aprovado, a tua conta passa a
+								Empresarial e tens acesso a empresas, planos e
+								pagamentos. A análise demora até 48h.
 							</p>
 						</div>
 					</div>
@@ -1760,7 +1795,7 @@ export function KycPage() {
 
 	return (
 		<div>
-			<Title>Verificação de identidade (KYC)</Title>
+			<Title>Converter para conta Empresarial</Title>
 			{kyc?.status === 'REJECTED' && (
 				<div className="mb-4 rounded-2xl bg-red/10 p-4 text-sm text-red">
 					<strong>Rejeitado:</strong>{' '}
@@ -1768,6 +1803,15 @@ export function KycPage() {
 						'Documentos ilegíveis. Tenta novamente.'}
 				</div>
 			)}
+			<p className="mb-6 max-w-3xl text-sm leading-relaxed text-ink/70">
+				Ao converteres a tua conta para <strong>Empresarial</strong>,
+				ficas com acesso a{' '}
+				<strong>
+					criar empresas, subscrever planos e gerir pagamentos
+				</strong>{' '}
+				direto na tua área pessoal. Envia os teus documentos de
+				identidade e a conversão é ativada em até 48h.
+			</p>
 			<div className="grid max-w-3xl gap-4 sm:grid-cols-2">
 				<KycSlot
 					label="Frente do BI"
@@ -1820,7 +1864,8 @@ export function KycPage() {
 				disabled={!canSubmit || submitting}
 				onClick={submit}
 			>
-				{submitting && <ButtonLoader />} Enviar para verificação
+				{submitting && <ButtonLoader />} Converter para conta
+				Empresarial
 			</button>
 		</div>
 	);
