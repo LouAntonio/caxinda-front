@@ -188,7 +188,7 @@ export function Header() {
 	};
 
 	const onLogout = () => {
-		logout.mutate(undefined, {
+		void logout.mutate(undefined, {
 			onSettled: () => {
 				useChatStore.getState().reset();
 				navigate('/');

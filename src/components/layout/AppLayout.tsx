@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { Link, Navigate, Outlet, useLocation } from 'react-router-dom';
 import { Header } from './Header';
 import { Footer } from './Footer';
+import { GlobalSEO } from './GlobalSEO';
 import { useSocketEvents } from '../../hooks/useSocketEvents';
 import { useSession } from '../../hooks/useSession';
 import { useScrollToTop } from '../../hooks/useScrollToTop';
@@ -30,6 +31,7 @@ export function AppLayout() {
 	useUnreadSync();
 	return (
 		<div className="flex min-h-screen flex-col">
+			<GlobalSEO />
 			<Header />
 			<main className="flex-1">
 				<Outlet />

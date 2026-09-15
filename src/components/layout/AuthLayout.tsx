@@ -1,11 +1,13 @@
 import { Link, Outlet } from 'react-router-dom';
 import { Logo } from './Logo';
+import { GlobalSEO } from './GlobalSEO';
 import { useScrollToTop } from '../../hooks/useScrollToTop';
 
 export function AuthLayout() {
 	useScrollToTop();
 	return (
 		<div className="flex min-h-screen flex-col bg-snow lg:flex-row">
+			<GlobalSEO />
 			<div className="relative hidden overflow-hidden bg-ink lg:flex lg:w-[45%] lg:flex-col">
 				<div className="relative z-10 flex h-full flex-col justify-between p-12 xl:p-16">
 					<Logo variant="dark" />

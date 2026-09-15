@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { usePageTitle } from '../hooks/usePageTitle';
 import {
 	Link,
@@ -81,12 +81,16 @@ export function AdsPage() {
 	const [searchParams, setSearchParams] = useSearchParams();
 	const { data: categories } = useCategories('AD');
 	const q = searchParams.get('q') ?? '';
-	const selectedCategoryIds =
-		searchParams.get('categoryIds')?.split(',').filter(Boolean) ?? [];
+	const selectedCategoryIds = useMemo(
+		() => searchParams.get('categoryIds')?.split(',').filter(Boolean) ?? [],
+		[searchParams],
+	);
 	const sortBy = searchParams.get('sortBy') ?? 'newest';
 	const onlyFeatured = searchParams.get('featured') === 'true';
-	const selectedProvinces =
-		searchParams.get('provinces')?.split(',').filter(Boolean) ?? [];
+	const selectedProvinces = useMemo(
+		() => searchParams.get('provinces')?.split(',').filter(Boolean) ?? [],
+		[searchParams],
+	);
 	const minPrice = searchParams.get('minPrice')
 		? Number(searchParams.get('minPrice'))
 		: undefined;
@@ -108,7 +112,7 @@ export function AdsPage() {
 		setDraftCategories(selectedCategoryIds);
 		setDraftProvinces(selectedProvinces);
 		setDraftFeatured(onlyFeatured);
-	}, [searchParams]);
+	}, [q, selectedCategoryIds, selectedProvinces, onlyFeatured]);
 
 	const toggleCategory = (id: string) => {
 		setDraftCategories((prev) =>
@@ -843,10 +847,14 @@ export function BusinessesPage() {
 	const [searchParams, setSearchParams] = useSearchParams();
 	const { data: categories } = useCategories('BUSINESS');
 	const q = searchParams.get('q') ?? '';
-	const selectedCategoryIds =
-		searchParams.get('categoryIds')?.split(',').filter(Boolean) ?? [];
-	const selectedProvinces =
-		searchParams.get('provinces')?.split(',').filter(Boolean) ?? [];
+	const selectedCategoryIds = useMemo(
+		() => searchParams.get('categoryIds')?.split(',').filter(Boolean) ?? [],
+		[searchParams],
+	);
+	const selectedProvinces = useMemo(
+		() => searchParams.get('provinces')?.split(',').filter(Boolean) ?? [],
+		[searchParams],
+	);
 	const sortBy = searchParams.get('sortBy') ?? 'newest';
 	const page = Math.max(1, Number(searchParams.get('page')) || 1);
 	const [filtersOpen, setFiltersOpen] = useState(false);
@@ -861,7 +869,7 @@ export function BusinessesPage() {
 		setDraftQ(q);
 		setDraftCategories(selectedCategoryIds);
 		setDraftProvinces(selectedProvinces);
-	}, [searchParams]);
+	}, [q, selectedCategoryIds, selectedProvinces]);
 
 	const toggleCategory = (id: string) => {
 		setDraftCategories((prev) =>
@@ -1713,8 +1721,10 @@ export function SearchPage() {
 	const type: SearchType | null =
 		typeParam === 'AD' || typeParam === 'BUSINESS' ? typeParam : null;
 	const categoryId = searchParams.get('categoryId') ?? undefined;
-	const selectedProvinces =
-		searchParams.get('provinces')?.split(',').filter(Boolean) ?? [];
+	const selectedProvinces = useMemo(
+		() => searchParams.get('provinces')?.split(',').filter(Boolean) ?? [],
+		[searchParams],
+	);
 	const rawSort = searchParams.get('sortBy');
 	const sortBy: SearchSort =
 		rawSort === 'newest' || rawSort === 'oldest' ? rawSort : 'relevance';
@@ -1736,7 +1746,7 @@ export function SearchPage() {
 		setDraftType(type);
 		setDraftCategoryId(categoryId);
 		setDraftProvinces(selectedProvinces);
-	}, [searchParams]);
+	}, [q, type, categoryId, selectedProvinces]);
 
 	const { data, isFetching } = useGlobalSearch({
 		q,

@@ -13,6 +13,7 @@ import {
 } from './components/layout/AppLayout';
 import { AuthLayout } from './components/layout/AuthLayout';
 import { AreaLayout } from './components/layout/AreaLayout';
+import { Head } from './components/layout/Head';
 import LandingPage from './pages/LandingPage';
 import {
 	SobrePage,
@@ -210,5 +211,15 @@ const router = createBrowserRouter([
 ]);
 
 export default function App() {
-	return <RouterProvider router={router} />;
+	return (
+		<>
+			{/* Componente Head global para metadados SEO base */}
+			<Head
+				title="Caxinda Divulga"
+				description="Caxinda Divulga — a plataforma que leva o seu negócio a outro nível. Divulgue serviços, venda produtos e destaque o seu estabelecimento em Angola."
+				type="website"
+			/>
+			<RouterProvider router={router} />
+		</>
+	);
 }
