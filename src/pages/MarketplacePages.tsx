@@ -43,10 +43,10 @@ import { MobileFilterDrawer } from '../components/ui/FilterDrawer';
 import { Divider } from '../components/ui/Divider';
 import { Skeleton } from '../components/ui/Skeleton';
 import { Lightbox } from '../components/ui/Lightbox';
+import { Carousel } from '../components/ui/Carousel';
 import {
 	ChatSVG,
 	CheckSVG,
-	ClockSVG,
 	GlobeSVG,
 	PhoneSVG,
 	PinSVG,
@@ -418,31 +418,16 @@ function SpecRow({
 	);
 }
 
-function StatCell({ value, label }: { value: string; label: string }) {
-	return (
-		<div className="flex flex-col items-center gap-0.5 px-2 py-3">
-			<span className="font-mono text-base font-bold text-ink">
-				{value}
-			</span>
-			<span className="text-[10px] font-bold uppercase tracking-widest text-ink/40">
-				{label}
-			</span>
-		</div>
-	);
-}
-
 export function AdDetailPage() {
 	const { slug } = useParams();
 	usePageTitle('Produto');
 	const { data: ad, isLoading } = useAdBySlug(slug);
 	const navigate = useNavigate();
-	const { user, isAuthenticated } = useSession();
+	const { isAuthenticated } = useSession();
 	const openConversation = useOpenConversation();
 	const { data: wishlistSaved } = useWishlistCheck(ad?.id);
-	const [activeImg, setActiveImg] = useState<string | null>(null);
 	const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
 	useEffect(() => {
-		setActiveImg(null);
 		setLightboxIndex(null);
 	}, [slug]);
 
@@ -471,7 +456,6 @@ export function AdDetailPage() {
 	const adImages = [ad.image, ...gallery.map((g) => g.url)].filter(
 		(u): u is string => Boolean(u),
 	);
-	const currentImg = activeImg ?? adImages[0] ?? null;
 	const relatedItems = (related.data?.items ?? [])
 		.filter((r) => r.id !== ad.id)
 		.slice(0, 4);
@@ -505,260 +489,147 @@ export function AdDetailPage() {
 				<span className="truncate text-ink/80">{ad.title}</span>
 			</nav>
 
-			<div className="grid gap-6 lg:grid-cols-[auto_minmax(0,1fr)_320px] lg:gap-0">
-				{/* ── Gallery ── */}
-				<div className="flex flex-col gap-3 lg:border-r lg:border-ink/10 lg:pr-6">
-					<div className="relative overflow-hidden rounded-2xl bg-snow-dark">
-						<button
-							type="button"
-							onClick={() => setLightboxIndex(0)}
-							className="block aspect-square w-full cursor-zoom-in overflow-hidden"
-							disabled={adImages.length === 0}
-							aria-label="Ampliar fotografia"
-						>
-							{currentImg ? (
-								<img
-									src={currentImg}
-									alt={ad.title}
-									className="h-full w-full object-cover transition-transform duration-200 hover:scale-105"
-								/>
-							) : (
-								<div className="flex h-full items-center justify-center bg-snow-dark font-display text-5xl font-black text-ink/15">
-									CX
-								</div>
-							)}
-						</button>
-						{ad.status === 'SOLD' ? (
-							<span className="absolute left-3 top-3 -rotate-3 rounded-lg bg-red px-2.5 py-1 font-mono text-[10px] font-bold uppercase tracking-wider text-white shadow">
-								Vendido
-							</span>
-						) : (
-							ad.featured && (
-								<span className="absolute left-3 top-3 -rotate-3 rounded-lg bg-kwanza px-2.5 py-1 font-mono text-[10px] font-bold uppercase tracking-wider text-ink shadow">
-									★ Destaque
-								</span>
-							)
-						)}
-						{adImages.length > 1 && (
-							<span className="absolute bottom-2 right-2 rounded-full bg-ink/70 px-2.5 py-0.5 font-mono text-[10px] font-bold text-white">
-								{adImages.length} fotos
-							</span>
-						)}
-						{isAuthenticated && (
-							<WishlistToggle
-								adId={ad.id}
-								saved={wishlistSaved ?? false}
+			<div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-start">
+				{/* ── Left: gallery + content ── */}
+				<div className="flex min-w-0 flex-col gap-6">
+					<div className="card overflow-hidden p-3">
+						{adImages.length > 0 ? (
+							<Carousel
+								images={adImages}
+								onImageClick={setLightboxIndex}
+								overlay={
+									<>
+										{ad.status === 'SOLD' ? (
+											<span className="absolute left-3 top-3 -rotate-3 rounded-lg bg-red px-2.5 py-1 font-mono text-[10px] font-bold uppercase tracking-wider text-white shadow">
+												Vendido
+											</span>
+										) : (
+											ad.featured && (
+												<span className="absolute left-3 top-3 -rotate-3 rounded-lg bg-kwanza px-2.5 py-1 font-mono text-[10px] font-bold uppercase tracking-wider text-ink shadow">
+													★ Destaque
+												</span>
+											)
+										)}
+										{isAuthenticated && (
+											<WishlistToggle
+												adId={ad.id}
+												saved={wishlistSaved ?? false}
+												variant="icon"
+											/>
+										)}
+									</>
+								}
 							/>
+						) : (
+							<div className="flex aspect-[4/3] w-full items-center justify-center rounded-2xl bg-snow-dark font-display text-5xl font-black text-ink/15">
+								CX
+							</div>
 						)}
 					</div>
-					{adImages.length > 1 && (
-						<div className="flex gap-2 overflow-x-auto sm:flex-col sm:overflow-x-visible">
-							{adImages.map((url, idx) => (
-								<button
-									type="button"
-									key={`${url}-${idx}`}
-									onClick={() => {
-										setActiveImg(url);
-										setLightboxIndex(idx);
-									}}
-									className={`h-16 w-16 shrink-0 overflow-hidden rounded-lg transition sm:h-20 sm:w-20 ${
-										currentImg === url
-											? 'ring-2 ring-ink ring-offset-2 ring-offset-snow'
-											: 'opacity-70 hover:opacity-100'
-									}`}
-								>
-									<img
-										src={url}
-										alt=""
-										className="h-full w-full object-cover"
-									/>
-								</button>
-							))}
-						</div>
-					)}
-				</div>
 
-				{/* ── Info ── */}
-				<div className="flex min-w-0 flex-col gap-5 lg:px-6">
-					<div>
+					<div className="flex flex-col gap-4">
 						<h1 className="text-balance font-display text-2xl font-black leading-tight">
 							{ad.title}
 						</h1>
 						{ad.averageRating !== null && (
 							<a
 								href="#avaliacoes"
-								className="mt-2 flex items-center gap-1.5 text-sm text-ink/60 hover:text-ink"
+								className="flex items-center gap-1.5 text-sm text-ink/60 hover:text-ink"
 							>
 								<Stars value={ad.averageRating} />
-								<span>
-									· {ad.reviewCount} avaliações
-								</span>
+								<span>· {ad.reviewCount} avaliações</span>
 							</a>
 						)}
-					</div>
-
-					<div className="flex flex-wrap gap-1.5">
-						{ad.category?.name && (
-							<Link
-								to={
-									ad.category?.id
-										? `/produtos?categoryIds=${ad.category.id}`
-										: '#'
-								}
-								className="chip"
-							>
-								{ad.category.name}
-							</Link>
-						)}
-						{ad.province && (
-							<Link
-								to={`/produtos?provinces=${ad.province}`}
-								className="chip"
-							>
-								{PROVINCE_LABELS[ad.province] ?? ad.province}
-							</Link>
-						)}
-						<span className="chip">
-							Pub. {timeAgo(ad.createdAt)}
-						</span>
-					</div>
-
-					<div>
-						{ad.price === null ? (
-							<span className="font-mono text-3xl font-black text-ink/50">
-								Sob consulta
-							</span>
-						) : ad.price === 0 ? (
-							<span className="inline-block rounded-lg bg-blue px-3 py-1.5 font-mono text-3xl font-black text-white">
-								Grátis
-							</span>
-						) : (
-							<span className="font-mono text-3xl font-black text-kwanza">
-								{formatKz(ad.price)}
-							</span>
-						)}
-					</div>
-
-					<div className="flex flex-wrap gap-1.5">
-						{ad.status === 'SOLD' && (
-							<span className="tag !border-red/30 !bg-red/10 !px-2.5 !py-0.5 !text-red">
-								Vendido
-							</span>
-						)}
-						{ad.featured && (
-							<span className="tag tag-kwanza !px-2.5 !py-0.5">
-								★ Destaque
-							</span>
-						)}
-					</div>
-				</div>
-
-				{/* ── Buy box ── */}
-				<aside className="lg:sticky lg:top-20 lg:self-start">
-					<div className="flex flex-col gap-4">
-						<div className="card overflow-hidden">
-							<div className="h-1.5 bg-kwanza" />
-							<div className="flex flex-col gap-3 p-5">
-								<div className="flex flex-wrap items-center gap-1.5">
-									{ad.status === 'SOLD' ? (
-										<span className="rounded-full bg-red/10 px-2.5 py-1 font-mono text-[11px] font-bold text-red">
-											Indisponível
-										</span>
-									) : (
-										<span className="rounded-full bg-kwanza/15 px-2.5 py-1 font-mono text-[11px] font-bold text-kwanza">
-											Disponível
-										</span>
-									)}
-									{ad.featured && (
-										<span className="rounded-full bg-kwanza/15 px-2.5 py-1 font-mono text-[11px] font-bold text-kwanza">
-											★ Destaque
-										</span>
-									)}
-								</div>
-								<button
-									className="btn-primary w-full"
-									onClick={contactCaxinda}
-									disabled={openConversation.isPending}
-								>
-									{openConversation.isPending && (
-										<ButtonLoader />
-									)}
-									<ChatSVG width={16} height={16} /> Contactar a
-									Caxinda
-								</button>
-								{isAuthenticated && (
-									<WishlistToggle
-										adId={ad.id}
-										saved={wishlistSaved ?? false}
-									/>
-								)}
-							</div>
-						</div>
-
-						<div className="card p-4">
-							<div className="flex flex-col gap-3">
-								<div className="flex items-center gap-2.5 text-sm text-ink/60">
-									<ChatSVG width={14} height={14} className="shrink-0 text-red" />
-									<span>Apoio humano, sem chatbot</span>
-								</div>
-								<div className="flex items-center gap-2.5 text-sm text-ink/60">
-									<CheckSVG width={14} height={14} className="shrink-0 text-green-600" />
-									<span>Equipa Caxinda a responder</span>
-								</div>
-								<div className="flex items-center gap-2.5 text-sm text-ink/60">
-									<ClockSVG width={14} height={14} className="shrink-0 text-blue" />
-									<span>Resposta rápida garantida</span>
-								</div>
-							</div>
-						</div>
-
-						<div className="card overflow-hidden">
-							<div
-								className="flex items-center gap-3 px-4 py-2.5"
-								style={{
-									background:
-										'linear-gradient(135deg, var(--color-kwanza), var(--color-red))',
-								}}
-							>
-								<div className="flex h-7 w-7 items-center justify-center rounded-md bg-white/20 font-mono text-[10px] font-black text-white">
-									CX
-								</div>
-								<div>
-									<p className="font-mono text-[10px] font-bold uppercase tracking-wider text-white">
-										Gerido pela Caxinda — Loja oficial
-									</p>
-								</div>
-							</div>
-							<div className="p-4">
-								<p className="text-sm leading-relaxed text-ink/60">
-									Produto oficial gerido pela equipa da
-									Caxinda. As tuas mensagens são respondidas
-									pelo apoio da plataforma.
-								</p>
+						<div className="flex flex-wrap gap-1.5">
+							{ad.category?.name && (
 								<Link
-									to="/produtos"
-									className="mt-3 block text-center text-xs font-bold text-red hover:underline"
+									to={
+										ad.category?.id
+											? `/produtos?categoryIds=${ad.category.id}`
+											: '#'
+									}
+									className="chip border-blue/20 bg-blue/5 !text-blue"
 								>
-									Ver mais produtos →
+									{ad.category.name}
 								</Link>
-							</div>
+							)}
+							{ad.province && (
+								<Link
+									to={`/produtos?provinces=${ad.province}`}
+									className="chip"
+								>
+									{PROVINCE_LABELS[ad.province] ??
+										ad.province}
+								</Link>
+							)}
+							<span className="chip">
+								Pub. {timeAgo(ad.createdAt)}
+							</span>
 						</div>
-
-						<div className="card p-4">
-							<ReportForm
-								targetType="AD"
-								targetId={ad.id}
-								targetLabel={ad.title}
-							/>
+						<div>
+							{ad.price === null ? (
+								<span className="font-mono text-3xl font-black text-ink/50">
+									Sob consulta
+								</span>
+							) : ad.price === 0 ? (
+								<span className="inline-block rounded-lg bg-blue px-3 py-1.5 font-mono text-3xl font-black text-white">
+									Grátis
+								</span>
+							) : (
+								<span className="price-tag-lg">
+									{formatKz(ad.price)}
+								</span>
+							)}
 						</div>
 					</div>
-				</aside>
-			</div>
 
-			<div className="mt-10 grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px] lg:gap-0">
-				{/* ── Description + Specs ── */}
-				<div className="flex flex-col gap-6 lg:border-r lg:border-ink/10 lg:pr-6">
-					<section className="card overflow-hidden rounded-2xl bg-snow-dark">
+					<section className="card overflow-hidden">
+						<div className="flex items-center justify-between gap-3 border-b border-ink/10 px-6 py-4">
+							<h2 className="kicker">Características</h2>
+							<span className="font-mono text-[10px] font-bold uppercase tracking-widest text-ink/30">
+								REF {ad.id.slice(0, 8).toUpperCase()}
+							</span>
+						</div>
+						<div className="grid grid-cols-1 divide-y divide-ink/10 sm:grid-cols-2 sm:divide-x sm:divide-y-0">
+							<div className="flex flex-col divide-y divide-ink/10">
+								<SpecRow
+									label="Categoria"
+									value={ad.category?.name ?? 'Geral'}
+									link={
+										ad.category?.id
+											? `/produtos?categoryIds=${ad.category.id}`
+											: undefined
+									}
+								/>
+								<SpecRow
+									label="Publicado"
+									value={timeAgo(ad.createdAt)}
+								/>
+							</div>
+							<div className="flex flex-col divide-y divide-ink/10">
+								<SpecRow
+									label="Província"
+									value={
+										ad.province
+											? (PROVINCE_LABELS[ad.province] ??
+												ad.province)
+											: 'Angola'
+									}
+									link={
+										ad.province
+											? `/produtos?provinces=${ad.province}`
+											: undefined
+									}
+								/>
+								<SpecRow
+									label="Visualizações"
+									value={`${ad.views}`}
+								/>
+							</div>
+						</div>
+					</section>
+
+					<section className="card overflow-hidden">
 						<div className="flex items-center gap-3 px-6 pt-5">
 							<span className="h-1.5 w-14 rounded-full bg-kwanza" />
 							<h2 className="kicker">Descrição</h2>
@@ -767,7 +638,7 @@ export function AdDetailPage() {
 							<p className="whitespace-pre-line text-sm leading-relaxed text-ink/75">
 								{ad.description}
 							</p>
-							<div className="mt-5 flex items-start gap-2.5 rounded-xl border border-ink/10 bg-white px-4 py-3">
+							<div className="mt-5 flex items-start gap-2.5 rounded-xl border border-ink/10 bg-snow px-4 py-3">
 								<ChatSVG
 									width={15}
 									height={15}
@@ -783,49 +654,95 @@ export function AdDetailPage() {
 						</div>
 					</section>
 
-					<section className="card overflow-hidden">
-						<div className="border-b border-ink/10 bg-snow/60 px-6 py-4">
-							<h2 className="kicker">
-								Características principais
-							</h2>
-						</div>
-						<dl className="divide-y divide-ink/10">
-							<div className="grid grid-cols-2 divide-x divide-ink/10">
-								<SpecRow
-									label="Categoria"
-									value={ad.category?.name ?? 'Geral'}
-									link={
-										ad.category?.id
-											? `/produtos?categoryIds=${ad.category.id}`
-											: undefined
-									}
-								/>
-								<SpecRow
-									label="Província"
-									value={
-										ad.province
-											? (PROVINCE_LABELS[ad.province] ?? ad.province)
-											: 'Angola'
-									}
-									link={
-										ad.province
-											? `/produtos?provinces=${ad.province}`
-											: undefined
-									}
-								/>
-							</div>
-							<div className="grid grid-cols-2 divide-x divide-ink/10">
-								<SpecRow label="Publicado" value={timeAgo(ad.createdAt)} />
-								<SpecRow label="Visualizações" value={`${ad.views}`} />
-							</div>
-						</dl>
-					</section>
+					<div id="avaliacoes">
+						<ReviewSection target={{ adId: ad.id }} />
+					</div>
 				</div>
 
-				{/* ── Reviews ── */}
-				<div className="lg:px-6" id="avaliacoes">
-					<ReviewSection target={{ adId: ad.id }} />
-				</div>
+				{/* ── Right: buy box ── */}
+				<aside className="lg:sticky lg:top-20 lg:self-start">
+					<div className="card flex flex-col gap-4 p-5">
+						<div className="flex flex-wrap items-center gap-1.5">
+							{ad.status === 'SOLD' ? (
+								<span className="rounded-full bg-red/10 px-2.5 py-1 font-mono text-[11px] font-bold text-red">
+									✕ Indisponível
+								</span>
+							) : (
+								<span className="rounded-full bg-green-600/10 px-2.5 py-1 font-mono text-[11px] font-bold text-green-600">
+									● Disponível
+								</span>
+							)}
+							{ad.featured && (
+								<span className="rounded-full bg-kwanza/15 px-2.5 py-1 font-mono text-[11px] font-bold text-kwanza">
+									★ Destaque
+								</span>
+							)}
+						</div>
+
+						<div>
+							<p className="text-xs font-bold uppercase tracking-wide text-ink/40">
+								Preço
+							</p>
+							{ad.price === null ? (
+								<p className="mt-0.5 font-mono text-2xl font-black text-ink/50">
+									Sob consulta
+								</p>
+							) : ad.price === 0 ? (
+								<p className="mt-0.5 font-mono text-2xl font-black text-blue">
+									Grátis
+								</p>
+							) : (
+								<p className="mt-0.5 font-mono text-2xl font-black text-kwanza">
+									{formatKz(ad.price)}
+								</p>
+							)}
+						</div>
+
+						<button
+							className="btn-primary w-full !py-3 !text-base"
+							onClick={contactCaxinda}
+							disabled={openConversation.isPending}
+						>
+							{openConversation.isPending && <ButtonLoader />}
+							<ChatSVG width={18} height={18} /> Contactar a
+							Caxinda
+						</button>
+						{isAuthenticated && (
+							<WishlistToggle
+								adId={ad.id}
+								saved={wishlistSaved ?? false}
+							/>
+						)}
+
+						<div className="border-t border-ink/10 pt-4">
+							<div className="flex items-center gap-2.5">
+								<span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-ink font-mono text-[10px] font-black text-kwanza">
+									CX
+								</span>
+								<div className="min-w-0">
+									<p className="text-xs font-bold text-ink">
+										Gerido pela Caxinda
+									</p>
+									<p className="text-[11px] text-ink/50">
+										Apoio humano no chat
+									</p>
+								</div>
+							</div>
+							<Link
+								to="/produtos"
+								className="mt-2 block text-center text-xs font-bold text-red hover:underline"
+							>
+								Ver mais produtos →
+							</Link>
+						</div>
+
+						<ReportForm
+							targetType="AD"
+							targetId={ad.id}
+							targetLabel={ad.title}
+						/>
+					</div>
+				</aside>
 			</div>
 
 			{relatedItems.length > 0 && (
@@ -865,7 +782,15 @@ export function AdDetailPage() {
 
 // ================= Favorito =================
 
-function WishlistToggle({ adId, saved }: { adId: string; saved: boolean }) {
+function WishlistToggle({
+	adId,
+	saved,
+	variant = 'full',
+}: {
+	adId: string;
+	saved: boolean;
+	variant?: 'full' | 'icon';
+}) {
 	const add = useAddToWishlist();
 	const remove = useRemoveFromWishlist();
 	const [isSaved, setIsSaved] = useState(saved);
@@ -886,6 +811,23 @@ function WishlistToggle({ adId, saved }: { adId: string; saved: boolean }) {
 			},
 		});
 	};
+
+	if (variant === 'icon') {
+		return (
+			<button
+				type="button"
+				aria-label="Guardar nos favoritos"
+				className={`absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full text-sm shadow-md transition active:scale-95 ${
+					isSaved
+						? 'bg-blue text-white'
+						: 'bg-white/90 text-ink hover:bg-white'
+				}`}
+				onClick={toggle}
+			>
+				{isSaved ? '★' : '☆'}
+			</button>
+		);
+	}
 
 	return (
 		<button
@@ -1286,193 +1228,142 @@ export function BusinessDetailPage() {
 				<span className="truncate text-ink/80">{business.name}</span>
 			</nav>
 
-			<div className="overflow-hidden rounded-3xl border border-ink/10 bg-white">
-				<div className="relative">
-					<button
-						type="button"
-						onClick={() => setLightboxIndex(0)}
-						className="relative block h-64 w-full overflow-hidden bg-blue lg:h-80"
-						disabled={businessImages.length === 0}
-						aria-label="Ampliar fotografia de capa"
-					>
-						{business.coverUrl ? (
-							<img
-								src={business.coverUrl}
-								alt={business.name}
-								className="h-full w-full object-cover"
-							/>
-						) : (
-							<div
-								className="flex h-full w-full items-center justify-center bg-blue"
-								style={{
-									backgroundImage:
-										'repeating-linear-gradient(45deg, rgba(255,255,255,0.06) 0 16px, transparent 16px 32px)',
-								}}
-							>
-								<span className="rotate-3 rounded-2xl bg-kwanza px-6 py-3 font-display text-2xl font-black text-ink shadow-lg">
-									CX
+			<div className="card overflow-hidden p-3">
+				{businessImages.length > 0 ? (
+					<Carousel
+						images={businessImages}
+						onImageClick={setLightboxIndex}
+						overlay={
+							business.isVerified ? (
+								<span className="absolute left-3 top-3 -rotate-3 rounded-lg bg-kwanza px-2.5 py-1 font-mono text-[10px] font-bold uppercase tracking-wider text-ink shadow">
+									<CheckSVG width={12} height={12} />{' '}
+									Verificada
 								</span>
-							</div>
-						)}
-						{businessImages.length > 1 && (
-							<span className="absolute bottom-3 right-3 rounded-full bg-ink/70 px-2.5 py-1 font-mono text-[10px] font-bold text-white backdrop-blur">
-								{businessImages.length} fotos
-							</span>
-						)}
-					</button>
-					{business.isVerified && (
-						<span className="absolute right-4 top-4 inline-flex -rotate-3 items-center gap-1 rounded-xl bg-kwanza px-3 py-1.5 font-mono text-[11px] font-bold uppercase tracking-wider text-ink shadow-lg">
-							<CheckSVG width={12} height={12} /> Verificada
+							) : (
+								<span className="absolute left-3 top-3 rounded-full bg-ink/70 px-2.5 py-1 font-mono text-[10px] font-bold text-white backdrop-blur">
+									{businessImages.length} fotos
+								</span>
+							)
+						}
+					/>
+				) : (
+					<div
+						className="flex h-64 w-full items-center justify-center rounded-2xl bg-blue lg:h-80"
+						style={{
+							backgroundImage:
+								'repeating-linear-gradient(45deg, rgba(255,255,255,0.06) 0 16px, transparent 16px 32px)',
+						}}
+					>
+						<span className="rotate-3 rounded-2xl bg-kwanza px-6 py-3 font-display text-2xl font-black text-ink shadow-lg">
+							CX
+						</span>
+					</div>
+				)}
+			</div>
+
+			<div className="mt-5 rounded-2xl bg-snow px-6 py-5">
+				<div className="flex flex-wrap items-center gap-4">
+					{business.logoUrl ? (
+						<img
+							src={business.logoUrl}
+							alt={business.name}
+							className="h-14 w-14 shrink-0 rounded-2xl border-2 border-white bg-white object-cover shadow-sm"
+						/>
+					) : (
+						<span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-ink font-display text-sm font-black text-white shadow-sm">
+							{business.name.slice(0, 2).toUpperCase()}
 						</span>
 					)}
-				</div>
-
-				<div
-					className="flex items-center gap-3 px-6 py-3"
-					style={{
-						background:
-							'linear-gradient(135deg, var(--color-kwanza), var(--color-red))',
-					}}
-				>
-					<div className="flex h-7 w-7 items-center justify-center rounded-md bg-white/20 font-mono text-[10px] font-black text-white">
-						CX
-					</div>
-					<p className="font-mono text-[10px] font-bold uppercase tracking-wider text-white">
-						Loja oficial — Caxinda Divulga
-					</p>
-				</div>
-
-				<div className="border-b border-ink/10 bg-snow px-6 py-5">
-					<div className="flex flex-wrap items-center gap-4">
-						{business.logoUrl ? (
-							<img
-								src={business.logoUrl}
-								alt={business.name}
-								className="h-20 w-20 shrink-0 rounded-2xl border-4 border-white bg-white object-cover shadow-sm"
-							/>
-						) : (
-							<span className="flex h-20 w-20 shrink-0 items-center justify-center rounded-2xl bg-ink font-display text-xl font-black text-white shadow-sm">
-								{business.name.slice(0, 2).toUpperCase()}
+					<div className="min-w-0 flex-1">
+						<h1 className="text-balance font-display text-xl font-black leading-tight">
+							{business.name}
+						</h1>
+						<div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+							<span className="chip border-blue/20 bg-blue/5 !text-blue">
+								{business.category.name}
 							</span>
-						)}
-						<div className="min-w-0">
-							<h1 className="text-balance font-display text-xl font-black leading-tight">
-								{business.name}
-							</h1>
-							<div className="mt-1.5 flex flex-wrap items-center gap-1.5">
-								<span className="chip border-blue/20 bg-blue/5 !text-blue">
-									{business.category.name}
-								</span>
-								<span className="chip">
-									{PROVINCE_LABELS[business.province] ??
-										business.province}
-								</span>
-							</div>
+							<span className="chip">
+								{PROVINCE_LABELS[business.province] ??
+									business.province}
+							</span>
 						</div>
 					</div>
-					<div className="mt-5 grid grid-cols-3 divide-x divide-ink/10 overflow-hidden rounded-2xl border border-ink/10 bg-white">
-						<StatCell
-							value={
-								business.averageRating !== null
+					<div className="flex items-center gap-4 text-center">
+						<div>
+							<span className="block font-mono text-sm font-bold text-ink">
+								{business.averageRating !== null
 									? business.averageRating
 											.toFixed(1)
 											.replace('.', ',')
-									: '—'
-							}
-							label="Nota"
-						/>
-						<StatCell
-							value={String(business.reviewCount)}
-							label="Avaliações"
-						/>
-						<StatCell
-							value={String(business.viewCount)}
-							label="Visualizações"
-						/>
+									: '—'}
+							</span>
+							<span className="text-[10px] font-bold uppercase tracking-widest text-ink/40">
+								Nota
+							</span>
+						</div>
+						<div className="h-6 w-px bg-ink/10" />
+						<div>
+							<span className="block font-mono text-sm font-bold text-ink">
+								{business.reviewCount}
+							</span>
+							<span className="text-[10px] font-bold uppercase tracking-widest text-ink/40">
+								Avaliações
+							</span>
+						</div>
+						<div className="h-6 w-px bg-ink/10" />
+						<div>
+							<span className="block font-mono text-sm font-bold text-ink">
+								{business.viewCount}
+							</span>
+							<span className="text-[10px] font-bold uppercase tracking-widest text-ink/40">
+								Visitas
+							</span>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<div className="mt-6 grid gap-8 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start">
+				{/* ── Left: Sobre + Avaliações ── */}
+				<div className="flex min-w-0 flex-col gap-6">
+					<section className="card overflow-hidden">
+						<div className="flex items-center gap-3 px-6 pt-5">
+							<span className="h-1.5 w-14 rounded-full bg-kwanza" />
+							<h2 className="kicker">Sobre</h2>
+						</div>
+						<div className="flex flex-col gap-4 p-6 pt-3">
+							<p className="whitespace-pre-line text-sm leading-relaxed text-ink/75">
+								{business.description}
+							</p>
+							{business.address && (
+								<p className="flex items-center gap-1.5 text-sm text-ink/60">
+									<PinSVG width={15} height={15} />
+									{business.address}
+								</p>
+							)}
+							<div className="flex items-center gap-1.5 text-sm text-ink/55">
+								<Stars value={business.averageRating} />
+								<span>· {business.reviewCount} avaliações</span>
+							</div>
+						</div>
+					</section>
+
+					<div id="avaliacoes">
+						<ReviewSection target={{ businessId: business.id }} />
 					</div>
 				</div>
 
-				<div className="grid gap-0 p-6 lg:grid-cols-[minmax(0,1fr)_320px]">
-					<div className="flex min-w-0 flex-col gap-6 lg:border-r lg:border-ink/10 lg:pr-6">
-						<section className="card overflow-hidden rounded-2xl bg-snow-dark">
-							<div className="flex items-center gap-3 px-6 pt-5">
-								<span className="h-1.5 w-14 rounded-full bg-kwanza" />
-								<h2 className="kicker">Sobre</h2>
-							</div>
-							<div className="flex flex-col gap-4 p-6 pt-3">
-								<p className="whitespace-pre-line text-sm leading-relaxed text-ink/75">
-									{business.description}
-								</p>
-								{business.address && (
-									<p className="flex items-center gap-1.5 text-sm text-ink/60">
-										<PinSVG width={15} height={15} />
-										{business.address}
-									</p>
-								)}
-								<div className="flex items-center gap-1.5 text-sm text-ink/55">
-									<Stars value={business.averageRating} />
-									<span>
-										· {business.reviewCount} avaliações
-									</span>
-								</div>
-							</div>
-						</section>
-
-						{business.gallery.length > 0 && (
-							<section className="card overflow-hidden">
-								<div className="flex items-center justify-between gap-3 border-b border-ink/10 bg-snow/60 px-6 py-4">
-									<h2 className="kicker">Fotografias</h2>
-									<span className="font-mono text-[10px] font-bold uppercase tracking-widest text-ink/30">
-										{business.gallery.length} itens
-									</span>
-								</div>
-								<div className="grid grid-cols-2 gap-2.5 p-5 md:grid-cols-3">
-									{business.gallery.map((g, idx) => (
-										<button
-											type="button"
-											key={`${g.cloudinaryId}-${idx}`}
-											onClick={() =>
-												setLightboxIndex(
-													business.coverUrl
-														? idx + 1
-														: idx,
-												)
-											}
-											className="group relative aspect-square w-full overflow-hidden rounded-xl"
-										>
-											<img
-												src={g.url}
-												alt={`${business.name} ${idx + 1}`}
-												className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
-											/>
-											<span className="absolute bottom-1 left-1 rounded bg-ink/70 px-1 font-mono text-[9px] font-bold text-white">
-												{String(idx + 1).padStart(
-													2,
-													'0',
-												)}
-											</span>
-										</button>
-									))}
-								</div>
-							</section>
-						)}
-					</div>
-
-					<aside className="flex flex-col gap-3 lg:sticky lg:top-20 lg:pl-6 lg:self-start">
+				{/* ── Right: contactos + ações ── */}
+				<aside className="lg:sticky lg:top-20 lg:self-start">
+					<div className="flex flex-col gap-3">
 						<div className="card overflow-hidden">
-							<div
-								className="flex items-center gap-3 px-4 py-2.5"
-								style={{
-									background:
-										'linear-gradient(135deg, var(--color-kwanza), var(--color-red))',
-								}}
-							>
+							<div className="flex items-center gap-2 border-b border-ink/10 px-4 py-3">
 								<PhoneSVG
 									width={14}
 									height={14}
-									className="text-white"
+									className="shrink-0 text-ink/50"
 								/>
-								<h3 className="font-mono text-[10px] font-bold uppercase tracking-wider text-white">
+								<h3 className="font-mono text-[10px] font-bold uppercase tracking-wider text-ink/60">
 									Contactos · {contactCount} vias
 								</h3>
 							</div>
@@ -1538,9 +1429,7 @@ export function BusinessDetailPage() {
 								onClick={messageBusiness}
 								disabled={openConversation.isPending}
 							>
-								{openConversation.isPending && (
-									<ButtonLoader />
-								)}
+								{openConversation.isPending && <ButtonLoader />}
 								<ChatSVG width={16} height={16} /> Mensagem →
 							</button>
 						)}
@@ -1555,17 +1444,13 @@ export function BusinessDetailPage() {
 
 						<div className="card p-4">
 							<ReportForm
-								targetType="BUSINESS"
-								targetId={business.id}
+								targetType="USER"
+								targetId={business.owner.id}
 								targetLabel={business.name}
 							/>
 						</div>
-					</aside>
-				</div>
-			</div>
-
-			<div className="mt-8">
-				<ReviewSection target={{ businessId: business.id }} />
+					</div>
+				</aside>
 			</div>
 
 			<Lightbox

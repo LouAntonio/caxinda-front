@@ -9,27 +9,25 @@ export function BusinessDetailSkeleton() {
 				<Skeleton className="h-4 w-48 rounded" />
 			</div>
 
-			<div className="overflow-hidden rounded-3xl border border-ink/10 bg-white">
-				<div className="relative">
-					<Skeleton className="h-64 w-full lg:h-80" />
-					<Skeleton className="absolute right-4 top-4 h-8 w-28 rounded-xl bg-kwanza/40" />
-				</div>
+			<div className="card overflow-hidden p-3">
+				<Skeleton className="aspect-[4/3] w-full rounded-xl" />
+			</div>
 
-				<Skeleton className="h-9 w-full bg-kwanza/25" />
-
-				<div className="border-b border-ink/10 bg-snow px-6 py-5">
-					<div className="flex items-center gap-4">
-						<Skeleton className="h-20 w-20 rounded-2xl" />
-						<div className="space-y-2 py-1">
-							<Skeleton className="h-5 w-48 rounded" />
-							<Skeleton className="h-3 w-32 rounded" />
+			<div className="mt-5 rounded-2xl bg-snow px-6 py-5">
+				<div className="flex flex-wrap items-center gap-4">
+					<Skeleton className="h-14 w-14 rounded-2xl" />
+					<div className="min-w-0 flex-1 space-y-2">
+						<Skeleton className="h-6 w-48 rounded" />
+						<div className="flex gap-1.5">
+							<Skeleton className="h-5 w-20 rounded-full" />
+							<Skeleton className="h-5 w-16 rounded-full" />
 						</div>
 					</div>
-					<div className="mt-5 grid grid-cols-3 divide-x divide-ink/10 overflow-hidden rounded-2xl border border-ink/10 bg-white">
+					<div className="flex items-center gap-4">
 						{Array.from({ length: 3 }).map((_, i) => (
 							<div
 								key={i}
-								className="flex flex-col items-center gap-1 px-2 py-3"
+								className="flex flex-col items-center gap-1"
 							>
 								<Skeleton className="h-4 w-10 rounded" />
 								<Skeleton className="h-2.5 w-14 rounded" />
@@ -37,39 +35,37 @@ export function BusinessDetailSkeleton() {
 						))}
 					</div>
 				</div>
+			</div>
 
-				<div className="grid gap-0 p-6 lg:grid-cols-[minmax(0,1fr)_320px]">
-					<div className="flex flex-col gap-6 lg:border-r lg:border-ink/10 lg:pr-6">
-						<div className="rounded-2xl border border-ink/10 bg-snow-dark p-6">
-							<div className="mb-3 flex items-center gap-3">
-								<Skeleton className="h-1.5 w-14 rounded-full bg-kwanza/40" />
-								<Skeleton className="h-4 w-20 rounded" />
-							</div>
-							<div className="space-y-2">
-								<SkeletonText />
-								<SkeletonText />
-								<SkeletonText width="w-2/3" />
-							</div>
+			<div className="mt-6 grid gap-8 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start">
+				<div className="flex min-w-0 flex-col gap-6">
+					<div className="card p-5">
+						<div className="mb-3 flex items-center gap-3">
+							<Skeleton className="h-1.5 w-14 rounded-full bg-kwanza/40" />
+							<Skeleton className="h-4 w-20 rounded" />
 						</div>
-						<div className="overflow-hidden rounded-2xl border border-ink/10 bg-white">
-							<div className="flex items-center justify-between gap-3 border-b border-ink/10 bg-snow/60 px-6 py-4">
-								<Skeleton className="h-4 w-28 rounded" />
-								<Skeleton className="h-3 w-12 rounded" />
-							</div>
-							<div className="grid grid-cols-3 gap-2 p-5">
-								{Array.from({ length: 3 }).map((_, i) => (
-									<Skeleton
-										key={i}
-										className="aspect-square w-full rounded-xl"
-									/>
-								))}
-							</div>
+						<div className="space-y-2">
+							<SkeletonText />
+							<SkeletonText />
+							<SkeletonText width="w-2/3" />
 						</div>
 					</div>
+					<div className="card p-5">
+						<Skeleton className="mb-4 h-4 w-24 rounded" />
+						<div className="space-y-3">
+							<SkeletonText />
+							<SkeletonText width="w-3/4" />
+						</div>
+					</div>
+				</div>
 
-					<aside className="flex flex-col gap-3 lg:pl-6">
-						<div className="overflow-hidden rounded-2xl border border-ink/10 bg-white">
-							<div className="h-9 w-full bg-kwanza/25" />
+				<aside className="lg:sticky lg:top-20 lg:self-start">
+					<div className="flex flex-col gap-3">
+						<div className="card overflow-hidden">
+							<div className="flex items-center gap-2 border-b border-ink/10 px-4 py-3">
+								<Skeleton className="h-4 w-4 rounded" />
+								<Skeleton className="h-3 w-32 rounded" />
+							</div>
 							<div className="flex flex-col gap-2 p-4">
 								{Array.from({ length: 3 }).map((_, i) => (
 									<SkeletonButton
@@ -81,8 +77,8 @@ export function BusinessDetailSkeleton() {
 						</div>
 						<SkeletonButton className="w-full" />
 						<Skeleton className="h-24 w-full rounded-2xl" />
-					</aside>
-				</div>
+					</div>
+				</aside>
 			</div>
 		</div>
 	);

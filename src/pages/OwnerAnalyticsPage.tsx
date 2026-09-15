@@ -1,12 +1,21 @@
 import { usePageTitle } from '../hooks/usePageTitle';
 import { useParams, Link } from 'react-router-dom';
-import { useAd, useBusiness, useAdAnalytics, useBusinessAnalytics } from '../hooks/queries';
+import {
+	useAd,
+	useBusiness,
+	useAdAnalytics,
+	useBusinessAnalytics,
+} from '../hooks/queries';
 import { useSession } from '../hooks/useSession';
 import { MiniChart } from '../components/ui/MiniChart';
 import { ButtonLoader } from '../components/ui/Spinner';
 import { EmptyState } from '../components/ui/EmptyState';
 import { ReviewSection } from './MarketplacePages';
-import type { AdAnalytics, BusinessAnalytics, ContactChannel } from '../types/api';
+import type {
+	AdAnalytics,
+	BusinessAnalytics,
+	ContactChannel,
+} from '../types/api';
 
 function ItemAnalyticsPanel({
 	title,
@@ -128,7 +137,9 @@ export function OwnerAnalyticsPage() {
 	const isBusiness = type === 'empresa';
 
 	const { data: ad, isLoading: adLoading } = useAd(isAd ? id : undefined);
-	const { data: business, isLoading: businessLoading } = useBusiness(isBusiness ? id : undefined);
+	const { data: business, isLoading: businessLoading } = useBusiness(
+		isBusiness ? id : undefined,
+	);
 
 	const isLoading = isAd ? adLoading : businessLoading;
 	const name = isAd ? ad?.title : business?.name;
@@ -153,7 +164,9 @@ export function OwnerAnalyticsPage() {
 				<div className="card p-6">
 					<div className="flex items-center gap-3">
 						<ButtonLoader />
-						<p className="text-sm text-ink/50">A carregar estatísticas…</p>
+						<p className="text-sm text-ink/50">
+							A carregar estatísticas…
+						</p>
 					</div>
 				</div>
 			</div>
@@ -191,7 +204,11 @@ export function OwnerAnalyticsPage() {
 		<div className="mx-auto max-w-3xl px-4 py-10">
 			<nav className="mb-5 flex flex-wrap items-center gap-1.5 text-sm text-ink/50">
 				<Link
-					to={isAd ? `/produtos/${ad?.slug}` : `/empresas/${business?.slug}`}
+					to={
+						isAd
+							? `/produtos/${ad?.slug}`
+							: `/empresas/${business?.slug}`
+					}
 					className="font-bold hover:text-red"
 				>
 					{isAd ? 'Produto' : 'Empresa'}
@@ -209,7 +226,9 @@ export function OwnerAnalyticsPage() {
 			</h1>
 
 			<ItemAnalyticsPanel
-				title={isAd ? 'Estatísticas do produto' : 'Estatísticas da empresa'}
+				title={
+					isAd ? 'Estatísticas do produto' : 'Estatísticas da empresa'
+				}
 				data={isAd ? adAnalytics : businessAnalytics}
 				isLoading={isAd ? adAnalyticsLoading : businessAnalyticsLoading}
 			/>
@@ -217,9 +236,7 @@ export function OwnerAnalyticsPage() {
 			<div className="mt-8">
 				<ReviewSection
 					target={
-						isAd
-							? { adId: ad?.id }
-							: { businessId: business?.id }
+						isAd ? { adId: ad?.id } : { businessId: business?.id }
 					}
 				/>
 			</div>

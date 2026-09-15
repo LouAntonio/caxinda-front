@@ -110,6 +110,10 @@
 		background-clip: content-box;
 	}
 
+	.carousel-arrow {
+		@apply absolute top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-sm text-ink shadow-md transition hover:bg-white active:scale-95;
+	}
+
 	.skeleton {
 		background-image: linear-gradient(
 			100deg,
