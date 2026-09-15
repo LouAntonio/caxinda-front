@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { usePageTitle } from '../hooks/usePageTitle';
 import { useScrollSpy } from '../hooks/useScrollSpy';
@@ -129,17 +130,28 @@ function CheckList({ items }: { items: string[] }) {
 
 export function SobrePage() {
 	usePageTitle('Sobre');
-	const facts = [
-		{ n: '18', l: 'províncias servidas' },
-		{ n: '0 kz', l: 'para começar a vender' },
-		{ n: '1', l: 'dia útil para responder' },
+	const stats = [
+		{ n: '18', l: 'províncias em que trabalhamos' },
+		{ n: '0 kz', l: 'é quanto custa começar a vender' },
+		{ n: '1', l: 'dia útil para respondermos a ti' },
 	];
-	const capabilities = [
-		'Anúncios de produtos e serviços em todas as províncias.',
-		'Páginas de empresas com contactos, fotos e avaliações.',
-		'Planos de destaque para quem quer vender mais.',
-		'Mensagens diretas entre compradores e vendedores.',
-		'Verificação de identidade e de empresas de confiança.',
+	const values = [
+		{
+			title: 'Feito em Angola, para Angola.',
+			body: 'Sem traduções de outras plataformas: a lógica, os exemplos e os preços são nossos.',
+		},
+		{
+			title: 'Tudo em kwanza.',
+			body: 'Preços claros, planos simples e sem taxas escondidas — do primeiro anúncio ao plano de destaque.',
+		},
+		{
+			title: 'Uma vitrine para todos.',
+			body: 'Do vendedor de rua ao escritório de Luanda. Quem cria a empresa é dono da própria página.',
+		},
+		{
+			title: 'Suporte com pessoa.',
+			body: 'Escreves e respondemos em até 1 dia útil. A sério.',
+		},
 	];
 	return (
 		<>
@@ -166,63 +178,101 @@ export function SobrePage() {
 				</section>
 			</div>
 
-			<div className="mx-auto max-w-6xl px-4 py-12">
-				<div className="grid gap-4 sm:grid-cols-3">
-					{facts.map((f) => (
-						<div
-							key={f.l}
-							className="rounded-2xl border border-ink/10 bg-white p-6"
-						>
-							<p className="font-mono text-3xl font-bold text-red">
-								{f.n}
-							</p>
-							<p className="mt-1 text-sm text-ink/60">{f.l}</p>
-						</div>
-					))}
+			<div className="mx-auto max-w-6xl px-4 py-14 md:py-20">
+				<div className="grid gap-8 lg:grid-cols-2 lg:gap-16">
+					<div>
+						<span className="kicker text-kwanza">O porquê</span>
+						<p className="mt-6 font-display text-3xl font-black leading-[1.1] tracking-tight text-ink md:text-4xl xl:text-5xl">
+							A maioria dos negócios de Angola vive do boca a
+							boca. Nós demos-lhes uma vitrine.
+						</p>
+					</div>
+					<div className="flex flex-col justify-center gap-6">
+						<p className="text-lg leading-relaxed text-ink/75">
+							Hoje, quem vende publica em segundos. Quem anda à
+							procura encontra por categoria e província, com
+							preços em kwanza e contacto direto com o vendedor —
+							sem intermediários e sem jargão.
+						</p>
+						<p className="text-lg leading-relaxed text-ink/75">
+							Começámos com uma ideia simples: se o boca a boca
+							funciona, na internet funciona melhor. Foi assim que
+							a Caxinda Divulga nasceu — feita para o mercado
+							local, do barraco de jeito ao escritório de Luanda.
+						</p>
+					</div>
 				</div>
 
-				<div className="mt-12 grid gap-10 lg:grid-cols-[1.15fr_1fr]">
-					<div className="space-y-6 text-ink/80">
-						<p>
-							Somos uma plataforma angolana de divulgação. Quem
-							vende, publica anúncios em segundos. Quem anda à
-							procura, encontra produtos, serviços e empresas
-							organizados por categoria e província.
+				<div className="mt-14 overflow-hidden rounded-3xl border border-ink/10 bg-white">
+					<div className="grid divide-y divide-ink/10 sm:grid-cols-3 sm:divide-x sm:divide-y-0">
+						{stats.map((s) => (
+							<div key={s.l} className="p-8">
+								<p className="font-display text-4xl font-black text-red md:text-5xl">
+									{s.n}
+								</p>
+								<p className="mt-2 text-sm text-ink/55">
+									{s.l}
+								</p>
+							</div>
+						))}
+					</div>
+				</div>
+
+				<div className="mt-14 grid gap-8 lg:grid-cols-[1fr_1.5fr] lg:gap-16">
+					<div>
+						<span className="mb-3 block h-1 w-10 rounded-full bg-kwanza" />
+						<h2 className="font-display text-2xl font-black text-ink md:text-3xl">
+							Como trabalhamos
+						</h2>
+						<p className="mt-3 text-sm text-ink/55">
+							Quatro princípios que não negociamos.
 						</p>
-						<p>
-							Tudo começou com uma ideia simples: a maioria dos
-							pequenos negócios de Angola ainda anuncia de boca a
-							boca e pelo telemóvel. Falta-lhes um sítio onde os
-							clientes os encontrem. A Caxinda Divulga é esse
-							sítio — feito em Angola, pensado para o mercado
-							local e com preços em kwanza.
-						</p>
+					</div>
+					<div className="grid gap-4 sm:grid-cols-2">
+						{values.map((v) => (
+							<div
+								key={v.title}
+								className="rounded-2xl border border-ink/10 bg-white p-6"
+							>
+								<p className="font-display text-base font-black text-ink">
+									{v.title}
+								</p>
+								<p className="mt-2 text-sm leading-relaxed text-ink/65">
+									{v.body}
+								</p>
+							</div>
+						))}
+					</div>
+				</div>
+
+				<div className="relative mt-14 overflow-hidden rounded-3xl bg-kwanza p-8 md:p-12">
+					<div className="pointer-events-none absolute -right-16 -top-16 h-40 w-40 rotate-12 rounded-3xl bg-ink/10" />
+					<div className="relative z-10 flex flex-col items-start gap-6 md:flex-row md:items-center md:justify-between">
 						<div>
-							<H2>A nossa missão</H2>
-							<p className="mt-2">
-								Dar a qualquer angolano — do vendedor de rua à
-								empresa de serviços — as ferramentas para ser
-								encontrado, comunicar com clientes e crescer.
-								Sem jargão, sem custos escondidos, sem portas
-								fechadas.
+							<span className="kicker text-ink/60">
+								Começa hoje
+							</span>
+							<h3 className="mt-3 font-display text-2xl font-black leading-tight text-ink md:text-3xl">
+								Publica o teu primeiro produto esta semana.
+							</h3>
+							<p className="mt-2 max-w-xl text-sm leading-relaxed text-ink/65">
+								Conta grátis, sem cartão e sem letras pequenas.
+								Se precisares de ajuda, falamos contigo.
 							</p>
 						</div>
-					</div>
-
-					<div className="rounded-2xl border border-ink/10 bg-white p-6 self-start">
-						<p className="mb-4 font-mono text-xs font-bold uppercase tracking-widest text-ink/40">
-							O que fazemos
-						</p>
-						<div className="flex flex-col gap-3">
-							{capabilities.map((c) => (
-								<div
-									key={c}
-									className="flex items-start gap-2 rounded-xl bg-snow p-3 text-sm"
-								>
-									<span className="text-kwanza">✔</span>
-									<span>{c}</span>
-								</div>
-							))}
+						<div className="flex flex-wrap gap-3">
+							<Link
+								to="/auth/registar"
+								className="inline-flex items-center gap-2 rounded-xl bg-ink px-4 py-2.5 text-sm font-bold text-white transition hover:bg-ink-soft"
+							>
+								Criar conta grátis
+							</Link>
+							<Link
+								to="/produtos"
+								className="inline-flex items-center gap-2 rounded-xl border-2 border-ink/25 px-4 py-2.5 text-sm font-bold text-ink transition hover:bg-ink/5"
+							>
+								Ver produtos
+							</Link>
 						</div>
 					</div>
 				</div>
@@ -469,21 +519,25 @@ export function ContactosPage() {
 			label: 'Geral',
 			value: 'geral@caxindadivulga.ao',
 			href: 'mailto:geral@caxindadivulga.ao',
+			Icon: EnvelopeSVG,
 		},
 		{
 			label: 'Suporte de contas',
 			value: 'suporte@caxindadivulga.ao',
 			href: 'mailto:suporte@caxindadivulga.ao',
+			Icon: EnvelopeSVG,
 		},
 		{
 			label: 'Parcerias',
 			value: 'parcerias@caxindadivulga.ao',
 			href: 'mailto:parcerias@caxindadivulga.ao',
+			Icon: EnvelopeSVG,
 		},
 		{
 			label: 'Telefone / WhatsApp',
 			value: '+244 923 000 000',
 			href: 'https://wa.me/244923000000',
+			Icon: WhatsAppSVG,
 		},
 	];
 
@@ -537,11 +591,13 @@ export function ContactosPage() {
 						onSubmit={submit}
 						className="rounded-2xl border border-ink/10 bg-white p-6 md:p-8"
 					>
+						<span className="mb-3 block h-1 w-10 rounded-full bg-kwanza" />
 						<h2 className="font-display text-lg font-black">
 							Envia-nos uma mensagem
 						</h2>
-						<p className="mt-1 text-sm text-ink/60">
-							Preenche o formulário e entraremos em contacto.
+						<p className="mt-1 text-sm text-ink/55">
+							Preenche o formulário e entraremos em contacto em
+							até 1 dia útil.
 						</p>
 						<div className="mt-6 grid gap-4 sm:grid-cols-2">
 							<div>
@@ -630,22 +686,30 @@ export function ContactosPage() {
 							</p>
 							<ul className="space-y-4">
 								{channels.map((c) => (
-									<li key={c.label}>
-										<p className="font-mono text-xs font-bold uppercase tracking-widest text-kwanza">
-											{c.label}
-										</p>
-										<a
-											href={c.href}
-											target={
-												c.href.startsWith('http')
-													? '_blank'
-													: undefined
-											}
-											rel="noreferrer"
-											className="text-ink transition hover:text-red"
-										>
-											{c.value}
-										</a>
+									<li
+										key={c.label}
+										className="flex items-start gap-3"
+									>
+										<span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-snow text-red">
+											<c.Icon width={18} height={18} />
+										</span>
+										<div className="min-w-0">
+											<p className="font-mono text-[0.65rem] font-bold uppercase tracking-widest text-kwanza">
+												{c.label}
+											</p>
+											<a
+												href={c.href}
+												target={
+													c.href.startsWith('http')
+														? '_blank'
+														: undefined
+												}
+												rel="noreferrer"
+												className="mt-0.5 block break-words text-sm font-medium text-ink transition hover:text-red"
+											>
+												{c.value}
+											</a>
+										</div>
 									</li>
 								))}
 							</ul>
@@ -675,10 +739,36 @@ export function ContactosPage() {
 							<p className="mb-4 font-mono text-xs font-bold uppercase tracking-widest text-ink/40">
 								Localização e horário
 							</p>
-							<p className="text-sm text-ink/80">
+							<p className="flex items-start gap-2 text-sm text-ink/80">
+								<svg
+									xmlns="http://www.w3.org/2000/svg"
+									viewBox="0 0 24 24"
+									fill="none"
+									stroke="currentColor"
+									strokeWidth="2"
+									strokeLinecap="round"
+									strokeLinejoin="round"
+									className="mt-0.5 h-4 w-4 shrink-0 text-red"
+								>
+									<path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" />
+									<circle cx="12" cy="10" r="3" />
+								</svg>
 								Luanda, Angola — servindo as 18 províncias.
 							</p>
-							<p className="mt-2 text-sm text-ink/80">
+							<p className="mt-2 flex items-start gap-2 text-sm text-ink/80">
+								<svg
+									xmlns="http://www.w3.org/2000/svg"
+									viewBox="0 0 24 24"
+									fill="none"
+									stroke="currentColor"
+									strokeWidth="2"
+									strokeLinecap="round"
+									strokeLinejoin="round"
+									className="mt-0.5 h-4 w-4 shrink-0 text-red"
+								>
+									<circle cx="12" cy="12" r="10" />
+									<path d="M12 6v6l4 2" />
+								</svg>
 								Segunda a sexta, das 08h00 às 17h00 (hora de
 								Luanda). Os emails são respondidos em até 1 dia
 								útil.

@@ -391,6 +391,51 @@ export function AdsPage() {
 
 // ================= Anúncio (detalhe) =================
 
+function SpecRow({
+	label,
+	value,
+	link,
+}: {
+	label: string;
+	value: string;
+	link?: string;
+}) {
+	return (
+		<div className="flex items-center justify-between gap-4 px-6 py-3">
+			<dt className="shrink-0 text-[11px] font-bold uppercase tracking-widest text-ink/40">
+				{label}
+			</dt>
+			{link ? (
+				<dd className="text-right">
+					<Link
+						to={link}
+						className="text-sm font-bold text-red hover:underline"
+					>
+						{value}
+					</Link>
+				</dd>
+			) : (
+				<dd className="truncate text-right text-sm font-bold text-ink">
+					{value}
+				</dd>
+			)}
+		</div>
+	);
+}
+
+function StatCell({ value, label }: { value: string; label: string }) {
+	return (
+		<div className="flex flex-col items-center gap-0.5 px-2 py-3">
+			<span className="font-mono text-base font-bold text-ink">
+				{value}
+			</span>
+			<span className="text-[10px] font-bold uppercase tracking-widest text-ink/40">
+				{label}
+			</span>
+		</div>
+	);
+}
+
 export function AdDetailPage() {
 	const { slug } = useParams();
 	usePageTitle('Produto');
@@ -415,6 +460,11 @@ export function AdDetailPage() {
 		setLightboxIndex(null);
 	}, [slug]);
 
+	const related = useAds({
+		categorySlugs: ad?.category?.slug ?? undefined,
+		limit: 5,
+	});
+
 	if (isLoading) {
 		return <AdDetailSkeleton />;
 	}
@@ -436,6 +486,9 @@ export function AdDetailPage() {
 		(u): u is string => Boolean(u),
 	);
 	const currentImg = activeImg ?? adImages[0] ?? null;
+	const relatedItems = (related.data?.items ?? [])
+		.filter((r) => r.id !== ad.id)
+		.slice(0, 4);
 
 	const contactCaxinda = () => {
 		if (!isAuthenticated) {
@@ -456,15 +509,29 @@ export function AdDetailPage() {
 			.then((conv) => navigate(`/area/mensagens?id=${conv.id}`));
 	};
 
-	const specRows: { label: string; value: string }[] = [
-		{ label: 'Categoria', value: ad.category?.name ?? 'Geral' },
+	const specRows: {
+		label: string;
+		value: string;
+		link?: string;
+	}[] = [
+		{
+			label: 'Categoria',
+			value: ad.category?.name ?? 'Geral',
+			link: ad.category?.id
+				? `/produtos?categoryIds=${ad.category.id}`
+				: undefined,
+		},
 		{
 			label: 'Província',
 			value: ad.province
 				? (PROVINCE_LABELS[ad.province] ?? ad.province)
 				: 'Angola',
+			link: ad.province
+				? `/produtos?provinces=${ad.province}`
+				: undefined,
 		},
 		{ label: 'Publicado', value: timeAgo(ad.createdAt) },
+		{ label: 'Visualizações', value: `${ad.views}` },
 	];
 
 	return (
@@ -479,162 +546,249 @@ export function AdDetailPage() {
 
 			<div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
 				<div className="flex min-w-0 flex-col gap-6">
-					<div className="card overflow-hidden">
-						<button
-							type="button"
-							onClick={() => setLightboxIndex(0)}
-							className="relative block aspect-[16/10] w-full bg-snow-dark"
-							disabled={adImages.length === 0}
-							aria-label="Ampliar fotografia"
-						>
-							{currentImg ? (
-								<img
-									src={currentImg}
-									alt={ad.title}
-									className="h-full w-full object-cover"
-								/>
-							) : (
-								<div className="flex h-full items-center justify-center bg-snow-dark font-display text-4xl font-black text-ink/20">
-									CX
+					<div className="card overflow-hidden rounded-3xl">
+						<div className="flex items-center justify-between gap-3 bg-ink px-5 py-2.5">
+							<span className="font-mono text-[11px] font-bold uppercase tracking-widest text-kwanza">
+								Galeria
+							</span>
+							<span className="font-mono text-[10px] font-bold uppercase tracking-widest text-white/50">
+								{adImages.length}{' '}
+								{adImages.length === 1
+									? 'fotografia'
+									: 'fotografias'}
+							</span>
+						</div>
+						<div className="bg-snow p-3">
+							<button
+								type="button"
+								onClick={() => setLightboxIndex(0)}
+								className="relative block aspect-[16/10] w-full overflow-hidden rounded-2xl bg-snow-dark"
+								disabled={adImages.length === 0}
+								aria-label="Ampliar fotografia"
+							>
+								{currentImg ? (
+									<img
+										src={currentImg}
+										alt={ad.title}
+										className="h-full w-full object-cover"
+									/>
+								) : (
+									<div className="flex h-full items-center justify-center bg-snow-dark font-display text-4xl font-black text-ink/20">
+										CX
+									</div>
+								)}
+								{ad.status === 'SOLD' ? (
+									<span className="absolute left-3 top-3 -rotate-3 rounded-lg bg-red px-2.5 py-1 font-mono text-[10px] font-bold uppercase tracking-wider text-white shadow">
+										Vendido
+									</span>
+								) : (
+									ad.featured && (
+										<span className="absolute left-3 top-3 -rotate-3 rounded-lg bg-kwanza px-2.5 py-1 font-mono text-[10px] font-bold uppercase tracking-wider text-ink shadow">
+											★ Destaque
+										</span>
+									)
+								)}
+								{ad.category?.name && (
+									<span className="absolute right-3 top-3 inline-flex max-w-[12rem] -rotate-3 items-center gap-1 truncate rounded-lg bg-blue px-2.5 py-1 font-mono text-[10px] font-bold uppercase tracking-wider text-white shadow-lg">
+										<span aria-hidden>▸</span>
+										<span className="truncate">
+											{ad.category.name}
+										</span>
+									</span>
+								)}
+							</button>
+							{adImages.length > 1 && (
+								<div className="mt-3 grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-6">
+									{adImages.map((url, idx) => (
+										<button
+											type="button"
+											key={`${url}-${idx}`}
+											onClick={() => {
+												setActiveImg(url);
+												setLightboxIndex(idx);
+											}}
+											className={`relative aspect-[4/3] overflow-hidden rounded-lg transition ${
+												currentImg === url
+													? 'ring-2 ring-ink ring-offset-2 ring-offset-snow'
+													: 'opacity-80 hover:opacity-100'
+											}`}
+										>
+											<img
+												src={url}
+												alt=""
+												className="h-full w-full object-cover"
+											/>
+											<span className="absolute bottom-1 left-1 rounded bg-ink/70 px-1 font-mono text-[9px] font-bold text-white">
+												{String(idx + 1).padStart(
+													2,
+													'0',
+												)}
+											</span>
+										</button>
+									))}
 								</div>
 							)}
-							{adImages.length > 0 && (
-								<span className="absolute right-3 bottom-3 rounded-full bg-ink/70 px-2.5 py-1 font-mono text-[10px] font-bold text-white backdrop-blur">
-									{adImages.length}{' '}
-									{adImages.length === 1 ? 'foto' : 'fotos'}
-								</span>
-							)}
-						</button>
-						{adImages.length > 1 && (
-							<div className="grid grid-cols-3 gap-2 bg-snow p-3 sm:grid-cols-4 md:grid-cols-6">
-								{adImages.map((url, idx) => (
-									<button
-										type="button"
-										key={`${url}-${idx}`}
-										onClick={() => {
-											setActiveImg(url);
-											setLightboxIndex(idx);
-										}}
-										className={`aspect-[4/3] overflow-hidden rounded-lg border-2 transition ${
-											currentImg === url
-												? 'border-blue'
-												: 'border-transparent hover:border-ink/20'
-										}`}
-									>
-										<img
-											src={url}
-											alt=""
-											className="h-full w-full object-cover"
-										/>
-									</button>
-								))}
-							</div>
-						)}
+						</div>
 					</div>
 
-					<div className="card p-6">
-						<h2 className="kicker">Detalhes</h2>
-						<dl className="mt-4 grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-3">
+					<div className="card overflow-hidden">
+						<div className="flex items-center justify-between gap-3 border-b border-ink/10 bg-snow/60 px-6 py-4">
+							<h2 className="kicker">Dados do produto</h2>
+							<span className="font-mono text-[10px] font-bold uppercase tracking-widest text-ink/30">
+								REF {ad.id.slice(0, 8).toUpperCase()}
+							</span>
+						</div>
+						<dl className="divide-y divide-ink/10">
 							{specRows.map((row) => (
-								<div key={row.label}>
-									<dt className="kicker">{row.label}</dt>
-									<dd className="mt-1 text-sm font-bold text-ink">
-										{row.value}
-									</dd>
-								</div>
+								<SpecRow
+									key={row.label}
+									label={row.label}
+									value={row.value}
+									link={row.link}
+								/>
 							))}
 						</dl>
 					</div>
 
-					<div className="card p-6">
-						<h2 className="kicker">Descrição</h2>
-						<p className="mt-3 whitespace-pre-line text-sm leading-relaxed text-ink/70">
-							{ad.description}
-						</p>
-					</div>
+					<section className="card overflow-hidden rounded-2xl bg-snow-dark">
+						<div className="flex items-center gap-3 px-6 pt-5">
+							<span className="h-1.5 w-14 rounded-full bg-kwanza" />
+							<h2 className="kicker">Descrição</h2>
+						</div>
+						<div className="p-6 pt-3">
+							<p className="whitespace-pre-line text-sm leading-relaxed text-ink/75">
+								{ad.description}
+							</p>
+							<div className="mt-5 flex items-start gap-2.5 rounded-xl border border-ink/10 bg-white px-4 py-3">
+								<ChatSVG
+									width={15}
+									height={15}
+									className="mt-0.5 shrink-0 text-red"
+								/>
+								<p className="text-xs leading-relaxed text-ink/60">
+									Produto oficial gerido pela equipa da
+									Caxinda. As tuas mensagens sobre este
+									produto são respondidas pelo apoio da
+									plataforma.
+								</p>
+							</div>
+						</div>
+					</section>
 				</div>
 
 				<aside className="lg:sticky lg:top-24 lg:self-start">
 					<div className="flex flex-col gap-4">
-						<div className="card gap-4 p-5">
-							<div className="flex flex-wrap items-center gap-1.5">
-								{ad.featured && (
-									<span className="tag tag-kwanza !px-2.5 !py-0.5">
-										★ Destaque
+						<div className="card overflow-hidden">
+							<div className="h-1.5 bg-kwanza" />
+							<div className="flex flex-col gap-4 p-5">
+								<div className="flex flex-wrap items-center gap-1.5">
+									{ad.status === 'SOLD' && (
+										<span className="tag !border-red/30 !bg-red/10 !px-2.5 !py-0.5 !text-red">
+											Vendido
+										</span>
+									)}
+									{ad.featured && (
+										<span className="tag tag-kwanza !px-2.5 !py-0.5">
+											★ Destaque
+										</span>
+									)}
+								</div>
+
+								<h1 className="text-balance font-display text-xl font-black leading-tight">
+									{ad.title}
+								</h1>
+
+								<div className="-mt-1 flex flex-wrap items-center gap-1.5">
+									<span className="chip">
+										{ad.category?.name ?? 'Geral'}
 									</span>
-								)}
-							</div>
-
-							<h1 className="text-balance font-display text-xl font-black leading-tight">
-								{ad.title}
-							</h1>
-
-							<p className="kicker flex flex-wrap items-center gap-x-2 gap-y-1">
-								<span>{ad.category?.name ?? 'Geral'}</span>
-								{ad.province && (
-									<>
-										<span aria-hidden>·</span>
-										<span>
+									{ad.province && (
+										<span className="chip">
 											{PROVINCE_LABELS[ad.province] ??
 												ad.province}
 										</span>
-									</>
-								)}
-								<span aria-hidden>·</span>
-								<span>Publicado {timeAgo(ad.createdAt)}</span>
-							</p>
+									)}
+									<span className="chip">
+										Pub. {timeAgo(ad.createdAt)}
+									</span>
+								</div>
 
-							<div className="mt-4">
-								{ad.price === null ? (
-									<span className="font-mono text-xl font-bold text-ink/50">
-										Sob consulta
-									</span>
-								) : ad.price === 0 ? (
-									<span
-										className="price-tag-lg"
-										style={{
-											background:
-												'var(--color-blue-light)',
-											color: 'var(--color-snow)',
-										}}
-									>
-										Grátis
-									</span>
-								) : (
-									<span className="price-tag-lg">
-										{formatKz(ad.price)}
-									</span>
-								)}
-							</div>
+								<div className="mt-1">
+									{ad.price === null ? (
+										<span className="font-mono text-xl font-bold text-ink/50">
+											Sob consulta
+										</span>
+									) : ad.price === 0 ? (
+										<span
+											className="price-tag-lg"
+											style={{
+												background:
+													'var(--color-blue-light)',
+												color: 'var(--color-snow)',
+											}}
+										>
+											Grátis
+										</span>
+									) : (
+										<span className="price-tag-lg">
+											{formatKz(ad.price)}
+										</span>
+									)}
+								</div>
 
-							{ad.averageRating !== null && (
-								<p className="text-sm text-ink/60">
-									<Stars value={ad.averageRating} /> ·{' '}
-									{ad.reviewCount} avaliações
+								{ad.averageRating !== null && (
+									<p className="flex items-center gap-1.5 text-sm text-ink/60">
+										<Stars value={ad.averageRating} />
+										<span>
+											· {ad.reviewCount} avaliações
+										</span>
+									</p>
+								)}
+
+								<Divider className="my-1" />
+
+								<button
+									className="btn-primary w-full"
+									onClick={contactCaxinda}
+									disabled={openConversation.isPending}
+								>
+									{openConversation.isPending && (
+										<ButtonLoader />
+									)}
+									<ChatSVG width={16} height={16} /> Contactar
+									a Caxinda
+								</button>
+								{isAuthenticated && (
+									<WishlistToggle
+										adId={ad.id}
+										saved={wishlistSaved ?? false}
+									/>
+								)}
+								<p className="text-xs leading-relaxed text-ink/40">
+									Produto gerido pela Caxinda. A equipa de
+									apoio responde às tuas mensagens.
 								</p>
-							)}
-
-							<Divider className="my-1" />
-
-							<button
-								className="btn-primary w-full"
-								onClick={contactCaxinda}
-								disabled={openConversation.isPending}
-							>
-								{openConversation.isPending && <ButtonLoader />}
-								<ChatSVG width={16} height={16} /> Contactar a
-								Caxinda
-							</button>
-							{isAuthenticated && (
-								<WishlistToggle
-									adId={ad.id}
-									saved={wishlistSaved ?? false}
+							</div>
+							<div className="grid grid-cols-3 divide-x divide-ink/10 border-t border-ink/10 bg-snow">
+								<StatCell
+									value={
+										ad.averageRating !== null
+											? ad.averageRating
+													.toFixed(1)
+													.replace('.', ',')
+											: '—'
+									}
+									label="Nota"
 								/>
-							)}
-							<p className="text-xs leading-relaxed text-ink/40">
-								Produto gerido pela Caxinda. A equipa de apoio
-								responde às tuas mensagens sobre este produto.
-							</p>
+								<StatCell
+									value={String(ad.reviewCount)}
+									label="Avaliações"
+								/>
+								<StatCell
+									value={String(ad.views)}
+									label="Visualizações"
+								/>
+							</div>
 						</div>
 
 						<div className="card p-5">
@@ -661,6 +815,33 @@ export function AdDetailPage() {
 			<div className="mt-8">
 				<ReviewSection target={{ adId: ad.id }} />
 			</div>
+
+			{relatedItems.length > 0 && (
+				<div className="mt-12">
+					<div className="mb-5 flex items-end justify-between gap-3">
+						<div>
+							<span className="kicker">Mais desta categoria</span>
+							<h2 className="mt-1 font-display text-2xl font-black text-ink">
+								Produtos semelhantes
+							</h2>
+						</div>
+						{ad.category?.id && (
+							<Link
+								to={`/produtos?categoryIds=${ad.category.id}`}
+								className="text-sm font-bold text-red hover:underline"
+							>
+								Ver todos →
+							</Link>
+						)}
+					</div>
+					<div className="grid grid-cols-2 gap-5 md:grid-cols-4 lg:items-start">
+						{relatedItems.map((r) => (
+							<AdCard key={r.id} ad={r} />
+						))}
+					</div>
+				</div>
+			)}
+
 			<Lightbox
 				images={adImages}
 				index={lightboxIndex}
@@ -1153,6 +1334,12 @@ export function BusinessDetailPage() {
 		);
 
 	const isOwner = user?.id === business.owner.id;
+	const contactCount = [
+		business.phone,
+		business.whatsapp,
+		business.email,
+		business.website,
+	].filter(Boolean).length;
 
 	const normalizeWebsite = (url: string) =>
 		url.match(/^[a-z][a-z0-9+.-]*:\/\//i) ? url : `https://${url}`;
@@ -1208,95 +1395,133 @@ export function BusinessDetailPage() {
 				<span className="text-xs text-kwanza">▸</span>
 				<span className="truncate text-ink/80">{business.name}</span>
 			</nav>
-			<div className="rounded-2xl border border-ink/10 bg-white">
-				<button
-					type="button"
-					onClick={() => setLightboxIndex(0)}
-					className="relative block h-56 w-full overflow-hidden rounded-t-2xl bg-blue"
-					disabled={businessImages.length === 0}
-					aria-label="Ampliar fotografia de capa"
-				>
-					{business.coverUrl ? (
-						<img
-							src={business.coverUrl}
-							alt={business.name}
-							className="h-full w-full object-cover"
-						/>
-					) : (
-						<div className="flex h-full items-center justify-center bg-gradient-to-br from-blue to-blue-dark font-display text-4xl font-black text-white/30">
-							{business.name}
-						</div>
-					)}
-					{businessImages.length > 1 && (
-						<span className="absolute right-3 bottom-3 rounded-full bg-ink/70 px-2.5 py-1 font-mono text-[10px] font-bold text-white backdrop-blur">
-							{businessImages.length} fotos
-						</span>
-					)}
-				</button>
 
-				<div className="px-6 pt-5 pb-2">
-					<div className="flex flex-wrap items-center justify-between gap-3">
-						<div className="flex items-center gap-4">
-							{business.logoUrl ? (
-								<img
-									src={business.logoUrl}
-									alt={business.name}
-									className="h-20 w-20 shrink-0 rounded-2xl border border-ink/10 bg-white object-cover shadow-sm"
-								/>
-							) : (
-								<span className="flex h-20 w-20 shrink-0 items-center justify-center rounded-2xl border border-ink/10 bg-ink font-display text-xl font-black text-white shadow-sm">
-									{business.name.slice(0, 2).toUpperCase()}
+			<div className="overflow-hidden rounded-3xl border border-ink/10 bg-white">
+				<div className="relative">
+					<button
+						type="button"
+						onClick={() => setLightboxIndex(0)}
+						className="relative block h-64 w-full overflow-hidden bg-blue lg:h-80"
+						disabled={businessImages.length === 0}
+						aria-label="Ampliar fotografia de capa"
+					>
+						{business.coverUrl ? (
+							<img
+								src={business.coverUrl}
+								alt={business.name}
+								className="h-full w-full object-cover"
+							/>
+						) : (
+							<div
+								className="flex h-full w-full items-center justify-center bg-blue"
+								style={{
+									backgroundImage:
+										'repeating-linear-gradient(45deg, rgba(255,255,255,0.06) 0 16px, transparent 16px 32px)',
+								}}
+							>
+								<span className="rotate-3 rounded-2xl bg-kwanza px-6 py-3 font-display text-2xl font-black text-ink shadow-lg">
+									CX
 								</span>
-							)}
-							<div>
-								<h1 className="text-balance font-display text-xl font-black leading-tight">
-									{business.name}
-								</h1>
-								<p className="kicker mt-1.5 flex flex-wrap items-center gap-x-2">
-									<span>{business.category.name}</span>
-									<span aria-hidden>·</span>
-									<span>
-										{PROVINCE_LABELS[business.province] ??
-											business.province}
-									</span>
-								</p>
 							</div>
-						</div>
-						{business.isVerified && (
-							<span className="stamp shrink-0">
-								<CheckSVG width={12} height={12} /> Verificada
+						)}
+						{businessImages.length > 1 && (
+							<span className="absolute right-3 bottom-3 rounded-full bg-ink/70 px-2.5 py-1 font-mono text-[10px] font-bold text-white backdrop-blur">
+								{businessImages.length} fotos
 							</span>
 						)}
+					</button>
+					{business.isVerified && (
+						<span className="absolute right-4 top-4 inline-flex -rotate-3 items-center gap-1 rounded-xl bg-kwanza px-3 py-1.5 font-mono text-[11px] font-bold uppercase tracking-wider text-ink shadow-lg">
+							<CheckSVG width={12} height={12} /> Verificada
+						</span>
+					)}
+				</div>
+
+				<div className="border-b border-ink/10 bg-snow px-6 py-5">
+					<div className="flex flex-wrap items-center gap-4">
+						{business.logoUrl ? (
+							<img
+								src={business.logoUrl}
+								alt={business.name}
+								className="h-20 w-20 shrink-0 rounded-2xl border-4 border-white bg-white object-cover shadow-sm"
+							/>
+						) : (
+							<span className="flex h-20 w-20 shrink-0 items-center justify-center rounded-2xl bg-ink font-display text-xl font-black text-white shadow-sm">
+								{business.name.slice(0, 2).toUpperCase()}
+							</span>
+						)}
+						<div className="min-w-0">
+							<h1 className="text-balance font-display text-xl font-black leading-tight">
+								{business.name}
+							</h1>
+							<div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+								<span className="chip border-blue/20 bg-blue/5 !text-blue">
+									{business.category.name}
+								</span>
+								<span className="chip">
+									{PROVINCE_LABELS[business.province] ??
+										business.province}
+								</span>
+							</div>
+						</div>
 					</div>
-					<Divider className="mt-4" />
+					<div className="mt-5 grid grid-cols-3 divide-x divide-ink/10 overflow-hidden rounded-2xl border border-ink/10 bg-white">
+						<StatCell
+							value={
+								business.averageRating !== null
+									? business.averageRating
+											.toFixed(1)
+											.replace('.', ',')
+									: '—'
+							}
+							label="Nota"
+						/>
+						<StatCell
+							value={String(business.reviewCount)}
+							label="Avaliações"
+						/>
+						<StatCell
+							value={String(business.viewCount)}
+							label="Visualizações"
+						/>
+					</div>
 				</div>
 
 				<div className="grid gap-6 p-6 lg:grid-cols-[minmax(0,1fr)_340px]">
 					<div className="flex min-w-0 flex-col gap-6">
-						<section className="card gap-3 p-6">
-							<h2 className="kicker">Sobre</h2>
-							<p className="mt-2 whitespace-pre-line text-sm leading-relaxed text-ink/70">
-								{business.description}
-							</p>
-							{business.address && (
-								<p className="flex items-center gap-1.5 text-sm text-ink/60">
-									<PinSVG width={15} height={15} />
-									{business.address}
+						<section className="card overflow-hidden rounded-2xl bg-snow-dark">
+							<div className="flex items-center gap-3 px-6 pt-5">
+								<span className="h-1.5 w-14 rounded-full bg-kwanza" />
+								<h2 className="kicker">Sobre</h2>
+							</div>
+							<div className="flex flex-col gap-4 p-6 pt-3">
+								<p className="whitespace-pre-line text-sm leading-relaxed text-ink/75">
+									{business.description}
 								</p>
-							)}
-							<div className="flex items-center gap-2">
-								<Stars value={business.averageRating} />
-								<span className="text-xs text-ink/50">
-									· {business.reviewCount} avaliações ·{' '}
-									{business.viewCount} visualizações
-								</span>
+								{business.address && (
+									<p className="flex items-center gap-1.5 text-sm text-ink/60">
+										<PinSVG width={15} height={15} />
+										{business.address}
+									</p>
+								)}
+								<div className="flex items-center gap-1.5 text-sm text-ink/55">
+									<Stars value={business.averageRating} />
+									<span>
+										· {business.reviewCount} avaliações
+									</span>
+								</div>
 							</div>
 						</section>
 
 						{business.gallery.length > 0 && (
-							<section className="card gap-4 p-6">
-								<h2 className="kicker">Álbum</h2>
-								<div className="grid grid-cols-2 gap-2.5 md:grid-cols-3">
+							<section className="card overflow-hidden">
+								<div className="flex items-center justify-between gap-3 border-b border-ink/10 bg-snow/60 px-6 py-4">
+									<h2 className="kicker">Fotografias</h2>
+									<span className="font-mono text-[10px] font-bold uppercase tracking-widest text-ink/30">
+										{business.gallery.length} itens
+									</span>
+								</div>
+								<div className="grid grid-cols-2 gap-2.5 p-5 md:grid-cols-3">
 									{business.gallery.map((g, idx) => (
 										<button
 											type="button"
@@ -1308,13 +1533,19 @@ export function BusinessDetailPage() {
 														: idx,
 												)
 											}
-											className="aspect-square w-full overflow-hidden rounded-xl"
+											className="group relative aspect-square w-full overflow-hidden rounded-xl"
 										>
 											<img
 												src={g.url}
 												alt={`${business.name} ${idx + 1}`}
-												className="h-full w-full object-cover transition hover:scale-105"
+												className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
 											/>
+											<span className="absolute bottom-1 left-1 rounded bg-ink/70 px-1 font-mono text-[9px] font-bold text-white">
+												{String(idx + 1).padStart(
+													2,
+													'0',
+												)}
+											</span>
 										</button>
 									))}
 								</div>
@@ -1324,8 +1555,13 @@ export function BusinessDetailPage() {
 
 					<aside className="lg:sticky lg:top-24 lg:self-start">
 						<div className="flex flex-col gap-3">
-							<div className="card gap-2 p-4">
-								<h3 className="kicker mb-1">Contactos</h3>
+							<div className="card gap-2 overflow-hidden p-5">
+								<div className="mb-1 flex items-center justify-between gap-3">
+									<h3 className="kicker">Contactos</h3>
+									<span className="font-mono text-[10px] font-bold uppercase tracking-widest text-ink/30">
+										{contactCount} vias
+									</span>
+								</div>
 								<Divider className="mb-3" />
 								{business.phone && (
 									<button

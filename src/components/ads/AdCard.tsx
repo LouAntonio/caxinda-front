@@ -56,7 +56,8 @@ export function AdCard({
 				</Link>
 				<div className="flex flex-wrap items-center gap-1.5">
 					{ad.category?.name && (
-						<span className="chip border-blue/20 bg-blue/5 text-blue">
+						<span className="inline-flex items-center gap-1 rounded-md bg-blue px-2 py-1 text-[11px] font-bold text-white">
+							<span aria-hidden>▸</span>
 							{ad.category.name}
 						</span>
 					)}
