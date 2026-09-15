@@ -4,7 +4,13 @@ import { http } from '../lib/api';
 import type { MediaAsset, MediaSignParams } from '../types/api';
 
 export type MediaFolder =
-	'ads' | 'businesses' | 'chat' | 'kyc' | 'reports' | 'payments';
+	| 'ads'
+	| 'businesses'
+	| 'categories'
+	| 'chat'
+	| 'kyc'
+	| 'reports'
+	| 'payments';
 
 interface UploadResult {
 	url: string;

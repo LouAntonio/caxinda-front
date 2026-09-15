@@ -82,7 +82,7 @@ import { useWishlistCheck } from '../hooks/queries';
 // ================= Anúncios (lista) =================
 
 export function AdsPage() {
-	usePageTitle('Anúncios');
+	usePageTitle('Produtos');
 	const [searchParams, setSearchParams] = useSearchParams();
 	const { data: categories } = useCategories('AD');
 	const q = searchParams.get('q') ?? '';
@@ -191,7 +191,7 @@ export function AdsPage() {
 		<>
 			<input
 				className="input"
-				placeholder="Pesquisar anúncios…"
+				placeholder="Pesquisar produtos…"
 				value={draftQ}
 				onChange={(e) => setDraftQ(e.target.value)}
 				onKeyDown={(e) => {
@@ -257,7 +257,7 @@ export function AdsPage() {
 
 	return (
 		<div className="mx-auto max-w-6xl px-4 py-10">
-			<h1 className="mb-6 font-display text-3xl font-black">Anúncios</h1>
+			<h1 className="mb-6 font-display text-3xl font-black">Produtos</h1>
 
 			<div className="flex gap-6 lg:grid lg:grid-cols-[17rem_minmax(0,1fr)] lg:items-start">
 				<aside className="nice-scroll hidden w-64 shrink-0 flex-col gap-5 rounded-2xl border border-ink/10 bg-white p-4 lg:sticky lg:top-24 lg:flex lg:max-h-[calc(100vh-6rem)] lg:w-auto lg:overflow-y-auto lg:self-start">
@@ -268,7 +268,7 @@ export function AdsPage() {
 					<div className="mb-4 flex flex-wrap items-center gap-2 lg:hidden">
 						<input
 							className="input flex-1"
-							placeholder="Pesquisar anúncios…"
+							placeholder="Pesquisar produtos…"
 							value={draftQ}
 							onChange={(e) => setDraftQ(e.target.value)}
 							onKeyDown={(e) => {
@@ -310,7 +310,7 @@ export function AdsPage() {
 							<span className="font-bold text-ink">
 								{data?.items.length ?? 0}
 							</span>{' '}
-							anúncios de{' '}
+							produtos de{' '}
 							<span className="font-bold text-ink">
 								{data?.total ?? 0}
 							</span>
@@ -335,7 +335,7 @@ export function AdsPage() {
 						<AdCardSkeletonGrid count={6} />
 					) : (data?.items.length ?? 0) === 0 ? (
 						<EmptyState
-							title="Sem anúncios encontrados"
+							title="Sem produtos encontrados"
 							description="Tenta mudar os filtros ou pesquisa noutra província."
 						/>
 					) : (
@@ -369,7 +369,7 @@ export function AdsPage() {
 
 export function AdDetailPage() {
 	const { slug } = useParams();
-	usePageTitle('Anúncio');
+	usePageTitle('Produto');
 	const { data: ad, isLoading } = useAdBySlug(slug);
 	const navigate = useNavigate();
 	const { user, isAuthenticated } = useSession();
@@ -397,10 +397,10 @@ export function AdDetailPage() {
 	if (!ad) {
 		return (
 			<EmptyState
-				title="Anúncio não encontrado"
+				title="Produto não encontrado"
 				action={
-					<Link to="/anuncios" className="btn-primary">
-						Ver anúncios
+					<Link to="/produtos" className="btn-primary">
+						Ver produtos
 					</Link>
 				}
 			/>
@@ -416,7 +416,7 @@ export function AdDetailPage() {
 	const contactCaxinda = () => {
 		if (!isAuthenticated) {
 			void navigate('/auth/entrar', {
-				state: { from: `/anuncios/${ad.slug}` },
+				state: { from: `/produtos/${ad.slug}` },
 			});
 			return;
 		}
@@ -446,8 +446,8 @@ export function AdDetailPage() {
 	return (
 		<div className="mx-auto max-w-6xl px-4 py-10">
 			<nav className="mb-5 flex flex-wrap items-center gap-1.5 text-sm text-ink/50">
-				<Link to="/anuncios" className="font-bold hover:text-red">
-					Anúncios
+				<Link to="/produtos" className="font-bold hover:text-red">
+					Produtos
 				</Link>
 				<span className="text-xs text-kwanza">▸</span>
 				<span className="truncate text-ink/80">{ad.title}</span>
@@ -608,8 +608,8 @@ export function AdDetailPage() {
 								/>
 							)}
 							<p className="text-xs leading-relaxed text-ink/40">
-								Anúncio gerido pela Caxinda. A equipa de apoio
-								responde às tuas mensagens sobre este anúncio.
+								Produto gerido pela Caxinda. A equipa de apoio
+								responde às tuas mensagens sobre este produto.
 							</p>
 						</div>
 
@@ -627,7 +627,7 @@ export function AdDetailPage() {
 			{canViewAnalytics && (
 				<div className="mt-8">
 					<ItemAnalyticsPanel
-						title="Estatísticas do anúncio"
+						title="Estatísticas do produto"
 						data={adAnalytics}
 						isLoading={adAnalyticsLoading}
 					/>
@@ -1615,7 +1615,7 @@ export function ReportForm({
 
 const SEARCH_TYPES: { id: string; label: string; type?: SearchType }[] = [
 	{ id: 'todos', label: 'Todos' },
-	{ id: 'ads', label: 'Anúncios', type: 'AD' },
+	{ id: 'ads', label: 'Produtos', type: 'AD' },
 	{ id: 'businesses', label: 'Empresas', type: 'BUSINESS' },
 ];
 
@@ -1909,7 +1909,7 @@ export function SearchPage() {
 						</>
 					) : (
 						<p className="text-sm text-ink/50">
-							Digita um termo para pesquisar anúncios e empresas.
+							Digita um termo para pesquisar produtos e empresas.
 						</p>
 					)}
 				</div>
@@ -2177,8 +2177,8 @@ export function NotFoundPage() {
 				<Link to="/" className="btn-primary">
 					Ir para o início
 				</Link>
-				<Link to="/anuncios" className="btn-outline">
-					Ver anúncios
+				<Link to="/produtos" className="btn-outline">
+					Ver produtos
 				</Link>
 			</div>
 		</div>

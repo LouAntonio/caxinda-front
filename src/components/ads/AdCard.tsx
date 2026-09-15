@@ -15,7 +15,7 @@ export function AdCard({
 	return (
 		<article className="card group overflow-hidden transition hover:-translate-y-0.5 hover:shadow-md">
 			<Link
-				to={`/anuncios/${ad.slug}`}
+				to={`/produtos/${ad.slug}`}
 				className="relative block aspect-[4/3] overflow-hidden bg-snow-dark"
 			>
 				{ad.image ? (
@@ -49,7 +49,7 @@ export function AdCard({
 			</Link>
 			<div className="flex flex-1 flex-col gap-2.5 p-4">
 				<Link
-					to={`/anuncios/${ad.slug}`}
+					to={`/produtos/${ad.slug}`}
 					className="line-clamp-1 text-sm font-bold hover:text-red"
 				>
 					{ad.title}

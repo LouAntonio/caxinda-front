@@ -349,6 +349,7 @@ export interface CreateCategoryDto {
 	name: string;
 	type: CategoryType;
 	slug?: string;
+	imageUrl?: string;
 }
 
 export function useCreateCategory() {

@@ -111,14 +111,14 @@ export function Header() {
 						}`}
 					>
 						<Link
-							to="/anuncios"
+							to="/produtos"
 							className={
 								showTransparent
 									? 'hover:text-white'
 									: 'hover:text-red'
 							}
 						>
-							Anúncios
+							Produtos
 						</Link>
 						<Link
 							to="/empresas"
@@ -304,11 +304,11 @@ export function Header() {
 					<div className="flex flex-col gap-2 p-4">
 						<nav className="flex flex-col gap-3 text-sm font-bold">
 							<Link
-								to="/anuncios"
+								to="/produtos"
 								onClick={() => setDrawerOpen(false)}
 								className="hover:text-red"
 							>
-								Anúncios
+								Produtos
 							</Link>
 							<Link
 								to="/empresas"

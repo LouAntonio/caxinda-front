@@ -945,7 +945,7 @@ export function WishlistPage() {
 			) : !data || data.items.length === 0 ? (
 				<EmptyState
 					title="Sem favoritos ainda"
-					description="Toca na estrela num anúncio para o guardar aqui."
+					description="Toca na estrela num produto para o guardar aqui."
 				/>
 			) : (
 				<div className="grid grid-cols-2 gap-4 lg:grid-cols-3 lg:items-start">
@@ -1042,7 +1042,7 @@ export function MessagesPage() {
 			) : !convos || convos.items.length === 0 ? (
 				<EmptyState
 					title="Sem conversas"
-					description="Manda uma mensagem a um vendedor a partir de um anúncio ou empresa."
+					description="Manda uma mensagem a um vendedor a partir de um produto ou empresa."
 				/>
 			) : (
 				<div className="grid gap-4 lg:grid-cols-[260px_1fr]">

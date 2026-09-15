@@ -18,10 +18,10 @@ export function Footer() {
 						Plataforma
 					</p>
 					<Link
-						to="/anuncios"
+						to="/produtos"
 						className="text-snow/70 hover:text-white"
 					>
-						Anúncios
+						Produtos
 					</Link>
 					<Link
 						to="/empresas"

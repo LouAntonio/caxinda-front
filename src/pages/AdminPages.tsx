@@ -69,6 +69,7 @@ import {
 } from '../lib/format';
 import type {
 	AnalyticsRange,
+	Category,
 	CategoryType,
 	ContactChannel,
 	Payment,
@@ -305,7 +306,7 @@ export function AdminAdsPage() {
 							)}
 							<div className="min-w-0 flex-1">
 								<Link
-									to={`/anuncios/${ad.slug}`}
+									to={`/produtos/${ad.slug}`}
 									className="line-clamp-1 text-sm font-bold hover:text-red"
 								>
 									{ad.title}
@@ -1669,32 +1670,89 @@ export function AdminCategoriesPage() {
 	const create = useCreateCategory();
 	const update = useUpdateCategory();
 	const del = useDeleteCategory();
+	const upload = useUpload('categories');
 	const [name, setName] = useState('');
 	const [type, setType] = useState<CategoryType>('AD');
+	const [editingId, setEditingId] = useState<string | null>(null);
+	const [imageUrl, setImageUrl] = useState<string | null>(null);
+	const [pendingImage, setPendingImage] = useState<File | null>(null);
+
+	const startCreate = () => {
+		setEditingId(null);
+		setName('');
+		setType('AD');
+		setImageUrl(null);
+		setPendingImage(null);
+	};
+
+	const startEdit = (cat: Category) => {
+		setEditingId(cat.id);
+		setName(cat.name);
+		setType(cat.type);
+		setImageUrl(cat.imageUrl ?? null);
+		setPendingImage(null);
+	};
+
+	const onFile = (file: File | null) => {
+		setPendingImage(file);
+		if (file) {
+			setImageUrl(URL.createObjectURL(file));
+		}
+	};
+
+	const handleSubmit = async (e: React.FormEvent) => {
+		e.preventDefault();
+		if (!name.trim()) return;
+		try {
+			let nextImageUrl = imageUrl;
+			if (pendingImage) {
+				const asset = await upload.mutateAsync(pendingImage);
+				nextImageUrl = asset.url;
+			}
+			if (editingId) {
+				await toast.promise(
+					update.mutateAsync({
+						id: editingId,
+						name: name.trim(),
+						type,
+						imageUrl: nextImageUrl ?? undefined,
+					}),
+					{
+						loading: 'A guardar categoria…',
+						success: 'Categoria atualizada.',
+						error: (err) => getApiError(err),
+					},
+				);
+			} else {
+				await toast.promise(
+					create.mutateAsync({
+						name: name.trim(),
+						type,
+						imageUrl: nextImageUrl ?? undefined,
+					}),
+					{
+						loading: 'A criar categoria…',
+						success: 'Categoria criada.',
+						error: (err) => getApiError(err),
+					},
+				);
+			}
+			startCreate();
+		} catch {
+			// erros já apresentados via toasts
+		}
+	};
 
 	return (
 		<div>
 			<Title>Categorias</Title>
 			<form
 				className="card mb-6 max-w-md gap-3 p-4"
-				onSubmit={(e) => {
-					e.preventDefault();
-					if (!name.trim()) return;
-					void toast
-						.promise(
-							create.mutateAsync({ name: name.trim(), type }),
-							{
-								loading: 'A criar categoria…',
-								success: 'Categoria criada.',
-								error: (err) => getApiError(err),
-							},
-						)
-						.then(() => {
-							setName('');
-						});
-				}}
+				onSubmit={(e) => void handleSubmit(e)}
 			>
-				<label className="label">Nova categoria</label>
+				<label className="label">
+					{editingId ? 'Editar categoria' : 'Nova categoria'}
+				</label>
 				<input
 					className="input"
 					placeholder="Nome"
@@ -1707,12 +1765,65 @@ export function AdminCategoriesPage() {
 					value={type}
 					onChange={(e) => setType(e.target.value as CategoryType)}
 				>
-					<option value="AD">Anúncios</option>
+					<option value="AD">Produtos</option>
 					<option value="BUSINESS">Empresas</option>
 				</select>
-				<button className="btn-primary" disabled={create.isPending}>
-					{create.isPending && <Spinner size={16} />} Criar
-				</button>
+				<div>
+					<label className="label">Imagem da categoria</label>
+					<div className="flex flex-wrap items-center gap-3">
+						{imageUrl ? (
+							<img
+								src={imageUrl}
+								alt=""
+								className="h-16 w-24 shrink-0 rounded-lg object-cover"
+							/>
+						) : (
+							<div className="flex h-16 w-24 shrink-0 items-center justify-center rounded-lg bg-snow font-mono text-xs font-bold text-ink/40">
+								Sem imagem
+							</div>
+						)}
+						<input
+							type="file"
+							accept="image/*"
+							className="input min-w-0 flex-1"
+							onChange={(e) =>
+								onFile(e.target.files?.[0] ?? null)
+							}
+						/>
+						{imageUrl && (
+							<button
+								type="button"
+								className="btn-ghost !text-red"
+								onClick={() => {
+									setImageUrl(null);
+									setPendingImage(null);
+								}}
+							>
+								Remover
+							</button>
+						)}
+					</div>
+				</div>
+				<div className="flex gap-2">
+					<button
+						className="btn-primary"
+						disabled={create.isPending || update.isPending}
+					>
+						{(create.isPending || update.isPending) && (
+							<Spinner size={16} />
+						)}
+						{editingId ? 'Guardar alterações' : 'Criar categoria'}
+					</button>
+					{editingId && (
+						<button
+							type="button"
+							className="btn-ghost"
+							onClick={startCreate}
+						>
+							Cancelar
+						</button>
+					)}
+				</div>
 			</form>
 
 			{isLoading ? (
@@ -1724,6 +1835,17 @@ export function AdminCategoriesPage() {
 							key={c.id}
 							className="card items-center gap-3 p-3 sm:flex-row"
 						>
+							{c.imageUrl ? (
+								<img
+									src={c.imageUrl}
+									alt=""
+									className="h-12 w-16 shrink-0 rounded-lg object-cover"
+								/>
+							) : (
+								<div className="flex h-12 w-16 shrink-0 items-center justify-center rounded-lg bg-snow font-mono text-xs font-bold text-ink/40">
+									{c.type === 'AD' ? 'PROD' : 'EMP'}
+								</div>
+							)}
 							<div className="min-w-0 flex-1">
 								<p className="text-sm font-bold">
 									{c.name}{' '}
@@ -1737,22 +1859,10 @@ export function AdminCategoriesPage() {
 								</p>
 							</div>
 							<button
-								onClick={() =>
-									void toast.promise(
-										update.mutateAsync({
-											id: c.id,
-											name: c.name,
-										}),
-										{
-											loading: 'A renomear categoria…',
-											success: 'Categoria renomeada.',
-											error: (err) => getApiError(err),
-										},
-									)
-								}
+								onClick={() => startEdit(c)}
 								className="btn-ghost !text-blue"
 							>
-								Renomear
+								Editar
 							</button>
 							<ConfirmButton
 								title="Apagar categoria?"
@@ -2578,7 +2688,7 @@ function TopItemsCard({
 								key={item.id}
 								to={
 									type === 'ad'
-										? `/anuncios/${item.slug}`
+										? `/produtos/${item.slug}`
 										: `/empresas/${item.slug}`
 								}
 								className="flex items-center gap-3 rounded-xl bg-snow p-2 transition hover:bg-ink/5"

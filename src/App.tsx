@@ -1,4 +1,9 @@
-import { createBrowserRouter, RouterProvider } from 'react-router-dom';
+import {
+	createBrowserRouter,
+	Navigate,
+	RouterProvider,
+	useParams,
+} from 'react-router-dom';
 import {
 	AppLayout,
 	RequireAuth,
@@ -61,13 +66,20 @@ import {
 	AdminAnalyticsPage,
 } from './pages/AdminPages';
 
+function RedirectAnuncios() {
+	const { slug } = useParams<{ slug: string }>();
+	return <Navigate to={slug ? `/produtos/${slug}` : '/produtos'} replace />;
+}
+
 const router = createBrowserRouter([
 	{
 		element: <AppLayout />,
 		children: [
 			{ index: true, element: <LandingPage /> },
-			{ path: 'anuncios', element: <AdsPage /> },
-			{ path: 'anuncios/:slug', element: <AdDetailPage /> },
+			{ path: 'produtos', element: <AdsPage /> },
+			{ path: 'produtos/:slug', element: <AdDetailPage /> },
+			{ path: 'anuncios', element: <RedirectAnuncios /> },
+			{ path: 'anuncios/:slug', element: <RedirectAnuncios /> },
 			{ path: 'empresas', element: <BusinessesPage /> },
 			{ path: 'empresas/:slug', element: <BusinessDetailPage /> },
 			{ path: 'busca', element: <SearchPage /> },

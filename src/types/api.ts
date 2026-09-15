@@ -123,6 +123,7 @@ export interface Category {
 	slug: string;
 	name: string;
 	type: CategoryType;
+	imageUrl: string | null;
 	adCount: number;
 	businessCount: number;
 }
