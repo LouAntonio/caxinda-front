@@ -256,111 +256,126 @@ export function AdsPage() {
 	);
 
 	return (
-		<div className="mx-auto max-w-6xl px-4 py-10">
-			<h1 className="mb-6 font-display text-3xl font-black">Produtos</h1>
+		<div>
+			<section className="bg-ink">
+				<div className="mx-auto max-w-6xl px-4 py-12">
+					<span className="kicker text-kwanza">Marketplace</span>
+					<h1 className="mt-2 font-display text-3xl font-black text-white">
+						Produtos
+					</h1>
+					<p className="mt-3 max-w-xl text-sm leading-relaxed text-white/55">
+						Produtos anunciados por negócios locais em todo o país.
+						Compara, escolhe e contacta o vendedor diretamente.
+					</p>
+				</div>
+			</section>
 
-			<div className="flex gap-6 lg:grid lg:grid-cols-[17rem_minmax(0,1fr)] lg:items-start">
-				<aside className="nice-scroll hidden w-64 shrink-0 flex-col gap-5 rounded-2xl border border-ink/10 bg-white p-4 lg:sticky lg:top-24 lg:flex lg:max-h-[calc(100vh-6rem)] lg:w-auto lg:overflow-y-auto lg:self-start">
-					{filtersPanel}
-				</aside>
+			<div className="mx-auto max-w-6xl px-4 py-10">
+				<div className="flex gap-6 lg:grid lg:grid-cols-[17rem_minmax(0,1fr)] lg:items-start">
+					<aside className="nice-scroll hidden w-64 shrink-0 flex-col gap-5 rounded-2xl border border-ink/10 bg-white p-4 lg:sticky lg:top-24 lg:flex lg:max-h-[calc(100vh-6rem)] lg:w-auto lg:overflow-y-auto lg:self-start">
+						{filtersPanel}
+					</aside>
 
-				<div className="min-w-0 flex-1">
-					<div className="mb-4 flex flex-wrap items-center gap-2 lg:hidden">
-						<input
-							className="input flex-1"
-							placeholder="Pesquisar produtos…"
-							value={draftQ}
-							onChange={(e) => setDraftQ(e.target.value)}
-							onKeyDown={(e) => {
-								if (e.key === 'Enter') {
-									e.preventDefault();
-									commit();
-								}
-							}}
-						/>
-						<button
-							type="button"
-							onClick={() => setFiltersOpen(true)}
-							className="flex shrink-0 items-center justify-center rounded-xl border-2 border-ink/15 px-3 py-2 text-xs font-bold text-ink/60 transition hover:border-ink/40"
-						>
-							☰ Filtros
-						</button>
-						<button
-							type="button"
-							onClick={commit}
-							className="shrink-0 rounded-xl bg-blue px-3 py-2 text-xs font-bold text-white transition hover:opacity-90"
-						>
-							Pesquisar
-						</button>
-						{hasActiveFilters && (
+					<div className="min-w-0 flex-1">
+						<div className="mb-4 flex flex-wrap items-center gap-2 lg:hidden">
+							<input
+								className="input flex-1"
+								placeholder="Pesquisar produtos…"
+								value={draftQ}
+								onChange={(e) => setDraftQ(e.target.value)}
+								onKeyDown={(e) => {
+									if (e.key === 'Enter') {
+										e.preventDefault();
+										commit();
+									}
+								}}
+							/>
 							<button
 								type="button"
-								onClick={clearFilters}
-								className="flex shrink-0 items-center justify-center rounded-xl border-2 border-ink/15 px-3 py-2 text-xs text-ink/50 transition hover:border-red/30 hover:text-red"
-								title="Limpar filtros"
+								onClick={() => setFiltersOpen(true)}
+								className="flex shrink-0 items-center justify-center rounded-xl border-2 border-ink/15 px-3 py-2 text-xs font-bold text-ink/60 transition hover:border-ink/40"
 							>
-								✕
+								☰ Filtros
 							</button>
+							<button
+								type="button"
+								onClick={commit}
+								className="shrink-0 rounded-xl bg-blue px-3 py-2 text-xs font-bold text-white transition hover:opacity-90"
+							>
+								Pesquisar
+							</button>
+							{hasActiveFilters && (
+								<button
+									type="button"
+									onClick={clearFilters}
+									className="flex shrink-0 items-center justify-center rounded-xl border-2 border-ink/15 px-3 py-2 text-xs text-ink/50 transition hover:border-red/30 hover:text-red"
+									title="Limpar filtros"
+								>
+									✕
+								</button>
+							)}
+						</div>
+
+						<div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+							<p className="text-sm font-medium text-ink/50">
+								A mostrar{' '}
+								<span className="font-bold text-ink">
+									{data?.items.length ?? 0}
+								</span>{' '}
+								produtos de{' '}
+								<span className="font-bold text-ink">
+									{data?.total ?? 0}
+								</span>
+							</p>
+							<select
+								className="input max-w-[200px]"
+								value={sortBy}
+								onChange={(e) =>
+									setParam('sortBy', e.target.value)
+								}
+							>
+								<option value="newest">Mais recentes</option>
+								<option value="oldest">Mais antigos</option>
+								<option value="price_asc">
+									Preço: menor → maior
+								</option>
+								<option value="price_desc">
+									Preço: maior → menor
+								</option>
+							</select>
+						</div>
+
+						{isFetching ? (
+							<AdCardSkeletonGrid count={6} />
+						) : (data?.items.length ?? 0) === 0 ? (
+							<EmptyState
+								title="Sem produtos encontrados"
+								description="Tenta mudar os filtros ou pesquisa noutra província."
+							/>
+						) : (
+							<>
+								<div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:items-start">
+									{(data?.items ?? []).map((ad) => (
+										<AdCard key={ad.id} ad={ad} />
+									))}
+								</div>
+								<Pagination
+									page={page}
+									totalPages={data?.totalPages ?? 1}
+									basePath="/anuncios"
+								/>
+							</>
 						)}
 					</div>
-
-					<div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-						<p className="text-sm font-medium text-ink/50">
-							A mostrar{' '}
-							<span className="font-bold text-ink">
-								{data?.items.length ?? 0}
-							</span>{' '}
-							produtos de{' '}
-							<span className="font-bold text-ink">
-								{data?.total ?? 0}
-							</span>
-						</p>
-						<select
-							className="input max-w-[200px]"
-							value={sortBy}
-							onChange={(e) => setParam('sortBy', e.target.value)}
-						>
-							<option value="newest">Mais recentes</option>
-							<option value="oldest">Mais antigos</option>
-							<option value="price_asc">
-								Preço: menor → maior
-							</option>
-							<option value="price_desc">
-								Preço: maior → menor
-							</option>
-						</select>
-					</div>
-
-					{isFetching ? (
-						<AdCardSkeletonGrid count={6} />
-					) : (data?.items.length ?? 0) === 0 ? (
-						<EmptyState
-							title="Sem produtos encontrados"
-							description="Tenta mudar os filtros ou pesquisa noutra província."
-						/>
-					) : (
-						<>
-							<div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:items-start">
-								{(data?.items ?? []).map((ad) => (
-									<AdCard key={ad.id} ad={ad} />
-								))}
-							</div>
-							<Pagination
-								page={page}
-								totalPages={data?.totalPages ?? 1}
-								basePath="/anuncios"
-							/>
-						</>
-					)}
 				</div>
-			</div>
 
-			<MobileFilterDrawer
-				open={filtersOpen}
-				onClose={() => setFiltersOpen(false)}
-			>
-				{filtersPanel}
-			</MobileFilterDrawer>
+				<MobileFilterDrawer
+					open={filtersOpen}
+					onClose={() => setFiltersOpen(false)}
+				>
+					{filtersPanel}
+				</MobileFilterDrawer>
+			</div>
 		</div>
 	);
 }
@@ -939,109 +954,125 @@ export function BusinessesPage() {
 	);
 
 	return (
-		<div className="mx-auto max-w-6xl px-4 py-10">
-			<div className="mb-6 flex flex-wrap items-end justify-between gap-4">
-				<h1 className="font-display text-3xl font-black">Empresas</h1>
-				<Link to="/auth/registar" className="btn-blue">
-					Registar a minha empresa
-				</Link>
-			</div>
+		<div>
+			<section className="bg-blue">
+				<div className="mx-auto max-w-6xl px-4 py-12">
+					<span className="kicker text-kwanza">Negócios locais</span>
+					<h1 className="mt-2 font-display text-3xl font-black text-white">
+						Empresas
+					</h1>
+					<p className="mt-3 max-w-xl text-sm leading-relaxed text-white/70">
+						Milhares de negócios angolanos organizados por categoria
+						e província.
+					</p>
+					<Link
+						to="/auth/registar"
+						className="btn-kwanza mt-6 shadow-[0_8px_18px_rgba(14,23,51,0.25)]"
+					>
+						Registar a minha empresa
+					</Link>
+				</div>
+			</section>
 
-			<div className="flex gap-6 lg:grid lg:grid-cols-[17rem_minmax(0,1fr)] lg:items-start">
-				<aside className="nice-scroll hidden w-64 shrink-0 flex-col gap-5 rounded-2xl border border-ink/10 bg-white p-4 lg:sticky lg:top-24 lg:flex lg:max-h-[calc(100vh-6rem)] lg:w-auto lg:overflow-y-auto lg:self-start">
-					{filtersPanel}
-				</aside>
+			<div className="mx-auto max-w-6xl px-4 py-10">
+				<div className="flex gap-6 lg:grid lg:grid-cols-[17rem_minmax(0,1fr)] lg:items-start">
+					<aside className="nice-scroll hidden w-64 shrink-0 flex-col gap-5 rounded-2xl border border-ink/10 bg-white p-4 lg:sticky lg:top-24 lg:flex lg:max-h-[calc(100vh-6rem)] lg:w-auto lg:overflow-y-auto lg:self-start">
+						{filtersPanel}
+					</aside>
 
-				<div className="min-w-0 flex-1">
-					<div className="mb-4 flex flex-wrap items-center gap-2 lg:hidden">
-						<input
-							className="input flex-1"
-							placeholder="Pesquisar empresas…"
-							value={draftQ}
-							onChange={(e) => setDraftQ(e.target.value)}
-							onKeyDown={(e) => {
-								if (e.key === 'Enter') {
-									e.preventDefault();
-									commit();
-								}
-							}}
-						/>
-						<button
-							type="button"
-							onClick={() => setFiltersOpen(true)}
-							className="flex shrink-0 items-center justify-center rounded-xl border-2 border-ink/15 px-3 py-2 text-xs font-bold text-ink/60 transition hover:border-ink/40"
-						>
-							☰ Filtros
-						</button>
-						<button
-							type="button"
-							onClick={commit}
-							className="shrink-0 rounded-xl bg-blue px-3 py-2 text-xs font-bold text-white transition hover:opacity-90"
-						>
-							Pesquisar
-						</button>
-						{hasActiveFilters && (
+					<div className="min-w-0 flex-1">
+						<div className="mb-4 flex flex-wrap items-center gap-2 lg:hidden">
+							<input
+								className="input flex-1"
+								placeholder="Pesquisar empresas…"
+								value={draftQ}
+								onChange={(e) => setDraftQ(e.target.value)}
+								onKeyDown={(e) => {
+									if (e.key === 'Enter') {
+										e.preventDefault();
+										commit();
+									}
+								}}
+							/>
 							<button
 								type="button"
-								onClick={clearFilters}
-								className="flex shrink-0 items-center justify-center rounded-xl border-2 border-ink/15 px-3 py-2 text-xs text-ink/50 transition hover:border-red/30 hover:text-red"
-								title="Limpar filtros"
+								onClick={() => setFiltersOpen(true)}
+								className="flex shrink-0 items-center justify-center rounded-xl border-2 border-ink/15 px-3 py-2 text-xs font-bold text-ink/60 transition hover:border-ink/40"
 							>
-								✕
+								☰ Filtros
 							</button>
+							<button
+								type="button"
+								onClick={commit}
+								className="shrink-0 rounded-xl bg-blue px-3 py-2 text-xs font-bold text-white transition hover:opacity-90"
+							>
+								Pesquisar
+							</button>
+							{hasActiveFilters && (
+								<button
+									type="button"
+									onClick={clearFilters}
+									className="flex shrink-0 items-center justify-center rounded-xl border-2 border-ink/15 px-3 py-2 text-xs text-ink/50 transition hover:border-red/30 hover:text-red"
+									title="Limpar filtros"
+								>
+									✕
+								</button>
+							)}
+						</div>
+
+						<div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+							<p className="text-sm font-medium text-ink/50">
+								A mostrar{' '}
+								<span className="font-bold text-ink">
+									{data?.items.length ?? 0}
+								</span>{' '}
+								empresas de{' '}
+								<span className="font-bold text-ink">
+									{data?.total ?? 0}
+								</span>
+							</p>
+							<select
+								className="input max-w-[200px]"
+								value={sortBy}
+								onChange={(e) =>
+									setParam('sortBy', e.target.value)
+								}
+							>
+								<option value="newest">Mais recentes</option>
+								<option value="oldest">Mais antigas</option>
+								<option value="name_asc">Nome: A → Z</option>
+								<option value="name_desc">Nome: Z → A</option>
+							</select>
+						</div>
+
+						{isFetching ? (
+							<BusinessCardSkeletonGrid count={6} />
+						) : (data?.items.length ?? 0) === 0 ? (
+							<EmptyState title="Sem empresas encontradas" />
+						) : (
+							<>
+								<div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:items-start">
+									{(data?.items ?? []).map((b) => (
+										<BusinessCard key={b.id} business={b} />
+									))}
+								</div>
+								<Pagination
+									page={page}
+									totalPages={data?.totalPages ?? 1}
+									basePath="/empresas"
+								/>
+							</>
 						)}
 					</div>
-
-					<div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-						<p className="text-sm font-medium text-ink/50">
-							A mostrar{' '}
-							<span className="font-bold text-ink">
-								{data?.items.length ?? 0}
-							</span>{' '}
-							empresas de{' '}
-							<span className="font-bold text-ink">
-								{data?.total ?? 0}
-							</span>
-						</p>
-						<select
-							className="input max-w-[200px]"
-							value={sortBy}
-							onChange={(e) => setParam('sortBy', e.target.value)}
-						>
-							<option value="newest">Mais recentes</option>
-							<option value="oldest">Mais antigas</option>
-							<option value="name_asc">Nome: A → Z</option>
-							<option value="name_desc">Nome: Z → A</option>
-						</select>
-					</div>
-
-					{isFetching ? (
-						<BusinessCardSkeletonGrid count={6} />
-					) : (data?.items.length ?? 0) === 0 ? (
-						<EmptyState title="Sem empresas encontradas" />
-					) : (
-						<>
-							<div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:items-start">
-								{(data?.items ?? []).map((b) => (
-									<BusinessCard key={b.id} business={b} />
-								))}
-							</div>
-							<Pagination
-								page={page}
-								totalPages={data?.totalPages ?? 1}
-								basePath="/empresas"
-							/>
-						</>
-					)}
 				</div>
-			</div>
 
-			<MobileFilterDrawer
-				open={filtersOpen}
-				onClose={() => setFiltersOpen(false)}
-			>
-				{filtersPanel}
-			</MobileFilterDrawer>
+				<MobileFilterDrawer
+					open={filtersOpen}
+					onClose={() => setFiltersOpen(false)}
+				>
+					{filtersPanel}
+				</MobileFilterDrawer>
+			</div>
 		</div>
 	);
 }

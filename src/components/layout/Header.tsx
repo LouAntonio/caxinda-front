@@ -10,6 +10,24 @@ import { useLogout } from '../../hooks/mutations';
 import { useChatStore } from '../../store/chat';
 import { fullName } from '../../lib/format';
 
+function SearchSVG({ className }: { className?: string }) {
+	return (
+		<svg
+			xmlns="http://www.w3.org/2000/svg"
+			viewBox="0 0 24 24"
+			fill="none"
+			stroke="currentColor"
+			strokeWidth="2.5"
+			strokeLinecap="round"
+			strokeLinejoin="round"
+			className={className}
+		>
+			<circle cx="11" cy="11" r="8" />
+			<path d="m21 21-4.35-4.35" />
+		</svg>
+	);
+}
+
 export function Header() {
 	const navigate = useNavigate();
 	const { pathname } = useLocation();
@@ -17,6 +35,7 @@ export function Header() {
 	const logout = useLogout();
 	const [menuOpen, setMenuOpen] = useState(false);
 	const [search, setSearch] = useState('');
+	const [searchType, setSearchType] = useState('all');
 	const menuRef = useRef<HTMLDivElement>(null);
 	const totalUnread = useChatStore((s) =>
 		Object.values(s.unreadByConversation).reduce((a, b) => a + b, 0),
@@ -53,7 +72,9 @@ export function Header() {
 	const submitSearch = (e: React.FormEvent) => {
 		e.preventDefault();
 		if (search.trim()) {
-			void navigate(`/busca?q=${encodeURIComponent(search.trim())}`);
+			const params = new URLSearchParams({ q: search.trim() });
+			if (searchType !== 'all') params.set('type', searchType);
+			void navigate(`/busca?${params.toString()}`);
 		}
 	};
 
@@ -79,31 +100,86 @@ export function Header() {
 				<div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-3 px-4">
 					<Logo variant={showTransparent ? 'dark' : 'default'} />
 					<form onSubmit={submitSearch} className="relative flex-1">
-						<input
-							value={search}
-							onChange={(e) => setSearch(e.target.value)}
-							placeholder="Pesquisar produtos, serviços, empresas…"
-							className={`input !rounded-full !py-2 ${
+						<div
+							className={`flex items-center overflow-hidden rounded-full border-2 transition-colors ${
 								showTransparent
-									? '!border-white/30 !bg-white/15 !text-white placeholder:!text-white/50 focus:!border-white/60'
-									: ''
-							} ${search.length > 0 ? '!pr-9' : ''}`}
-							aria-label="Pesquisar"
-						/>
-						{search.length > 0 && (
-							<button
-								type="button"
-								onClick={() => setSearch('')}
-								className={`absolute top-1/2 right-3 flex h-5 w-5 -translate-y-1/2 items-center justify-center rounded-full text-xs font-bold transition ${
+									? 'border-white/30 bg-white/15'
+									: 'border-ink/15 bg-white'
+							}`}
+						>
+							<SearchSVG
+								className={`ml-3 h-4 w-4 shrink-0 ${
 									showTransparent
-										? 'bg-white/20 text-white hover:bg-white/30'
-										: 'bg-ink/10 text-ink/60 hover:bg-ink/20'
+										? 'text-white/50'
+										: 'text-ink/40'
 								}`}
-								aria-label="Limpar pesquisa"
-							>
-								✕
-							</button>
-						)}
+							/>
+							<div className="relative shrink-0">
+								<select
+									value={searchType}
+									onChange={(e) =>
+										setSearchType(e.target.value)
+									}
+									className={`cursor-pointer appearance-none bg-transparent py-2.5 pl-2 pr-5 text-xs font-bold outline-none ${
+										showTransparent
+											? 'text-white/70'
+											: 'text-ink/70'
+									}`}
+								>
+									<option value="all">Todos</option>
+									<option value="AD">Produtos</option>
+									<option value="BUSINESS">Empresas</option>
+								</select>
+								<svg
+									xmlns="http://www.w3.org/2000/svg"
+									viewBox="0 0 24 24"
+									fill="none"
+									stroke="currentColor"
+									strokeWidth="3"
+									strokeLinecap="round"
+									strokeLinejoin="round"
+									className={`pointer-events-none absolute right-1.5 top-1/2 h-3 w-3 -translate-y-1/2 ${
+										showTransparent
+											? 'text-white/50'
+											: 'text-ink/40'
+									}`}
+								>
+									<path d="m6 9 6 6 6-6" />
+								</svg>
+							</div>
+							<div
+								className={`h-5 w-px shrink-0 ${
+									showTransparent
+										? 'bg-white/20'
+										: 'bg-ink/15'
+								}`}
+							/>
+							<input
+								value={search}
+								onChange={(e) => setSearch(e.target.value)}
+								placeholder="Pesquisar…"
+								className={`flex-1 bg-transparent px-3 py-2.5 text-sm font-medium outline-none placeholder:font-normal ${
+									showTransparent
+										? 'text-white placeholder:text-white/50'
+										: 'text-ink placeholder:text-ink/40'
+								}`}
+								aria-label="Pesquisar"
+							/>
+							{search.length > 0 && (
+								<button
+									type="button"
+									onClick={() => setSearch('')}
+									className={`mr-2 flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-xs font-bold transition ${
+										showTransparent
+											? 'bg-white/20 text-white hover:bg-white/30'
+											: 'bg-ink/10 text-ink/60 hover:bg-ink/20'
+									}`}
+									aria-label="Limpar pesquisa"
+								>
+									✕
+								</button>
+							)}
+						</div>
 					</form>
 					<nav
 						className={`hidden items-center gap-4 text-sm font-bold lg:flex ${

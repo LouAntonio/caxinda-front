@@ -68,6 +68,9 @@
 	.card {
 		@apply flex h-full flex-col rounded-2xl border border-ink/10 bg-white shadow-sm;
 	}
+	.card-elevated {
+		@apply flex h-full flex-col rounded-2xl border border-ink/10 bg-white shadow-[0_10px_30px_rgba(14,23,51,0.08)] transition hover:-translate-y-0.5 hover:shadow-[0_16px_40px_rgba(14,23,51,0.12)];
+	}
 	.tag {
 		@apply inline-flex items-center rounded-full border-2 px-3 py-1 text-xs font-bold;
 	}
