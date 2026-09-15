@@ -51,6 +51,12 @@ import {
 import { Spinner } from '../components/ui/Spinner';
 import { MiniChart } from '../components/ui/MiniChart';
 import { RangePicker, analyticsQuery } from '../components/ui/RangePicker';
+import {
+	SegmentToggle,
+	GroupByToggle,
+	MetricToggle,
+	periodLabel,
+} from '../components/ui/AnalyticsControls';
 import { FormSkeleton } from '../components/skeletons/FormSkeletons';
 import { TableSkeleton } from '../components/skeletons/SkeletonsTables';
 import { EmptyState } from '../components/ui/EmptyState';
@@ -59,6 +65,7 @@ import { Stars } from '../components/ui/Stars';
 import { Avatar } from '../components/ui/Avatar';
 import { ConfirmButton } from '../components/ui/ConfirmButton';
 import { Price } from '../components/ui/Price';
+import { BusinessInfoSection } from '../components/businesses/BusinessDetailParts';
 import { getApiError, http } from '../lib/api';
 import {
 	PanelIcon,
@@ -72,7 +79,12 @@ import {
 	PROVINCE_LABELS,
 } from '../lib/format';
 import type {
+	AdListItem,
+	AnalyticsGroupBy,
+	AnalyticsQuery,
 	AnalyticsRange,
+	AnalyticsType,
+	Business,
 	Category,
 	CategoryType,
 	ContactChannel,
@@ -305,9 +317,12 @@ export function AdminAdsPage() {
 	usePageTitle('Gerir anúncios');
 	const [q, setQ] = useState('');
 	const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+	const [activeAdId, setActiveAdId] = useState<string | null>(null);
 	const { data, isLoading } = useAdminAds(
 		q ? { q, limit: 25 } : { limit: 25 },
 	);
+	const activeAd =
+		(data?.items ?? []).find((item) => item.id === activeAdId) ?? null;
 
 	return (
 		<div>
@@ -349,12 +364,9 @@ export function AdminAdsPage() {
 								</button>
 							)}
 							<div className="min-w-0 flex-1">
-								<Link
-									to={`/produtos/${ad.slug}`}
-									className="line-clamp-1 text-sm font-bold hover:text-red"
-								>
+								<span className="line-clamp-1 text-sm font-bold">
 									{ad.title}
-								</Link>
+								</span>
 								<p className="text-xs text-ink/50">
 									{fullName(ad.user?.name, ad.user?.surname)}{' '}
 									· {formatDate(ad.createdAt)}
@@ -370,7 +382,13 @@ export function AdminAdsPage() {
 									)}
 								</div>
 							</div>
-							<AdModerateActions ad={ad} />
+							<button
+								type="button"
+								onClick={() => setActiveAdId(ad.id)}
+								className="btn-ghost"
+							>
+								Detalhes
+							</button>
 						</div>
 					))}
 				</div>
@@ -380,7 +398,120 @@ export function AdminAdsPage() {
 				index={previewUrl ? 0 : null}
 				onClose={() => setPreviewUrl(null)}
 			/>
+			<AdDetailModal ad={activeAd} onClose={() => setActiveAdId(null)} />
 		</div>
+	);
+}
+
+function AdDetailModal({
+	ad,
+	onClose,
+}: {
+	ad: AdListItem | null;
+	onClose: () => void;
+}) {
+	return (
+		<Modal
+			open={Boolean(ad)}
+			onClose={onClose}
+			title="Detalhes do anúncio"
+			wide
+		>
+			{ad ? (
+				<div className="flex flex-col gap-4">
+					<div className="flex flex-col gap-2 sm:flex-row sm:items-start">
+						{ad.image && (
+							<img
+								src={ad.image}
+								alt={ad.title}
+								className="h-32 w-40 shrink-0 rounded-lg object-cover"
+							/>
+						)}
+						<div className="min-w-0 flex-1">
+							<h3 className="font-display text-lg font-black">
+								{ad.title}
+							</h3>
+							<p className="mt-1 text-xs text-ink/50">
+								{fullName(ad.user?.name, ad.user?.surname)}
+							</p>
+							<div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
+								<Price value={ad.price} />
+								<StatusPill status={ad.status} />
+								<StatusPill status={ad.visibility} />
+								{ad.verified && (
+									<span className="chip border-blue/25 bg-blue/10 font-bold text-blue">
+										✔ verificado
+									</span>
+								)}
+							</div>
+						</div>
+					</div>
+
+					<div className="grid gap-2 rounded-lg bg-ink/[0.03] p-3 text-xs">
+						<div className="flex justify-between">
+							<span className="text-ink/40">Categoria</span>
+							<span className="font-bold">
+								{ad.category?.name ?? '—'}
+							</span>
+						</div>
+						<div className="flex justify-between">
+							<span className="text-ink/40">Província</span>
+							<span className="font-bold">
+								{ad.province
+									? (PROVINCE_LABELS[ad.province] ??
+										ad.province)
+									: '—'}
+							</span>
+						</div>
+						<div className="flex justify-between">
+							<span className="text-ink/40">Criado</span>
+							<span className="font-bold">
+								{formatDate(ad.createdAt)}
+							</span>
+						</div>
+						<div className="flex justify-between">
+							<span className="text-ink/40">Visualizações</span>
+							<span className="font-mono font-bold">
+								{ad.views}
+							</span>
+						</div>
+					</div>
+
+					<div className="flex flex-col gap-1">
+						<h4 className="font-display text-sm font-black">
+							Descrição
+						</h4>
+						<p className="whitespace-pre-wrap text-sm text-ink/70">
+							{ad.description}
+						</p>
+					</div>
+
+					<div className="flex flex-wrap gap-2 border-t border-ink/5 pt-4">
+						<AdModerateActions ad={ad} />
+						{ad.user && (
+							<Link
+								to={`/admin/utilizadores/${ad.user.id}`}
+								className="btn-ghost"
+								onClick={onClose}
+							>
+								Ver utilizador
+							</Link>
+						)}
+						<Link
+							to={`/produtos/${ad.slug}`}
+							className="btn-ghost"
+							onClick={onClose}
+						>
+							Ver no site
+						</Link>
+					</div>
+				</div>
+			) : (
+				<p className="py-6 text-sm text-ink/50">
+					Sem dados para apresentar.
+				</p>
+			)}
+		</Modal>
 	);
 }
 
@@ -736,8 +867,10 @@ export function AdminAdFormPage() {
 export function AdminBusinessesPage() {
 	usePageTitle('Gerir empresas');
 	const { data, isLoading } = useBusinesses({ page: 1, limit: 50 });
-	const moderate = useModerateBusiness();
 	const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+	const [activeId, setActiveId] = useState<string | null>(null);
+	const activeBusiness =
+		(data?.items ?? []).find((item) => item.id === activeId) ?? null;
 	return (
 		<div>
 			<Title>Verificação de empresas</Title>
@@ -767,12 +900,9 @@ export function AdminBusinessesPage() {
 								</button>
 							)}
 							<div className="min-w-0 flex-1">
-								<Link
-									to={`/empresas/${b.slug}`}
-									className="line-clamp-1 text-sm font-bold hover:text-blue"
-								>
+								<span className="line-clamp-1 text-sm font-bold">
 									{b.name}
-								</Link>
+								</span>
 								<p className="text-xs text-ink/50">
 									{b.category.name} ·{' '}
 									{fullName(b.owner.name, b.owner.surname)}
@@ -787,55 +917,13 @@ export function AdminBusinessesPage() {
 									)}
 								</div>
 							</div>
-							<div className="flex flex-wrap gap-1.5">
-								{!b.isVerified && (
-									<button
-										className="btn-blue"
-										onClick={() =>
-											void toast.promise(
-												moderate.mutateAsync({
-													id: b.id,
-													isVerified: true,
-												}),
-												{
-													loading:
-														'A verificar empresa…',
-													success:
-														'Empresa verificada.',
-													error: (err) =>
-														getApiError(err),
-												},
-											)
-										}
-									>
-										Verificar
-									</button>
-								)}
-								<button
-									className="btn-ghost"
-									onClick={() =>
-										void toast.promise(
-											moderate.mutateAsync({
-												id: b.id,
-												status:
-													b.status === 'SHOW'
-														? 'HIDE'
-														: 'SHOW',
-											}),
-											{
-												loading: 'A alterar estado…',
-												success: 'Estado alterado.',
-												error: (err) =>
-													getApiError(err),
-											},
-										)
-									}
-								>
-									{b.status === 'SHOW'
-										? 'Ocultar'
-										: 'Mostrar'}
-								</button>
-							</div>
+							<button
+								type="button"
+								onClick={() => setActiveId(b.id)}
+								className="btn-ghost"
+							>
+								Detalhes
+							</button>
 						</div>
 					))}
 				</div>
@@ -845,7 +933,112 @@ export function AdminBusinessesPage() {
 				index={previewUrl ? 0 : null}
 				onClose={() => setPreviewUrl(null)}
 			/>
+			<BusinessDetailModal
+				business={activeBusiness}
+				onClose={() => setActiveId(null)}
+			/>
 		</div>
+	);
+}
+
+function BusinessDetailModal({
+	business,
+	onClose,
+}: {
+	business: Business | null;
+	onClose: () => void;
+}) {
+	const moderate = useModerateBusiness();
+
+	return (
+		<Modal
+			open={Boolean(business)}
+			onClose={onClose}
+			title="Detalhes da empresa"
+			wide
+		>
+			{business ? (
+				<div className="flex flex-col gap-4">
+					<BusinessInfoSection
+						business={business}
+						ownerLabel={
+							<Link
+								to={`/admin/utilizadores/${business.owner.id}`}
+								onClick={onClose}
+								className="font-bold text-blue hover:underline"
+							>
+								{fullName(
+									business.owner.name,
+									business.owner.surname,
+								)}
+							</Link>
+						}
+					/>
+
+					<div className="flex flex-wrap gap-2 border-t border-ink/5 pt-4">
+						{!business.isVerified && (
+							<button
+								className="btn-blue"
+								onClick={() =>
+									void toast.promise(
+										moderate.mutateAsync({
+											id: business.id,
+											isVerified: true,
+										}),
+										{
+											loading: 'A verificar empresa…',
+											success: 'Empresa verificada.',
+											error: (err) => getApiError(err),
+										},
+									)
+								}
+							>
+								Verificar
+							</button>
+						)}
+						<button
+							className="btn-ghost"
+							onClick={() =>
+								void toast.promise(
+									moderate.mutateAsync({
+										id: business.id,
+										status:
+											business.status === 'SHOW'
+												? 'HIDE'
+												: 'SHOW',
+									}),
+									{
+										loading: 'A alterar estado…',
+										success: 'Estado alterado.',
+										error: (err) => getApiError(err),
+									},
+								)
+							}
+						>
+							{business.status === 'SHOW' ? 'Ocultar' : 'Mostrar'}
+						</button>
+						<Link
+							to={`/area/analiticas/empresa/${business.id}`}
+							className="btn-ghost"
+							onClick={onClose}
+						>
+							Estatísticas
+						</Link>
+						<Link
+							to={`/empresas/${business.slug}`}
+							className="btn-ghost"
+							onClick={onClose}
+						>
+							Ver no site
+						</Link>
+					</div>
+				</div>
+			) : (
+				<p className="py-6 text-sm text-ink/50">
+					Sem dados para apresentar.
+				</p>
+			)}
+		</Modal>
 	);
 }
 
@@ -2503,7 +2696,23 @@ export function AdminAnalyticsPage() {
 	const [custom, setCustom] = useState(false);
 	const [from, setFrom] = useState('');
 	const [to, setTo] = useState('');
-	const query = analyticsQuery(range, custom, from, to);
+	const [groupBy, setGroupBy] = useState<AnalyticsGroupBy>('day');
+	const [type, setType] = useState<'ALL' | AnalyticsType>('ALL');
+	const [categoryId, setCategoryId] = useState('');
+	const [province, setProvince] = useState('');
+	const [metric, setMetric] = useState<'views' | 'clicks'>('views');
+
+	const { data: categories, isLoading: categoriesLoading } = useCategories(
+		type === 'ALL' ? undefined : type,
+	);
+
+	const query: AnalyticsQuery = {
+		...(custom ? analyticsQuery(range, custom, from, to) : { range }),
+		groupBy,
+		type: type === 'ALL' ? undefined : type,
+		categories: categoryId || undefined,
+		provinces: province || undefined,
+	};
 	const { data, isLoading, isError, error, refetch } =
 		usePlatformAnalyticsOverview(query);
 
@@ -2544,6 +2753,12 @@ export function AdminAnalyticsPage() {
 		website: 'Website',
 	};
 
+	const resetFilters = () => {
+		setType('ALL');
+		setCategoryId('');
+		setProvince('');
+	};
+
 	return (
 		<div>
 			<div className="mb-6 flex flex-wrap items-start justify-between gap-4">
@@ -2568,13 +2783,7 @@ export function AdminAnalyticsPage() {
 					onToChange={setTo}
 				/>
 				<div className="flex flex-wrap items-center gap-2 text-xs text-ink/50">
-					<span>
-						{custom
-							? from || to
-								? `Período personalizado${from ? ` de ${from}` : ''}${to ? ` até ${to}` : ''}`
-								: 'Escolhe as datas para consultar'
-							: `Últimos ${range}`}
-					</span>
+					<span>{periodLabel(range, custom, from, to)}</span>
 					{custom && (from || to) && (
 						<button
 							type="button"
@@ -2582,6 +2791,76 @@ export function AdminAnalyticsPage() {
 							className="font-bold text-blue hover:underline"
 						>
 							Atualizar
+						</button>
+					)}
+				</div>
+
+				<div className="flex flex-wrap items-center gap-3 border-t border-ink/5 pt-4">
+					<span className="text-xs font-bold uppercase tracking-wide text-ink/40">
+						Segmento
+					</span>
+					<SegmentToggle
+						ariaLabel="Segmento das estatísticas"
+						options={[
+							{ value: 'ALL', label: 'Tudo' },
+							{ value: 'AD', label: 'Anúncios' },
+							{ value: 'BUSINESS', label: 'Empresas' },
+						]}
+						value={type}
+						onChange={(next) => {
+							setType(next);
+							setCategoryId('');
+						}}
+					/>
+					<GroupByToggle value={groupBy} onChange={setGroupBy} />
+					<MetricToggle
+						value={metric}
+						onChange={setMetric}
+						showClicks
+					/>
+					{type === 'AD' || type === 'BUSINESS' ? (
+						<select
+							aria-label="Categoria"
+							className="input !py-1.5 text-xs"
+							value={categoryId}
+							onChange={(event) =>
+								setCategoryId(event.target.value)
+							}
+							disabled={categoriesLoading}
+						>
+							<option value="">Todas as categorias</option>
+							{(categories ?? []).map((item) => (
+								<option key={item.id} value={item.id}>
+									{item.name}
+								</option>
+							))}
+						</select>
+					) : (
+						<span className="text-xs text-ink/40">
+							Categoria disponível ao escolher Anúncios ou
+							Empresas.
+						</span>
+					)}
+					<select
+						aria-label="Província"
+						className="input !py-1.5 text-xs"
+						value={province}
+						onChange={(event) => setProvince(event.target.value)}
+					>
+						<option value="">Todas as províncias</option>
+						{PROVINCES.map((item) => (
+							<option key={item} value={item}>
+								{PROVINCE_LABELS[item] ?? item}
+							</option>
+						))}
+					</select>
+					{(type !== 'ALL' || categoryId || province) && (
+						<button
+							type="button"
+							onClick={resetFilters}
+							className="text-xs font-bold text-red hover:underline"
+						>
+							Limpar filtros
 						</button>
 					)}
 				</div>
@@ -2627,7 +2906,7 @@ export function AdminAnalyticsPage() {
 						<div className="flex items-center justify-between gap-3">
 							<div>
 								<h2 className="font-display text-sm font-black">
-									Atividade por dia
+									Atividade por período
 								</h2>
 								<p className="text-xs text-ink/50">
 									Evolução das visualizações no período
@@ -2635,7 +2914,7 @@ export function AdminAnalyticsPage() {
 								</p>
 							</div>
 						</div>
-						<MiniChart data={data?.daily ?? []} />
+						<MiniChart data={data?.daily ?? []} metric={metric} />
 					</div>
 
 					<div className="card mt-5 gap-4 p-5">

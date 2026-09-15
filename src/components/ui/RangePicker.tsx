@@ -11,7 +11,7 @@ interface RangePickerProps {
 	onToChange: (value: string) => void;
 }
 
-const ranges: AnalyticsRange[] = ['7d', '30d', '90d', '180d', '365d'];
+const ranges: AnalyticsRange[] = ['7d', '30d', '90d', '180d', '365d', '730d'];
 
 export function RangePicker({
 	range,

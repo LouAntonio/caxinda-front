@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { usePageTitle } from '../hooks/usePageTitle';
 import { useParams, Link } from 'react-router-dom';
 import {
@@ -10,21 +11,39 @@ import { useSession } from '../hooks/useSession';
 import { MiniChart } from '../components/ui/MiniChart';
 import { ButtonLoader } from '../components/ui/Spinner';
 import { EmptyState } from '../components/ui/EmptyState';
+import { RangePicker, analyticsQuery } from '../components/ui/RangePicker';
+import {
+	GroupByToggle,
+	MetricToggle,
+	periodLabel,
+} from '../components/ui/AnalyticsControls';
 import { ReviewSection } from './MarketplacePages';
 import type {
 	AdAnalytics,
+	AnalyticsDaily,
+	AnalyticsGroupBy,
+	AnalyticsQuery,
+	AnalyticsRange,
 	BusinessAnalytics,
 	ContactChannel,
 } from '../types/api';
 
 function ItemAnalyticsPanel({
 	title,
+	period,
 	data,
 	isLoading,
+	metric,
+	showClicks,
+	onMetricChange,
 }: {
 	title: string;
+	period: string;
 	data?: AdAnalytics | BusinessAnalytics;
 	isLoading: boolean;
+	metric: 'views' | 'clicks';
+	showClicks: boolean;
+	onMetricChange: (value: 'views' | 'clicks') => void;
 }) {
 	const channelLabels: Record<ContactChannel, string> = {
 		phone: 'Telefone',
@@ -38,15 +57,23 @@ function ItemAnalyticsPanel({
 			? data.totals.clicksByChannel.map((item) => item.count)
 			: []),
 	);
+	const series: AnalyticsDaily[] = data?.daily ?? [];
 
 	return (
 		<section className="card gap-4 p-6">
-			<div className="flex items-center justify-between gap-3">
+			<div className="flex flex-wrap items-center justify-between gap-3">
 				<div>
 					<h2 className="kicker">{title}</h2>
-					<p className="mt-1 text-xs text-ink/50">Últimos 30 dias.</p>
+					<p className="mt-1 text-xs text-ink/50">{period}.</p>
 				</div>
-				{isLoading && <ButtonLoader />}
+				<div className="flex items-center gap-3">
+					<MetricToggle
+						value={metric}
+						onChange={onMetricChange}
+						showClicks={showClicks}
+					/>
+					{isLoading && <ButtonLoader />}
+				</div>
 			</div>
 
 			{!data ? (
@@ -70,7 +97,7 @@ function ItemAnalyticsPanel({
 						/>
 					</div>
 
-					<MiniChart data={data.daily} />
+					<MiniChart data={series} metric={metric} />
 
 					{data.totals.clicksByChannel.length > 0 && (
 						<div className="flex flex-col gap-3">
@@ -110,7 +137,7 @@ function ItemAnalyticsPanel({
 						/>
 					</div>
 
-					<MiniChart data={data.daily} />
+					<MiniChart data={series} metric={metric} />
 				</>
 			)}
 		</section>
@@ -135,6 +162,19 @@ export function OwnerAnalyticsPage() {
 
 	const isAd = type === 'produto';
 	const isBusiness = type === 'empresa';
+	const isValid = isAd || isBusiness;
+
+	const [range, setRange] = useState<AnalyticsRange>('30d');
+	const [custom, setCustom] = useState(false);
+	const [from, setFrom] = useState('');
+	const [to, setTo] = useState('');
+	const [groupBy, setGroupBy] = useState<AnalyticsGroupBy>('day');
+	const [metric, setMetric] = useState<'views' | 'clicks'>('views');
+
+	const query: AnalyticsQuery = {
+		...(custom ? analyticsQuery(range, custom, from, to) : { range }),
+		groupBy,
+	};
 
 	const { data: ad, isLoading: adLoading } = useAd(isAd ? id : undefined);
 	const { data: business, isLoading: businessLoading } = useBusiness(
@@ -153,10 +193,25 @@ export function OwnerAnalyticsPage() {
 
 	const { data: adAnalytics, isLoading: adAnalyticsLoading } = useAdAnalytics(
 		isAd && isOwner ? id : undefined,
-		'30d',
+		query,
 	);
 	const { data: businessAnalytics, isLoading: businessAnalyticsLoading } =
-		useBusinessAnalytics(isBusiness && isOwner ? id : undefined, '30d');
+		useBusinessAnalytics(isBusiness && isOwner ? id : undefined, query);
+
+	if (!isValid) {
+		return (
+			<div className="mx-auto max-w-3xl px-4 py-10">
+				<EmptyState
+					title="Item não encontrado"
+					action={
+						<Link to="/area" className="btn-primary">
+							Voltar à minha área
+						</Link>
+					}
+				/>
+			</div>
+		);
+	}
 
 	if (isLoading) {
 		return (
@@ -225,12 +280,30 @@ export function OwnerAnalyticsPage() {
 				Estatísticas — {name}
 			</h1>
 
+			<div className="mb-5 flex flex-wrap items-center gap-2">
+				<RangePicker
+					range={range}
+					custom={custom}
+					from={from}
+					to={to}
+					onRangeChange={setRange}
+					onCustomToggle={() => setCustom((value) => !value)}
+					onFromChange={setFrom}
+					onToChange={setTo}
+				/>
+				<GroupByToggle value={groupBy} onChange={setGroupBy} />
+			</div>
+
 			<ItemAnalyticsPanel
 				title={
 					isAd ? 'Estatísticas do produto' : 'Estatísticas da empresa'
 				}
+				period={periodLabel(range, custom, from, to)}
 				data={isAd ? adAnalytics : businessAnalytics}
 				isLoading={isAd ? adAnalyticsLoading : businessAnalyticsLoading}
+				metric={metric}
+				showClicks={isBusiness}
+				onMetricChange={setMetric}
 			/>
 
 			<div className="mt-8">

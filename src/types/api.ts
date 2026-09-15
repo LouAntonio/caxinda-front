@@ -457,10 +457,16 @@ export interface MessagesResponse {
 
 export type AnalyticsRange = '7d' | '30d' | '90d' | '180d' | '365d' | '730d';
 export type ContactChannel = 'phone' | 'whatsapp' | 'email' | 'website';
+export type AnalyticsGroupBy = 'day' | 'week' | 'month';
+export type AnalyticsType = 'AD' | 'BUSINESS';
 export interface AnalyticsQuery {
 	range?: AnalyticsRange;
 	from?: string;
 	to?: string;
+	groupBy?: AnalyticsGroupBy;
+	type?: AnalyticsType;
+	categories?: string;
+	provinces?: string;
 }
 
 export interface AnalyticsDaily {

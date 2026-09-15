@@ -53,7 +53,9 @@ import { AdCard } from '../components/ads/AdCard';
 import { AdCardSkeletonGrid } from '../components/ads/AdCardSkeleton';
 import { BusinessCard } from '../components/businesses/BusinessCard';
 import { BusinessCardSkeletonGrid } from '../components/businesses/BusinessCardSkeleton';
+import { BusinessInfoSection } from '../components/businesses/BusinessDetailParts';
 import { EmptyState } from '../components/ui/EmptyState';
+import { Modal } from '../components/ui/Modal';
 import { Skeleton } from '../components/ui/Skeleton';
 import { FormSkeleton } from '../components/skeletons/FormSkeletons';
 import { Spinner } from '../components/ui/Spinner';
@@ -76,7 +78,7 @@ import {
 	fullName,
 	PROVINCE_LABELS,
 } from '../lib/format';
-import type { KycRecord, MediaAsset, Province } from '../types/api';
+import type { Business, KycRecord, MediaAsset, Province } from '../types/api';
 import { PROVINCES } from '../types/api';
 import {
 	PanelIcon,
@@ -380,6 +382,9 @@ export function MyBusinessesPage() {
 		limit: 50,
 		ownerId: user?.id,
 	});
+	const [detailsId, setDetailsId] = useState<string | null>(null);
+	const detailsBusiness =
+		(data?.items ?? []).find((item) => item.id === detailsId) ?? null;
 
 	return (
 		<div>
@@ -443,34 +448,113 @@ export function MyBusinessesPage() {
 					{data.items.map((b) => (
 						<div key={b.id}>
 							<BusinessCard business={b} showStatus />
-							<div className="mt-2 flex flex-wrap gap-1.5">
-								<StatusToggle id={b.id} current={b.status} />
-								<FeatureBusinessButton business={b} />
-								<Link
-									to={`/area/empresas/${b.id}/subscricao`}
-									className="btn-ghost !text-blue"
+							<div className="mt-2">
+								<button
+									type="button"
+									onClick={() => setDetailsId(b.id)}
+									className="btn-ghost w-full"
 								>
-									Planos
-								</Link>
-								<Link
-									to={`/area/analiticas/empresa/${b.id}`}
-									className="btn-ghost"
-								>
-									Estatísticas
-								</Link>
-								<Link
-									to={`/area/empresas/${b.id}/editar`}
-									className="btn-ghost"
-								>
-									Editar
-								</Link>
-								<DeleteBusinessButton id={b.id} name={b.name} />
+									Detalhes
+								</button>
 							</div>
 						</div>
 					))}
 				</div>
 			)}
+			<MyBusinessDetailModal
+				business={detailsBusiness}
+				onClose={() => setDetailsId(null)}
+			/>
 		</div>
+	);
+}
+
+function MyBusinessDetailModal({
+	business,
+	onClose,
+}: {
+	business: Business | null;
+	onClose: () => void;
+}) {
+	const { data: subscriptions } = useMySubscriptions();
+	const subscription = subscriptions?.find(
+		(item) => item.business.id === business?.id,
+	);
+
+	return (
+		<Modal
+			open={Boolean(business)}
+			onClose={onClose}
+			title="Detalhes da empresa"
+			wide
+		>
+			{business ? (
+				<div className="flex flex-col gap-4">
+					<BusinessInfoSection
+						business={business}
+						planLabel={
+							subscription ? (
+								<div className="flex items-center justify-between gap-2 rounded-lg border border-blue/20 bg-blue/5 px-3 py-2 text-xs">
+									<span className="font-bold text-blue">
+										Plano {subscription.plan.name}
+									</span>
+									<span className="font-mono text-ink/60">
+										{subscription.status === 'ACTIVE'
+											? `até ${formatShortDate(subscription.endDate)}`
+											: subscription.status === 'PENDING'
+												? 'pagamento em análise'
+												: 'sem subscrição ativa'}
+									</span>
+								</div>
+							) : undefined
+						}
+					/>
+
+					<div className="flex flex-col gap-1.5 border-t border-ink/5 pt-4">
+						<div className="flex flex-wrap justify-center gap-1.5">
+							<StatusToggle
+								id={business.id}
+								current={business.status}
+							/>
+							<FeatureBusinessButton business={business} />
+						</div>
+						<div className="flex flex-wrap justify-center gap-1.5">
+							<Link
+								to={`/area/empresas/${business.id}/subscricao`}
+								className="btn-ghost !text-blue"
+								onClick={onClose}
+							>
+								Planos
+							</Link>
+							<Link
+								to={`/area/analiticas/empresa/${business.id}`}
+								className="btn-ghost"
+								onClick={onClose}
+							>
+								Estatísticas
+							</Link>
+							<Link
+								to={`/area/empresas/${business.id}/editar`}
+								className="btn-ghost"
+								onClick={onClose}
+							>
+								Editar
+							</Link>
+						</div>
+						<div className="flex justify-center border-t border-ink/5 pt-3">
+							<DeleteBusinessButton
+								id={business.id}
+								name={business.name}
+							/>
+						</div>
+					</div>
+				</div>
+			) : (
+				<p className="py-6 text-sm text-ink/50">
+					Sem dados para apresentar.
+				</p>
+			)}
+		</Modal>
 	);
 }
 

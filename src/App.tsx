@@ -153,15 +153,7 @@ const router = createBrowserRouter([
 					{ path: 'verificacao', element: <KycPage /> },
 					{ path: 'definicoes', element: <SettingsPage /> },
 					{
-						path: 'analiticas/produto/:id',
-						element: (
-							<RequireBusiness>
-								<OwnerAnalyticsPage />
-							</RequireBusiness>
-						),
-					},
-					{
-						path: 'analiticas/empresa/:id',
+						path: 'analiticas/:type/:id',
 						element: (
 							<RequireBusiness>
 								<OwnerAnalyticsPage />
