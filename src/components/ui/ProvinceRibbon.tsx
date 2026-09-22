@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import type { CSSProperties } from 'react';
 
 const PROVINCE_NAMES: Record<string, string> = {
 	BENGO: 'Bengo',
@@ -27,79 +27,49 @@ const provinces = Object.entries(PROVINCE_NAMES).map(([code, name]) => ({
 }));
 
 export function ProvinceRibbon() {
-	const [isVisible, setIsVisible] = useState(false);
-
-	useEffect(() => {
-		const timer = setTimeout(() => setIsVisible(true), 600);
-		return () => clearTimeout(timer);
-	}, []);
-
 	return (
 		<section
 			className="mx-auto max-w-6xl px-4 py-8"
 			aria-label="Lista de províncias presentes no Caxinda Divulga"
 		>
-			<div className="relative overflow-hidden">
+			<div className="province-ribbon relative overflow-hidden">
 				<div
-					className="flex whitespace-nowrap gap-3 py-3"
+					className="province-ribbon-track flex whitespace-nowrap py-3"
 					style={
 						{
 							'--sweep-duration': '20s',
-						} as React.CSSProperties
+						} as CSSProperties
 					}
 				>
-					<div
-						className="flex gap-3"
-						style={
-							{
-								animation: isVisible
-									? 'sweep var(--sweep-duration) linear infinite'
-									: 'none',
-								'--motion-reduce': 'running',
-							} as React.CSSProperties
-						}
-					>
-						{provinces.map(({ code, name }) => (
-							<span
-								key={code}
-								className="inline-flex items-center rounded-full bg-ink/5 px-3 py-1 text-xs font-mono text-ink/60 ring-1 ring-inset ring-ink/10"
-								style={{ whiteSpace: 'nowrap' }}
-							>
-								{name}
-							</span>
-						))}
-					</div>
-					<div
-						className="flex gap-3"
-						style={{
-							animation: isVisible
-								? 'sweep var(--sweep-duration) linear infinite'
-								: 'none',
-							animationDelay: 'calc(var(--sweep-duration) / -2)',
-						}}
-					>
-						{provinces.map(({ code, name }) => (
-							<span
-								key={`dup-${code}`}
-								className="inline-flex items-center rounded-full bg-ink/5 px-3 py-1 text-xs font-mono text-ink/60 ring-1 ring-inset ring-ink/10"
-								style={{ whiteSpace: 'nowrap' }}
-							>
-								{name}
-							</span>
-						))}
-					</div>
+					{[0, 1].map((half) => (
+						<div key={half} className="flex gap-3 pr-3">
+							{provinces.map(({ code, name }) => (
+								<span
+									key={`${half}-${code}`}
+									className="inline-flex items-center rounded-full bg-ink/5 px-3 py-1 text-xs font-mono text-ink/60 ring-1 ring-inset ring-ink/10"
+								>
+									{name}
+								</span>
+							))}
+						</div>
+					))}
 				</div>
 
 				<style>
 					{`
-          @keyframes sweep {
-            from { transform: translateX(0%); }
+          .province-ribbon-track {
+            animation: province-sweep var(--sweep-duration) linear infinite;
+          }
+          .province-ribbon:hover .province-ribbon-track {
+            animation-play-state: paused;
+          }
+          @keyframes province-sweep {
+            from { transform: translateX(0); }
             to { transform: translateX(-50%); }
           }
           @media (prefers-reduced-motion: reduce) {
-            * {
+            .province-ribbon-track {
               animation: none !important;
-              transition: none !important;
             }
           }
           `}

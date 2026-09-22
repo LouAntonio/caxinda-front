@@ -7,6 +7,8 @@ import { useScrollSpy } from '../hooks/useScrollSpy';
 import { http, getApiError } from '../lib/api';
 import { FacebookSVG } from '../components/ui/icons/FacebookSVG';
 import { InstagramSVG } from '../components/ui/icons/InstagramSVG';
+import { LinkedInSVG } from '../components/ui/icons/LinkedInSVG';
+import { TikTokSVG } from '../components/ui/icons/TikTokSVG';
 import { WhatsAppSVG } from '../components/ui/icons/WhatsAppSVG';
 import { EnvelopeSVG } from '../components/ui/icons/EnvelopeSVG';
 
@@ -517,20 +519,20 @@ export function ContactosPage() {
 	const channels = [
 		{
 			label: 'Geral',
-			value: 'geral@caxindadivulga.ao',
-			href: 'mailto:geral@caxindadivulga.ao',
+			value: 'geral@caxindadivulga.com',
+			href: 'mailto:geral@caxindadivulga.com',
 			Icon: EnvelopeSVG,
 		},
 		{
 			label: 'Suporte de contas',
-			value: 'suporte@caxindadivulga.ao',
-			href: 'mailto:suporte@caxindadivulga.ao',
+			value: 'suporte@caxindadivulga.com',
+			href: 'mailto:suporte@caxindadivulga.com',
 			Icon: EnvelopeSVG,
 		},
 		{
 			label: 'Parcerias',
-			value: 'parcerias@caxindadivulga.ao',
-			href: 'mailto:parcerias@caxindadivulga.ao',
+			value: 'parcerias@caxindadivulga.com',
+			href: 'mailto:parcerias@caxindadivulga.com',
 			Icon: EnvelopeSVG,
 		},
 		{
@@ -544,13 +546,23 @@ export function ContactosPage() {
 	const socials = [
 		{
 			label: 'Facebook',
-			href: 'https://facebook.com/caxindadivulga',
+			href: 'https://www.facebook.com/share/1QQ4oB2nSv/?mibextid=wwXIfr',
 			Icon: FacebookSVG,
 		},
 		{
 			label: 'Instagram',
-			href: 'https://instagram.com/caxindadivulga',
+			href: 'https://www.instagram.com/caxinda_divulga?stkn=MTU1NGx2aWpnd3Fsdg%3D%3D&utm_source=qr',
 			Icon: InstagramSVG,
+		},
+		{
+			label: 'LinkedIn',
+			href: 'https://www.linkedin.com/company/caxinda-divulga/',
+			Icon: LinkedInSVG,
+		},
+		{
+			label: 'TikTok',
+			href: 'https://www.tiktok.com/@caxindadivulga?_r=1&_t=ZS-99xI6ehfEay',
+			Icon: TikTokSVG,
 		},
 		{
 			label: 'WhatsApp',
@@ -559,7 +571,7 @@ export function ContactosPage() {
 		},
 		{
 			label: 'Email',
-			href: 'mailto:geral@caxindadivulga.ao',
+			href: 'mailto:geral@caxindadivulga.com',
 			Icon: EnvelopeSVG,
 		},
 	];

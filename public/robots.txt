@@ -8,7 +8,7 @@ Disallow: /planos/*
 # Core Web Vitals Crawl-Delay: 1
 
 # Sitemap
-Sitemap: https://caxindadivulga.ao/sitemap.xml
+Sitemap: https://caxindadivulga.com/sitemap.xml
 
 # Hosting限制
 Crawl-delay: 1

@@ -1,6 +1,6 @@
 const DEFAULT_IMAGE = '/images/og-default.jpg';
 const DEFAULT_TITLE_SUFFIX = ' — Caxinda';
-const SITE_URL = 'https://caxindadivulga.ao';
+const SITE_URL = 'https://caxindadivulga.com';
 
 export interface SeoUtils {
 	generateTitle: (title?: string) => string;
@@ -155,8 +155,10 @@ export function generateJsonLd(
 				addressRegion: 'Luanda',
 			};
 			jsonLd.sameAs = [
-				'https://facebook.com/caxindadivulga',
-				'https://instagram.com/caxindadivulga',
+				'https://www.facebook.com/share/1QQ4oB2nSv/?mibextid=wwXIfr',
+				'https://www.instagram.com/caxinda_divulga?stkn=MTU1NGx2aWpnd3Fsdg%3D%3D&utm_source=qr',
+				'https://www.linkedin.com/company/caxinda-divulga/',
+				'https://www.tiktok.com/@caxindadivulga?_r=1&_t=ZS-99xI6ehfEay',
 			];
 			break;
 
@@ -164,8 +166,10 @@ export function generateJsonLd(
 			jsonLd['@type'] = 'Organization';
 			jsonLd.logo = `${SITE_URL}/images/logo/icon.png`;
 			jsonLd.sameAs = [
-				'https://facebook.com/caxindadivulga',
-				'https://instagram.com/caxindadivulga',
+				'https://www.facebook.com/share/1QQ4oB2nSv/?mibextid=wwXIfr',
+				'https://www.instagram.com/caxinda_divulga?stkn=MTU1NGx2aWpnd3Fsdg%3D%3D&utm_source=qr',
+				'https://www.linkedin.com/company/caxinda-divulga/',
+				'https://www.tiktok.com/@caxindadivulga?_r=1&_t=ZS-99xI6ehfEay',
 			];
 			break;
 	}

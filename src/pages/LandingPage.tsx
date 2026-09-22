@@ -6,7 +6,7 @@ import { AdCard } from '../components/ads/AdCard';
 import { AdCardSkeletonGrid } from '../components/ads/AdCardSkeleton';
 import { BusinessCard } from '../components/businesses/BusinessCard';
 import { BusinessCardSkeletonGrid } from '../components/businesses/BusinessCardSkeleton';
-import type { Category } from '../types/api';
+import { CategoryMarquee } from '../components/ui/CategoryMarquee';
 
 const HERO_IMAGES = [
 	'https://images.unsplash.com/photo-1611348586804-61bf6c080437?w=1920&q=80',
@@ -16,50 +16,6 @@ const HERO_IMAGES = [
 
 const AD_BANNER_TOP = 'https://kuvangana.com/images/ads/3.png';
 const AD_BANNER_MIDDLE = 'https://kuvangana.com/images/ads/2.png';
-
-function CategoryCard({ category, to }: { category: Category; to: string }) {
-	const count =
-		category.type === 'AD' ? category.adCount : category.businessCount;
-	const countLabel =
-		category.type === 'AD'
-			? count === 1
-				? 'produto'
-				: 'produtos'
-			: count === 1
-				? 'empresa'
-				: 'empresas';
-
-	return (
-		<Link
-			to={to}
-			className="group relative block overflow-hidden rounded-2xl border border-white/10 transition hover:-translate-y-0.5 hover:shadow-lg"
-		>
-			<div className="relative aspect-[4/3] overflow-hidden bg-white/5">
-				{category.imageUrl ? (
-					<img
-						src={category.imageUrl}
-						alt={category.name}
-						loading="lazy"
-						className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
-					/>
-				) : (
-					<div className="flex h-full items-center justify-center bg-gradient-to-br from-white/5 to-white/10 font-display text-3xl font-black text-white/15">
-						{category.name}
-					</div>
-				)}
-				<div className="absolute inset-0 bg-gradient-to-t from-ink/90 via-ink/20 to-transparent" />
-			</div>
-			<div className="absolute inset-x-0 bottom-0 p-4">
-				<h3 className="font-display text-base font-black text-white drop-shadow-sm">
-					{category.name}
-				</h3>
-				<p className="mt-0.5 text-xs font-semibold text-white/60">
-					{count} {countLabel}
-				</p>
-			</div>
-		</Link>
-	);
-}
 
 function CategoryCardSkeletonGrid({
 	count,
@@ -228,15 +184,10 @@ export default function LandingPage() {
 							gridClassName="grid grid-cols-2 gap-5 md:grid-cols-3 lg:grid-cols-4"
 						/>
 					) : (productCategories ?? []).length === 0 ? null : (
-						<div className="grid grid-cols-2 gap-5 md:grid-cols-3 lg:grid-cols-4">
-							{(productCategories ?? []).map((cat) => (
-								<CategoryCard
-									key={cat.id}
-									category={cat}
-									to={`/produtos?categoryIds=${cat.id}`}
-								/>
-							))}
-						</div>
+						<CategoryMarquee
+							categories={productCategories ?? []}
+							baseTo="/produtos"
+						/>
 					)}
 				</div>
 			</section>
@@ -314,15 +265,10 @@ export default function LandingPage() {
 							gridClassName="grid grid-cols-2 gap-5 md:grid-cols-3 lg:grid-cols-4"
 						/>
 					) : (businessCategories ?? []).length === 0 ? null : (
-						<div className="grid grid-cols-2 gap-5 md:grid-cols-3 lg:grid-cols-4">
-							{(businessCategories ?? []).map((cat) => (
-								<CategoryCard
-									key={cat.id}
-									category={cat}
-									to={`/empresas?categoryIds=${cat.id}`}
-								/>
-							))}
-						</div>
+						<CategoryMarquee
+							categories={businessCategories ?? []}
+							baseTo="/empresas"
+						/>
 					)}
 				</div>
 			</section>
