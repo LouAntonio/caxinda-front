@@ -10,7 +10,7 @@ const STATUS_META: Record<string, StatusMeta> = {
 	},
 	PENDING: {
 		label: 'Pendente',
-		className: 'border-kwanza bg-kwanza/15 text-ink',
+		className: 'border-blue bg-blue/15 text-blue',
 	},
 	HIDDEN: {
 		label: 'Oculto',
@@ -84,7 +84,7 @@ const STATUS_META: Record<string, StatusMeta> = {
 	},
 	MODERATOR: {
 		label: 'Moderador',
-		className: 'border-kwanza bg-kwanza/15 text-ink',
+		className: 'border-blue bg-blue/15 text-blue',
 	},
 	ADMIN: { label: 'Admin', className: 'border-red bg-red/10 text-red' },
 };

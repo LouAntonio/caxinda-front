@@ -42,7 +42,7 @@ function InstitutionalShell({
 					/>
 
 					<div className="relative z-10 px-6 py-8 md:px-12 md:py-10">
-						<span className="kicker text-kwanza">{kicker}</span>
+						<span className="kicker text-red-light">{kicker}</span>
 						<h1 className="mt-4 font-display text-3xl font-black leading-[1.05] tracking-tight md:text-4xl">
 							{title}
 							{titleAccent && (
@@ -77,8 +77,8 @@ function InstitutionalShell({
 											}
 											className={`border-l-2 py-1.5 pl-4 text-sm transition-all duration-200 ${
 												isActive
-													? 'border-kwanza bg-kwanza/5 font-bold text-ink'
-													: 'border-transparent text-ink/55 hover:border-kwanza/40 hover:text-ink'
+													? 'border-blue bg-blue/5 font-bold text-ink'
+													: 'border-transparent text-ink/55 hover:border-blue/40 hover:text-ink'
 											}`}
 										>
 											{s.label}
@@ -102,7 +102,7 @@ function InstitutionalShell({
 function H2({ id, children }: { id?: string; children: ReactNode }) {
 	return (
 		<div className="pt-4">
-			<span className="mb-2.5 block h-1 w-10 rounded-full bg-kwanza" />
+			<span className="mb-2.5 block h-1 w-10 rounded-full bg-blue" />
 			<h2
 				id={id}
 				className="scroll-mt-24 font-display text-xl font-black text-ink md:text-2xl"
@@ -118,7 +118,7 @@ function CheckList({ items }: { items: string[] }) {
 		<ul className="space-y-1.5">
 			{items.map((item) => (
 				<li key={item} className="flex items-start gap-2.5">
-					<span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-kwanza/15 text-[0.65rem] font-black text-ink">
+					<span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-blue/15 text-[0.65rem] font-black text-ink">
 						✔
 					</span>
 					<span>{item}</span>
@@ -162,7 +162,7 @@ export function SobrePage() {
 					<div className="pointer-events-none absolute -right-16 -top-16 h-40 w-40 rotate-12 rounded-3xl bg-red opacity-80" />
 
 					<div className="relative z-10 px-6 py-8 md:px-12 md:py-10">
-						<span className="kicker text-kwanza">
+						<span className="kicker text-red-light">
 							Caxinda Divulga
 						</span>
 						<h1 className="mt-4 font-display text-3xl font-black leading-[1.05] tracking-tight md:text-4xl">
@@ -183,7 +183,7 @@ export function SobrePage() {
 			<div className="mx-auto max-w-6xl px-4 py-14 md:py-20">
 				<div className="grid gap-8 lg:grid-cols-2 lg:gap-16">
 					<div>
-						<span className="kicker text-kwanza">O porquê</span>
+						<span className="kicker text-red">O porquê</span>
 						<p className="mt-6 font-display text-3xl font-black leading-[1.1] tracking-tight text-ink md:text-4xl xl:text-5xl">
 							A maioria dos negócios de Angola vive do boca a
 							boca. Nós demos-lhes uma vitrine.
@@ -222,7 +222,7 @@ export function SobrePage() {
 
 				<div className="mt-14 grid gap-8 lg:grid-cols-[1fr_1.5fr] lg:gap-16">
 					<div>
-						<span className="mb-3 block h-1 w-10 rounded-full bg-kwanza" />
+						<span className="mb-3 block h-1 w-10 rounded-full bg-blue" />
 						<h2 className="font-display text-2xl font-black text-ink md:text-3xl">
 							Como trabalhamos
 						</h2>
@@ -247,17 +247,17 @@ export function SobrePage() {
 					</div>
 				</div>
 
-				<div className="relative mt-14 overflow-hidden rounded-3xl bg-kwanza p-8 md:p-12">
+				<div className="relative mt-14 overflow-hidden rounded-3xl bg-red p-8 md:p-12">
 					<div className="pointer-events-none absolute -right-16 -top-16 h-40 w-40 rotate-12 rounded-3xl bg-ink/10" />
 					<div className="relative z-10 flex flex-col items-start gap-6 md:flex-row md:items-center md:justify-between">
 						<div>
-							<span className="kicker text-ink/60">
+							<span className="kicker text-white/70">
 								Começa hoje
 							</span>
-							<h3 className="mt-3 font-display text-2xl font-black leading-tight text-ink md:text-3xl">
+							<h3 className="mt-3 font-display text-2xl font-black leading-tight text-white md:text-3xl">
 								Publica o teu primeiro produto esta semana.
 							</h3>
-							<p className="mt-2 max-w-xl text-sm leading-relaxed text-ink/65">
+							<p className="mt-2 max-w-xl text-sm leading-relaxed text-white/70">
 								Conta grátis, sem cartão e sem letras pequenas.
 								Se precisares de ajuda, falamos contigo.
 							</p>
@@ -271,7 +271,7 @@ export function SobrePage() {
 							</Link>
 							<Link
 								to="/produtos"
-								className="inline-flex items-center gap-2 rounded-xl border-2 border-ink/25 px-4 py-2.5 text-sm font-bold text-ink transition hover:bg-ink/5"
+								className="inline-flex items-center gap-2 rounded-xl border-2 border-white/40 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-white/10"
 							>
 								Ver produtos
 							</Link>
@@ -583,7 +583,7 @@ export function ContactosPage() {
 					<div className="pointer-events-none absolute -right-16 -top-16 h-40 w-40 rotate-12 rounded-3xl bg-red opacity-80" />
 
 					<div className="relative z-10 px-6 py-8 md:px-12 md:py-10">
-						<span className="kicker text-kwanza">
+						<span className="kicker text-red-light">
 							Fala connosco
 						</span>
 						<h1 className="mt-4 font-display text-3xl font-black leading-[1.05] tracking-tight md:text-4xl">
@@ -603,7 +603,7 @@ export function ContactosPage() {
 						onSubmit={submit}
 						className="rounded-2xl border border-ink/10 bg-white p-6 md:p-8"
 					>
-						<span className="mb-3 block h-1 w-10 rounded-full bg-kwanza" />
+						<span className="mb-3 block h-1 w-10 rounded-full bg-blue" />
 						<h2 className="font-display text-lg font-black">
 							Envia-nos uma mensagem
 						</h2>
@@ -679,7 +679,7 @@ export function ContactosPage() {
 						</div>
 						<button
 							type="submit"
-							className="mt-6 bg-kwanza px-5 py-2.5 font-mono text-sm font-bold text-ink transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-60"
+							className="mt-6 bg-red px-5 py-2.5 font-mono text-sm font-bold text-white transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-60"
 							style={{
 								clipPath:
 									'polygon(0 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%)',
@@ -706,7 +706,7 @@ export function ContactosPage() {
 											<c.Icon width={18} height={18} />
 										</span>
 										<div className="min-w-0">
-											<p className="font-mono text-[0.65rem] font-bold uppercase tracking-widest text-kwanza">
+											<p className="font-mono text-[0.65rem] font-bold uppercase tracking-widest text-blue">
 												{c.label}
 											</p>
 											<a
@@ -738,7 +738,7 @@ export function ContactosPage() {
 										href={s.href}
 										target="_blank"
 										rel="noreferrer"
-										className="flex items-center gap-2 rounded-full border-2 border-ink/15 px-3 py-1.5 text-xs font-bold text-ink/70 transition hover:border-kwanza hover:text-ink"
+										className="flex items-center gap-2 rounded-full border-2 border-ink/15 px-3 py-1.5 text-xs font-bold text-ink/70 transition hover:border-blue/50 hover:text-ink"
 									>
 										<s.Icon width={16} height={16} />
 										{s.label}

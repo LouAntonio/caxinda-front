@@ -153,7 +153,7 @@ export function AdminDashboardPage() {
 					label="Aguarda moderação"
 					value={pendingCount}
 					icon="clock"
-					accent="kwanza"
+					accent="blue"
 				/>
 			</div>
 
@@ -238,14 +238,14 @@ function AdminStatsCard({
 	label: string;
 	value: string | number;
 	icon: PanelIconName;
-	accent: 'red' | 'blue' | 'kwanza';
+	accent: 'red' | 'blue';
 }) {
 	const color =
 		accent === 'blue'
 			? 'text-blue'
 			: accent === 'red'
 				? 'text-red'
-				: 'text-kwanza';
+				: 'text-blue';
 	return (
 		<div className="card p-5">
 			<span
@@ -1821,7 +1821,7 @@ export function AdminSupportPage() {
 											)}
 										</span>
 									) : (
-										<span className="text-xs text-kwanza">
+										<span className="text-xs text-blue">
 											por atribuir
 										</span>
 									)}
@@ -1875,7 +1875,7 @@ export function AdminSupportPage() {
 								{c.status !== 'RESOLVED' &&
 									c.status !== 'CLOSED' && (
 										<button
-											className="btn-kwanza"
+											className="btn-primary"
 											onClick={() =>
 												void toast.promise(
 													resolve.mutateAsync({
@@ -2944,7 +2944,7 @@ export function AdminAnalyticsPage() {
 										</div>
 										<div className="h-2 overflow-hidden rounded-full bg-ink/10">
 											<div
-												className="h-full rounded-full bg-kwanza"
+												className="h-full rounded-full bg-blue"
 												style={{
 													width: `${(item.count / channelMax) * 100}%`,
 												}}

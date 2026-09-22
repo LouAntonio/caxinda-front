@@ -205,7 +205,7 @@ export function AdsPage() {
 				onClick={() => setDraftFeatured((prev) => !prev)}
 				className={`w-full rounded-xl border-2 px-3 py-2 text-xs font-bold transition ${
 					draftFeatured
-						? 'border-kwanza bg-kwanza/15 text-ink'
+						? 'border-blue bg-blue/15 text-blue'
 						: 'border-ink/15 text-ink/50 hover:border-ink/30'
 				}`}
 			>
@@ -261,7 +261,7 @@ export function AdsPage() {
 					<div className="pointer-events-none absolute -right-16 -top-16 h-40 w-40 rotate-12 rounded-3xl bg-red opacity-80" />
 
 					<div className="relative z-10 px-6 py-8 md:px-12 md:py-10">
-						<span className="kicker text-kwanza">
+						<span className="kicker text-red-light">
 							Catálogo de produtos
 						</span>
 						<h1 className="mt-4 font-display text-4xl font-black leading-[1.05] tracking-tight md:text-6xl">
@@ -489,7 +489,7 @@ export function AdDetailPage() {
 				<Link to="/produtos" className="font-bold hover:text-red">
 					Produtos
 				</Link>
-				<span className="text-xs text-kwanza">▸</span>
+				<span className="text-xs text-blue">▸</span>
 				<span className="truncate text-ink/80">{ad.title}</span>
 			</nav>
 
@@ -509,7 +509,7 @@ export function AdDetailPage() {
 											</span>
 										) : (
 											ad.featured && (
-												<span className="absolute left-3 top-3 -rotate-3 rounded-lg bg-kwanza px-2.5 py-1 font-mono text-[10px] font-bold uppercase tracking-wider text-ink shadow">
+												<span className="absolute left-3 top-3 -rotate-3 rounded-lg bg-red px-2.5 py-1 font-mono text-[10px] font-bold uppercase tracking-wider text-white shadow">
 													★ Destaque
 												</span>
 											)
@@ -631,7 +631,7 @@ export function AdDetailPage() {
 
 					<section className="card overflow-hidden">
 						<div className="flex items-center gap-3 px-6 pt-5">
-							<span className="h-1.5 w-14 rounded-full bg-kwanza" />
+							<span className="h-1.5 w-14 rounded-full bg-blue" />
 							<h2 className="kicker">Descrição</h2>
 						</div>
 						<div className="p-6 pt-3">
@@ -673,7 +673,7 @@ export function AdDetailPage() {
 								</span>
 							)}
 							{ad.featured && (
-								<span className="rounded-full bg-kwanza/15 px-2.5 py-1 font-mono text-[11px] font-bold text-kwanza">
+								<span className="rounded-full bg-red/10 px-2.5 py-1 font-mono text-[11px] font-bold text-red">
 									★ Destaque
 								</span>
 							)}
@@ -692,7 +692,7 @@ export function AdDetailPage() {
 									Grátis
 								</p>
 							) : (
-								<p className="mt-0.5 font-mono text-2xl font-black text-kwanza">
+								<p className="mt-0.5 font-mono text-2xl font-black text-red">
 									{formatKz(ad.price)}
 								</p>
 							)}
@@ -716,7 +716,7 @@ export function AdDetailPage() {
 
 						<div className="border-t border-ink/10 pt-4">
 							<div className="flex items-center gap-2.5">
-								<span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-ink font-mono text-[10px] font-black text-kwanza">
+								<span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-ink font-mono text-[10px] font-black text-red-light">
 									CX
 								</span>
 								<div className="min-w-0">
@@ -998,7 +998,7 @@ export function BusinessesPage() {
 
 					<div className="relative z-10 flex flex-col gap-8 px-6 py-8 md:flex-row md:items-center md:justify-between md:px-12 md:py-10">
 						<div className="max-w-2xl">
-							<span className="kicker text-kwanza">
+							<span className="kicker text-red-light">
 								Negócios locais
 							</span>
 							<h1 className="mt-4 font-display text-4xl font-black leading-[1.05] tracking-tight md:text-6xl">
@@ -1012,10 +1012,10 @@ export function BusinessesPage() {
 							</p>
 						</div>
 
-						<div className="shrink-0 rounded-2xl bg-kwanza p-2 shadow-[0_10px_24px_rgba(242,169,0,0.3)]">
+						<div className="shrink-0 rounded-2xl bg-red p-2 shadow-[0_10px_24px_rgba(211,20,30,0.3)]">
 							<Link
 								to="/auth/registar"
-								className="flex items-center justify-center gap-2 rounded-xl bg-ink px-8 py-4 text-sm font-bold text-kwanza transition hover:bg-ink-soft"
+								className="flex items-center justify-center gap-2 rounded-xl bg-ink px-8 py-4 text-sm font-bold text-white transition hover:bg-ink-soft"
 							>
 								Registar a minha empresa
 								<svg
@@ -1228,7 +1228,7 @@ export function BusinessDetailPage() {
 				<Link to="/empresas" className="font-bold hover:text-blue">
 					Empresas
 				</Link>
-				<span className="text-xs text-kwanza">▸</span>
+				<span className="text-xs text-blue">▸</span>
 				<span className="truncate text-ink/80">{business.name}</span>
 			</nav>
 
@@ -1239,7 +1239,7 @@ export function BusinessDetailPage() {
 						onImageClick={setLightboxIndex}
 						overlay={
 							business.isVerified ? (
-								<span className="absolute left-3 top-3 -rotate-3 rounded-lg bg-kwanza px-2.5 py-1 font-mono text-[10px] font-bold uppercase tracking-wider text-ink shadow">
+								<span className="absolute left-3 top-3 -rotate-3 rounded-lg bg-red px-2.5 py-1 font-mono text-[10px] font-bold uppercase tracking-wider text-white shadow">
 									<CheckSVG width={12} height={12} />{' '}
 									Verificada
 								</span>
@@ -1258,7 +1258,7 @@ export function BusinessDetailPage() {
 								'repeating-linear-gradient(45deg, rgba(255,255,255,0.06) 0 16px, transparent 16px 32px)',
 						}}
 					>
-						<span className="rotate-3 rounded-2xl bg-kwanza px-6 py-3 font-display text-2xl font-black text-ink shadow-lg">
+						<span className="rotate-3 rounded-2xl bg-red px-6 py-3 font-display text-2xl font-black text-white shadow-lg">
 							CX
 						</span>
 					</div>
@@ -1323,7 +1323,7 @@ export function BusinessDetailPage() {
 				<div className="flex min-w-0 flex-col gap-6">
 					<section className="card overflow-hidden">
 						<div className="flex items-center gap-3 px-6 pt-5">
-							<span className="h-1.5 w-14 rounded-full bg-kwanza" />
+							<span className="h-1.5 w-14 rounded-full bg-blue" />
 							<h2 className="kicker">Sobre</h2>
 						</div>
 						<div className="flex flex-col gap-4 p-6 pt-3">
@@ -1592,7 +1592,7 @@ function ReviewForm({
 								height="22"
 								viewBox="0 0 24 24"
 								className={
-									i <= rating ? 'fill-kwanza' : 'fill-ink/15'
+									i <= rating ? 'fill-red' : 'fill-ink/15'
 								}
 							>
 								<path d="M12 2l2.9 6.3 6.9.8-5.1 4.7 1.4 6.8L12 17.4 5.9 20.6l1.4-6.8L2.2 9.1l6.9-.8L12 2z" />
@@ -1952,7 +1952,7 @@ export function SearchPage() {
 										<Skeleton className="h-3 w-1/3 rounded" />
 										<Skeleton className="h-3 w-full rounded" />
 										<div className="flex items-center justify-between gap-2 pt-1">
-											<Skeleton className="h-7 w-24 rounded-md bg-kwanza/25" />
+											<Skeleton className="h-7 w-24 rounded-md bg-blue/25" />
 											<Skeleton className="h-3 w-16 rounded" />
 										</div>
 									</div>
@@ -2039,7 +2039,7 @@ export function PlansPage() {
 				<div className="mx-auto flex max-w-6xl items-stretch px-4 py-14 md:py-16">
 					<div className="flex-1 text-center">
 						<span
-							className="inline-block bg-kwanza px-3 py-1 font-mono text-xs font-bold uppercase tracking-widest text-ink"
+							className="inline-block bg-red px-3 py-1 font-mono text-xs font-bold uppercase tracking-widest text-white"
 							style={{
 								clipPath:
 									'polygon(0 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%)',
@@ -2078,7 +2078,7 @@ export function PlansPage() {
 									<Skeleton className="mt-2 h-4 w-40 rounded bg-snow/10" />
 								</div>
 								<div className="p-6">
-									<Skeleton className="h-24 w-full rounded-xl bg-kwanza/20" />
+									<Skeleton className="h-24 w-full rounded-xl bg-blue/20" />
 								</div>
 							</div>
 						))}
@@ -2090,16 +2090,14 @@ export function PlansPage() {
 							return (
 								<div
 									key={plan.id}
-									className={`kwanza-glow overflow-hidden border ${
-										isRec
-											? 'border-kwanza'
-											: 'border-ink/10'
+									className={`overflow-hidden border ${
+										isRec ? 'border-red' : 'border-ink/10'
 									} rounded-2xl bg-white`}
 									style={{ padding: 0 }}
 								>
 									{isRec && (
 										<div
-											className="bg-kwanza px-4 py-1.5 font-mono text-xs font-bold text-ink"
+											className="bg-red px-4 py-1.5 font-mono text-xs font-bold text-white"
 											style={{
 												clipPath:
 													'polygon(0 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%)',
@@ -2117,7 +2115,7 @@ export function PlansPage() {
 											{plan.description}
 										</p>
 										<div className="mt-4 flex items-baseline gap-1">
-											<span className="price-tag !bg-kwanza !text-ink">
+											<span className="price-tag !bg-red !text-white">
 												{formatKz(plan.price)}
 											</span>
 											<span className="font-mono text-xs text-snow/50">
@@ -2131,7 +2129,7 @@ export function PlansPage() {
 												key={b}
 												className="flex items-center gap-2"
 											>
-												<span className="text-kwanza">
+												<span className="text-red">
 													✔
 												</span>{' '}
 												{b}

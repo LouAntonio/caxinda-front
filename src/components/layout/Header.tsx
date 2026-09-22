@@ -253,7 +253,7 @@ export function Header() {
 										strokeLinejoin="round"
 										className={`h-3 w-3 transition-transform ${
 											searchMenuOpen ? 'rotate-180' : ''
-										} text-kwanza`}
+										} text-blue`}
 									>
 										<path d="m6 9 6 6 6-6" />
 									</svg>
@@ -288,7 +288,7 @@ export function Header() {
 													{opt.label}
 												</span>
 												{searchType === opt.value && (
-													<CheckIcon className="h-3.5 w-3.5 text-kwanza" />
+													<CheckIcon className="h-3.5 w-3.5 text-blue" />
 												)}
 											</button>
 										))}
@@ -359,7 +359,7 @@ export function Header() {
 							className={
 								showTransparent
 									? 'hover:text-white'
-									: 'hover:text-kwanza'
+									: 'hover:text-red'
 							}
 						>
 							Contacto
@@ -547,7 +547,7 @@ export function Header() {
 							<Link
 								to="/contactos"
 								onClick={() => setDrawerOpen(false)}
-								className="hover:text-kwanza"
+								className="hover:text-red"
 							>
 								Contacto
 							</Link>

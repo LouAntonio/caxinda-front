@@ -5,7 +5,7 @@ export function AdDetailSkeleton() {
 		<div className="mx-auto max-w-6xl px-4 py-10" aria-hidden>
 			<div className="mb-5 flex items-center gap-2">
 				<Skeleton className="h-4 w-20 rounded" />
-				<span className="text-xs text-kwanza">▸</span>
+				<span className="text-xs text-blue">▸</span>
 				<Skeleton className="h-4 w-44 rounded" />
 			</div>
 
@@ -26,7 +26,7 @@ export function AdDetailSkeleton() {
 								/>
 							))}
 						</div>
-						<Skeleton className="h-10 w-48 rounded-md bg-kwanza/25" />
+						<Skeleton className="h-10 w-48 rounded-md bg-blue/25" />
 					</div>
 
 					<div className="card p-5">
@@ -73,7 +73,7 @@ export function AdDetailSkeleton() {
 						</div>
 						<div>
 							<Skeleton className="mb-1 h-3 w-10 rounded" />
-							<Skeleton className="h-9 w-40 rounded-md bg-kwanza/25" />
+							<Skeleton className="h-9 w-40 rounded-md bg-blue/25" />
 						</div>
 						<SkeletonButton className="w-full !py-3 !text-base" />
 						<SkeletonButton className="w-full" />

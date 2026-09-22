@@ -110,7 +110,7 @@ export default function LandingPage() {
 							onClick={() => setHeroIndex(idx)}
 							className={`h-2 rounded-full transition-all ${
 								idx === heroIndex
-									? 'w-6 bg-kwanza'
+									? 'w-6 bg-blue'
 									: 'w-2 bg-white/40 hover:bg-white/70'
 							}`}
 							aria-label={`Imagem ${idx + 1}`}
@@ -120,7 +120,7 @@ export default function LandingPage() {
 			</section>
 
 			{/* Kwanza strip */}
-			<div className="h-1.5 bg-kwanza" />
+			<div className="h-1.5 bg-blue" />
 
 			{/* Produtos em destaque */}
 			<section className="py-16">
@@ -164,7 +164,7 @@ export default function LandingPage() {
 				<div className="mx-auto max-w-6xl px-4">
 					<div className="mb-8 flex items-end justify-between">
 						<div>
-							<span className="kicker text-kwanza">
+							<span className="kicker text-red-light">
 								Categorias
 							</span>
 							<h2 className="mt-2 font-display text-2xl font-black text-white">
@@ -173,7 +173,7 @@ export default function LandingPage() {
 						</div>
 						<Link
 							to="/produtos"
-							className="text-sm font-bold text-kwanza hover:underline"
+							className="text-sm font-bold text-red-light hover:underline"
 						>
 							Ver tudo →
 						</Link>
@@ -220,7 +220,7 @@ export default function LandingPage() {
 							},
 						].map((s) => (
 							<div key={s.n} className="card-elevated p-6">
-								<span className="mb-4 inline-flex h-11 w-11 items-center justify-center rounded-xl bg-kwanza font-mono text-sm font-bold text-ink">
+								<span className="mb-4 inline-flex h-11 w-11 items-center justify-center rounded-xl bg-red font-mono text-sm font-bold text-white">
 									{s.n}
 								</span>
 								<h3 className="font-display text-sm font-bold">
@@ -245,7 +245,7 @@ export default function LandingPage() {
 				<div className="mx-auto max-w-6xl px-4">
 					<div className="mb-8 flex items-end justify-between">
 						<div>
-							<span className="kicker text-kwanza">
+							<span className="kicker text-red-light">
 								Categorias
 							</span>
 							<h2 className="mt-2 font-display text-2xl font-black text-white">
@@ -254,7 +254,7 @@ export default function LandingPage() {
 						</div>
 						<Link
 							to="/empresas"
-							className="text-sm font-bold text-kwanza hover:underline"
+							className="text-sm font-bold text-red-light hover:underline"
 						>
 							Ver tudo →
 						</Link>
@@ -309,7 +309,7 @@ export default function LandingPage() {
 			<section className="mx-auto max-w-6xl px-4">
 				<div className="overflow-hidden rounded-2xl bg-blue shadow-[0_20px_50px_rgba(14,23,51,0.2)]">
 					<div className="px-6 py-16 text-center sm:px-10">
-						<span className="block kicker text-kwanza">
+						<span className="block kicker text-red-light">
 							Caxinda Divulga
 						</span>
 						<h2 className="mt-3 text-balance font-display text-3xl font-black text-white md:text-4xl">
@@ -323,7 +323,7 @@ export default function LandingPage() {
 						<div className="mt-8 flex flex-wrap justify-center gap-3">
 							<Link
 								to="/auth/registar"
-								className="btn-kwanza shadow-[0_8px_18px_rgba(14,23,51,0.18)]"
+								className="btn-primary shadow-[0_8px_18px_rgba(14,23,51,0.18)]"
 							>
 								Registar empresa grátis
 							</Link>

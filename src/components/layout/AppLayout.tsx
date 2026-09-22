@@ -107,7 +107,7 @@ export function RequireBusiness({ children }: { children: React.ReactNode }) {
 		<div className="mx-auto max-w-6xl px-4 py-10">
 			{kyc?.status === 'PENDING' ? (
 				<div className="card flex items-start gap-4 p-6">
-					<span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-kwanza/15 text-kwanza">
+					<span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-blue/15 text-blue">
 						<PanelIcon name="clock" size={20} />
 					</span>
 					<div>
@@ -127,7 +127,7 @@ export function RequireBusiness({ children }: { children: React.ReactNode }) {
 				</div>
 			) : (
 				<div className="card overflow-hidden">
-					<div className="h-1.5 bg-kwanza" />
+					<div className="h-1.5 bg-blue" />
 					<div className="p-8">
 						<p className="inline-block -rotate-2 rounded-lg bg-red px-2.5 py-1 font-mono text-[10px] font-bold uppercase tracking-wider text-white shadow">
 							Conta pessoal
@@ -142,21 +142,21 @@ export function RequireBusiness({ children }: { children: React.ReactNode }) {
 						</p>
 						<ul className="mt-4 flex max-w-xl flex-col gap-2 text-sm text-ink/80">
 							<li className="flex items-start gap-2">
-								<span className="mt-0.5 font-black text-kwanza">
+								<span className="mt-0.5 font-black text-blue">
 									★
 								</span>{' '}
 								<strong>As tuas empresas</strong> — cria e gere
 								o teu negócio na Caxinda
 							</li>
 							<li className="flex items-start gap-2">
-								<span className="mt-0.5 font-black text-kwanza">
+								<span className="mt-0.5 font-black text-blue">
 									★
 								</span>{' '}
 								<strong>Planos e subscrições</strong> — ganha
 								visibilidade com planos pagos
 							</li>
 							<li className="flex items-start gap-2">
-								<span className="mt-0.5 font-black text-kwanza">
+								<span className="mt-0.5 font-black text-blue">
 									★
 								</span>{' '}
 								<strong>Pagamentos</strong> — acompanha os teus

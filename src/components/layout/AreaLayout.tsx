@@ -133,7 +133,7 @@ export function AreaLayout({ admin = false }: { admin?: boolean }) {
 					cls: 'bg-green-500/15 text-green-400',
 				}
 			: kyc?.status === 'PENDING'
-				? { label: 'Em análise', cls: 'bg-kwanza/15 text-kwanza' }
+				? { label: 'Em análise', cls: 'bg-blue/15 text-blue-light' }
 				: kyc?.status === 'REJECTED'
 					? { label: 'Rejeitado', cls: 'bg-red/15 text-red-light' }
 					: {
@@ -146,7 +146,7 @@ export function AreaLayout({ admin = false }: { admin?: boolean }) {
 			isActive
 				? 'bg-white/5 text-white'
 				: link.isConversion
-					? 'text-kwanza'
+					? 'text-blue-light'
 					: 'text-white/60 hover:bg-white/5 hover:text-white'
 		}`;
 
@@ -155,7 +155,7 @@ export function AreaLayout({ admin = false }: { admin?: boolean }) {
 			isActive
 				? `${accentTile} text-white`
 				: link.isConversion
-					? 'bg-kwanza/15 text-kwanza group-hover:bg-kwanza/25'
+					? 'bg-blue-light/15 text-blue-light group-hover:bg-blue-light/25'
 					: 'bg-white/10 text-white/50 group-hover:bg-white/15 group-hover:text-white'
 		}`;
 
@@ -164,7 +164,7 @@ export function AreaLayout({ admin = false }: { admin?: boolean }) {
 			isActive
 				? 'bg-white/10 text-white'
 				: link.isConversion
-					? 'text-kwanza'
+					? 'text-blue-light'
 					: 'text-white/60'
 		}`;
 

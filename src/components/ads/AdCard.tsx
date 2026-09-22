@@ -36,7 +36,7 @@ export function AdCard({
 					</span>
 				) : (
 					ad.featured && (
-						<span className="absolute left-3 top-3 rounded-full bg-kwanza px-2.5 py-1 font-mono text-[10px] font-bold uppercase tracking-wider text-ink shadow">
+						<span className="absolute left-3 top-3 rounded-full bg-red px-2.5 py-1 font-mono text-[10px] font-bold uppercase tracking-wider text-white shadow">
 							★ Destaque
 						</span>
 					)

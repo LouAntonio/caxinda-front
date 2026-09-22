@@ -27,7 +27,7 @@ export function AuthLayout() {
 					</p>
 				</div>
 
-				<div className="pointer-events-none absolute -bottom-24 -right-24 h-80 w-80 rotate-45 rounded-3xl bg-kwanza/10" />
+				<div className="pointer-events-none absolute -bottom-24 -right-24 h-80 w-80 rotate-45 rounded-3xl bg-blue/10" />
 				<div className="pointer-events-none absolute right-32 top-20 h-20 w-20 rotate-12 rounded-2xl bg-red/15" />
 				<div className="pointer-events-none absolute -left-20 bottom-1/2 h-40 w-40 rotate-12 rounded-3xl bg-blue/10" />
 			</div>

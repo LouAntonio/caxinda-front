@@ -47,7 +47,7 @@ function AuthCard({
 }) {
 	return (
 		<div className="rounded-2xl border border-ink/10 bg-white p-8 shadow-sm">
-			<span className="kicker text-kwanza">{kicker}</span>
+			<span className="kicker text-red-light">{kicker}</span>
 			<h1 className="mt-3 font-display text-2xl font-black">{title}</h1>
 			<p className="mt-1 text-sm text-ink/55">{subtitle}</p>
 			{children}

@@ -15,7 +15,7 @@ export function PageShellSkeleton() {
 						<div className="space-y-2 p-4">
 							<Skeleton className="h-4 w-4/5 rounded" />
 							<Skeleton className="h-3 w-1/3 rounded" />
-							<Skeleton className="h-7 w-28 rounded-md bg-kwanza/20" />
+							<Skeleton className="h-7 w-28 rounded-md bg-blue/20" />
 						</div>
 					</div>
 				))}
@@ -70,7 +70,7 @@ export function SearchListSkeleton() {
 							<Skeleton className="h-3 w-1/3 rounded" />
 							<Skeleton className="h-3 w-full rounded" />
 							<div className="flex items-center justify-between gap-2 pt-1">
-								<Skeleton className="h-7 w-24 rounded-md bg-kwanza/25" />
+								<Skeleton className="h-7 w-24 rounded-md bg-blue/25" />
 								<Skeleton className="h-3 w-16 rounded" />
 							</div>
 						</div>
@@ -88,7 +88,7 @@ export function PlansListSkeleton() {
 			<div className="grid gap-4 md:grid-cols-3">
 				{Array.from({ length: 3 }).map((_, i) => (
 					<div key={i} className="card items-center p-6">
-						<Skeleton className="mb-3 h-6 w-28 rounded-full bg-kwanza/20" />
+						<Skeleton className="mb-3 h-6 w-28 rounded-full bg-blue/20" />
 						<Skeleton className="h-4 w-32 rounded" />
 						<Skeleton className="my-4 h-px w-full" />
 						<div className="space-y-2">

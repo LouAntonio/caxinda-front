@@ -11,7 +11,7 @@ export function AdCardSkeleton() {
 				<Skeleton className="h-4 w-4/5 rounded" />
 				<Skeleton className="h-5 w-24 rounded-md bg-blue/25" />
 				<div className="mt-auto flex items-center justify-between gap-2">
-					<Skeleton className="h-7 w-28 rounded-md bg-kwanza/25" />
+					<Skeleton className="h-7 w-28 rounded-md bg-blue/25" />
 					<Skeleton className="h-3 w-14 rounded" />
 				</div>
 				<Skeleton className="h-4 w-full rounded" />

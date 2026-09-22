@@ -11,7 +11,6 @@
 	--color-ink-soft: #232f4e;
 	--color-snow: #f7f7f5;
 	--color-snow-dark: #ecebe6;
-	--color-kwanza: #f2a900;
 
 	--font-display: 'Unbounded', system-ui, sans-serif;
 	--font-sans: 'Manrope', system-ui, sans-serif;
@@ -54,9 +53,6 @@
 	.btn-ghost {
 		@apply inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold transition active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 bg-transparent text-ink hover:bg-ink/5;
 	}
-	.btn-kwanza {
-		@apply inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold transition active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 bg-kwanza text-ink hover:brightness-105;
-	}
 
 	.input {
 		@apply w-full rounded-xl border-2 border-ink/15 bg-white px-3.5 py-2.5 text-sm font-medium text-ink placeholder:font-normal placeholder:text-ink/40 focus:border-ink/30 focus:outline-none;
@@ -74,17 +70,11 @@
 	.tag {
 		@apply inline-flex items-center rounded-full border-2 px-3 py-1 text-xs font-bold;
 	}
-	.tag-kwanza {
-		@apply inline-flex items-center rounded-full border-2 px-3 py-1 text-xs font-bold border-kwanza bg-kwanza/15 text-ink;
-	}
-	.tag-gold {
-		@apply inline-flex items-center rounded-full border-2 px-3 py-1 text-xs font-bold border-kwanza bg-kwanza/15 text-ink;
-	}
 }
 
 @layer utilities {
 	.price-tag {
-		@apply relative inline-flex items-center rounded-lg bg-kwanza px-3 py-1 font-mono text-sm font-bold text-ink shadow-sm;
+		@apply relative inline-flex items-center rounded-lg bg-red px-3 py-1 font-mono text-sm font-bold text-white shadow-sm;
 	}
 	.text-balance {
 		text-wrap: balance;
@@ -162,15 +152,15 @@
 	.price-tag-lg {
 		display: inline-block;
 		position: relative;
-		background: var(--color-kwanza);
+		background: var(--color-red);
 		font-family: var(--font-mono);
 		font-weight: 700;
-		color: var(--color-ink);
+		color: #ffffff;
 		font-size: 1.55rem;
 		line-height: 1.1;
 		padding: 0.75rem 1.25rem;
 		border-radius: 1rem;
-		box-shadow: 0 4px 14px rgba(242, 169, 0, 0.25);
+		box-shadow: 0 4px 14px rgba(211, 20, 30, 0.25);
 	}
 }
 

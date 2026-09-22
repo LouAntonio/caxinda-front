@@ -143,7 +143,7 @@ export function AreaDashboardPage() {
 						{fullName(user?.name, user?.surname)} · {user?.email}
 					</p>
 				</div>
-				<span className="inline-flex shrink-0 items-center gap-2 rounded-xl bg-kwanza px-4 py-2 font-mono text-xs font-bold uppercase tracking-widest text-ink shadow-[0_4px_14px_rgba(242,169,0,0.25)]">
+				<span className="inline-flex shrink-0 items-center gap-2 rounded-xl bg-blue px-4 py-2 font-mono text-xs font-bold uppercase tracking-widest text-white shadow-[0_4px_14px_rgba(42,75,154,0.25)]">
 					<PanelIcon name="shield" size={14} />
 					{accountStatus}
 				</span>
@@ -171,13 +171,13 @@ export function AreaDashboardPage() {
 							value="✔ Ativa"
 							to="/area/verificacao"
 							icon="shield"
-							accent="kwanza"
+							accent="blue"
 						/>
 					</>
 				) : (
 					<div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl bg-ink p-6 text-white sm:col-span-3">
 						<div>
-							<p className="flex items-center gap-1.5 font-mono text-[10px] font-bold uppercase tracking-widest text-kwanza">
+							<p className="flex items-center gap-1.5 font-mono text-[10px] font-bold uppercase tracking-widest text-red-light">
 								<PanelIcon name="shield" size={13} />
 								Conta Empresarial
 							</p>
@@ -191,7 +191,7 @@ export function AreaDashboardPage() {
 						</div>
 						<Link
 							to="/area/verificacao"
-							className="btn-kwanza shrink-0"
+							className="btn-primary shrink-0"
 						>
 							Converter para conta Empresarial
 						</Link>
@@ -283,7 +283,7 @@ export function AreaDashboardPage() {
 					<Link to="/area/empresas/nova" className="btn-blue">
 						+ Nova empresa
 					</Link>
-					<Link to="/planos" className="btn-kwanza">
+					<Link to="/planos" className="btn-primary">
 						Ver planos
 					</Link>
 				</div>
@@ -303,14 +303,14 @@ function StatCard({
 	value: string | number;
 	to: string;
 	icon: PanelIconName;
-	accent: 'red' | 'blue' | 'kwanza';
+	accent: 'red' | 'blue';
 }) {
 	const color =
 		accent === 'red'
 			? 'text-red'
 			: accent === 'blue'
 				? 'text-blue'
-				: 'text-kwanza';
+				: 'text-blue';
 	return (
 		<Link
 			to={to}
@@ -1274,7 +1274,7 @@ export function MessagesPage() {
 									</span>
 								</span>
 								{c.unreadCount > 0 && (
-									<span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-kwanza px-1 font-mono text-[10px] font-bold text-ink">
+									<span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-red px-1 font-mono text-[10px] font-bold text-white">
 										{c.unreadCount}
 									</span>
 								)}
@@ -1498,7 +1498,7 @@ export function PaymentsPage() {
 					title="Sem pagamentos"
 					description="Assina um plano para uma das tuas empresas."
 					action={
-						<Link to="/planos" className="btn-kwanza">
+						<Link to="/planos" className="btn-primary">
 							Ver planos
 						</Link>
 					}
@@ -1676,7 +1676,7 @@ export function MySubscriptionsPage() {
 					title="Sem subscrições"
 					description="Assina um plano para uma das tuas empresas."
 					action={
-						<Link to="/planos" className="btn-kwanza">
+						<Link to="/planos" className="btn-primary">
 							Ver planos
 						</Link>
 					}
@@ -1730,7 +1730,7 @@ export function MySubscriptionsPage() {
 									{s.plan.benefits.map((b) => (
 										<li
 											key={b}
-											className="rounded-full bg-kwanza/15 px-2.5 py-1 text-xs font-medium text-ink"
+											className="rounded-full bg-blue/15 px-2.5 py-1 text-xs font-medium text-ink"
 										>
 											{b}
 										</li>
@@ -1790,7 +1790,7 @@ export function MySubscriptionsPage() {
 										{plan.benefits.map((b) => (
 											<li
 												key={b}
-												className="rounded-full bg-kwanza/15 px-2.5 py-1 text-xs font-medium text-ink"
+												className="rounded-full bg-blue/15 px-2.5 py-1 text-xs font-medium text-ink"
 											>
 												{b}
 											</li>
@@ -1921,7 +1921,7 @@ export function KycPage() {
 					</div>
 				) : (
 					<div className="card mb-6 flex items-center gap-4 p-6">
-						<span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-kwanza/15 text-kwanza">
+						<span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-blue/15 text-blue">
 							<PanelIcon name="clock" size={20} />
 						</span>
 						<div>
@@ -2605,7 +2605,7 @@ export function SettingsPage() {
 														{parsed.label}
 													</span>
 													{s.current && (
-														<span className="rounded-full bg-kwanza px-2 py-0.5 font-mono text-[10px] font-bold text-ink">
+														<span className="rounded-full bg-blue px-2 py-0.5 font-mono text-[10px] font-bold text-white">
 															atual
 														</span>
 													)}

@@ -5,7 +5,7 @@ export function BusinessDetailSkeleton() {
 		<div className="mx-auto max-w-6xl px-4 py-10" aria-hidden>
 			<div className="mb-5 flex items-center gap-2">
 				<Skeleton className="h-4 w-24 rounded" />
-				<span className="text-xs text-kwanza">▸</span>
+				<span className="text-xs text-blue">▸</span>
 				<Skeleton className="h-4 w-48 rounded" />
 			</div>
 
@@ -41,7 +41,7 @@ export function BusinessDetailSkeleton() {
 				<div className="flex min-w-0 flex-col gap-6">
 					<div className="card p-5">
 						<div className="mb-3 flex items-center gap-3">
-							<Skeleton className="h-1.5 w-14 rounded-full bg-kwanza/40" />
+							<Skeleton className="h-1.5 w-14 rounded-full bg-blue/40" />
 							<Skeleton className="h-4 w-20 rounded" />
 						</div>
 						<div className="space-y-2">

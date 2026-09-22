@@ -113,7 +113,7 @@ function ItemAnalyticsPanel({
 									</div>
 									<div className="h-2 overflow-hidden rounded-full bg-ink/10">
 										<div
-											className="h-full rounded-full bg-kwanza"
+											className="h-full rounded-full bg-blue"
 											style={{
 												width: `${(item.count / channelMax) * 100}%`,
 											}}
@@ -268,11 +268,11 @@ export function OwnerAnalyticsPage() {
 				>
 					{isAd ? 'Produto' : 'Empresa'}
 				</Link>
-				<span className="text-xs text-kwanza">▸</span>
+				<span className="text-xs text-blue">▸</span>
 				<span className="truncate text-ink/80">
 					{isAd ? ad?.title : business?.name}
 				</span>
-				<span className="text-xs text-kwanza">▸</span>
+				<span className="text-xs text-blue">▸</span>
 				<span className="font-bold text-ink">Estatísticas</span>
 			</nav>
 
