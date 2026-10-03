@@ -1299,7 +1299,7 @@ export function BusinessDetailPage() {
 									? business.averageRating
 											.toFixed(1)
 											.replace('.', ',')
-									: '—'}
+									: '-'}
 							</span>
 							<span className="text-[10px] font-bold uppercase tracking-widest text-ink/40">
 								Nota

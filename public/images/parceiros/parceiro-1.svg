@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="180" height="48" viewBox="0 0 180 48" role="img" aria-label="Parceiro 1">
+  <g fill="none" stroke="#0e1733" stroke-width="3">
+    <circle cx="24" cy="24" r="13" />
+    <path d="M18 24h12M24 18v12" stroke-linecap="round" />
+  </g>
+  <text x="46" y="30" font-family="Verdana, DejaVu Sans, sans-serif" font-size="18" font-weight="700" fill="#0e1733">Parceiro 1</text>
+</svg>

@@ -216,7 +216,7 @@ export default function App() {
 			{/* Componente Head global para metadados SEO base */}
 			<Head
 				title="Caxinda Divulga"
-				description="Caxinda Divulga — a plataforma que leva o seu negócio a outro nível. Divulgue serviços, venda produtos e destaque o seu estabelecimento em Angola."
+				description="Caxinda Divulga - a plataforma que leva o seu negócio a outro nível. Divulgue serviços, venda produtos e destaque o seu estabelecimento em Angola."
 				type="website"
 			/>
 			<RouterProvider router={router} />

@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="180" height="48" viewBox="0 0 180 48" role="img" aria-label="Parceiro 7">
+  <g fill="#0e1733">
+    <path d="M12 34l7-16 6 11 5-7 6 12z" opacity="0.85" />
+    <circle cx="38" cy="14" r="4" opacity="0.5" />
+  </g>
+  <text x="50" y="30" font-family="Verdana, DejaVu Sans, sans-serif" font-size="18" font-weight="700" fill="#0e1733">Parceiro 7</text>
+</svg>

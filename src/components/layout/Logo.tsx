@@ -15,7 +15,7 @@ export function Logo({ compact = false, variant = 'default' }: LogoProps) {
 	return (
 		<Link
 			to="/"
-			aria-label="Caxinda Divulga — página inicial"
+			aria-label="Caxinda Divulga - página inicial"
 			className="flex items-center"
 		>
 			<img

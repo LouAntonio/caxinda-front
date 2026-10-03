@@ -99,7 +99,7 @@ export function periodLabel(
 	to: string,
 ): string {
 	if (custom) {
-		return `${from || '—'} a ${to || '—'}`;
+		return `${from || '-'} a ${to || '-'}`;
 	}
 	return RANGE_LABELS[range] ?? `Últimos ${range}`;
 }

@@ -139,13 +139,13 @@ export function AdminDashboardPage() {
 			<div className="mt-6 grid gap-4 sm:grid-cols-3">
 				<AdminStatsCard
 					label="Visualizações (30d)"
-					value={analytics?.totals.views ?? '—'}
+					value={analytics?.totals.views ?? '-'}
 					icon="eye"
 					accent="blue"
 				/>
 				<AdminStatsCard
 					label="Cliques (30d)"
-					value={analytics?.totals.clicks ?? '—'}
+					value={analytics?.totals.clicks ?? '-'}
 					icon="cursor"
 					accent="red"
 				/>
@@ -451,7 +451,7 @@ function AdDetailModal({
 						<div className="flex justify-between">
 							<span className="text-ink/40">Categoria</span>
 							<span className="font-bold">
-								{ad.category?.name ?? '—'}
+								{ad.category?.name ?? '-'}
 							</span>
 						</div>
 						<div className="flex justify-between">
@@ -460,7 +460,7 @@ function AdDetailModal({
 								{ad.province
 									? (PROVINCE_LABELS[ad.province] ??
 										ad.province)
-									: '—'}
+									: '-'}
 							</span>
 						</div>
 						<div className="flex justify-between">
@@ -1232,7 +1232,7 @@ export function AdminUserPage() {
 						<Info k="Registo" v={formatDate(user.createdAt)} />
 						<Info k="Confiança" v={String(user.trustScore)} />
 						<Info k="Anúncios" v={String(user.adCount)} />
-						<Info k="Telefone" v={user.phone ?? '—'} />
+						<Info k="Telefone" v={user.phone ?? '-'} />
 					</div>
 					{user.subscriptions.length > 0 && (
 						<div>
@@ -2886,7 +2886,7 @@ export function AdminAnalyticsPage() {
 					<div className="grid grid-cols-2 gap-3 md:grid-cols-4">
 						<Info
 							k="Visualizações"
-							v={String(data?.totals.views ?? '—')}
+							v={String(data?.totals.views ?? '-')}
 						/>
 						<Info
 							k="Visitas únicas"
@@ -2894,7 +2894,7 @@ export function AdminAnalyticsPage() {
 						/>
 						<Info
 							k="Cliques"
-							v={String(data?.totals.clicks ?? '—')}
+							v={String(data?.totals.clicks ?? '-')}
 						/>
 						<Info
 							k="Canais registados"

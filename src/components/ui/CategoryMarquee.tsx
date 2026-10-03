@@ -13,23 +13,12 @@ function CategoryMarqueeCard({
 	category: Category;
 	baseTo: string;
 }) {
-	const count =
-		category.type === 'AD' ? category.adCount : category.businessCount;
-	const countLabel =
-		category.type === 'AD'
-			? count === 1
-				? 'produto'
-				: 'produtos'
-			: count === 1
-				? 'empresa'
-				: 'empresas';
-
 	return (
 		<Link
 			to={`${baseTo}?categoryIds=${category.id}`}
-			className="group relative block w-44 shrink-0 overflow-hidden rounded-2xl border border-white/10 transition hover:-translate-y-0.5 hover:shadow-lg md:w-56"
+			className="group relative block w-44 shrink-0 overflow-hidden rounded-2xl border border-ink/10 transition hover:-translate-y-0.5 hover:shadow-lg md:w-56"
 		>
-			<div className="relative aspect-[4/3] overflow-hidden bg-white/5">
+			<div className="relative aspect-[4/3] overflow-hidden bg-snow-dark">
 				{category.imageUrl ? (
 					<img
 						src={category.imageUrl}
@@ -38,7 +27,7 @@ function CategoryMarqueeCard({
 						className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
 					/>
 				) : (
-					<div className="flex h-full items-center justify-center bg-gradient-to-br from-white/5 to-white/10 font-display text-3xl font-black text-white/15">
+					<div className="flex h-full items-center justify-center bg-gradient-to-br from-ink/70 to-ink/90 font-display text-3xl font-black text-white/50">
 						{category.name}
 					</div>
 				)}
@@ -48,9 +37,6 @@ function CategoryMarqueeCard({
 				<h3 className="font-display text-base font-black text-white drop-shadow-sm">
 					{category.name}
 				</h3>
-				<p className="mt-0.5 text-xs font-semibold text-white/60">
-					{count} {countLabel}
-				</p>
 			</div>
 		</Link>
 	);

@@ -221,7 +221,7 @@ export function AreaDashboardPage() {
 						</span>
 						<span className="chip">KYC: {kycLabel}</span>
 						<span className="chip">
-							Confiança: {user?.trustScore ?? '—'}
+							Confiança: {user?.trustScore ?? '-'}
 						</span>
 					</div>
 					<div className="mt-4 flex gap-2">
@@ -1980,7 +1980,7 @@ export function KycPage() {
 				/>
 			</div>
 			<p className="mt-6 mb-2 font-mono text-xs font-bold uppercase tracking-widest text-ink/40">
-				Selfies (3 obrigatórias) — de frente, de perfil e outro ângulo
+				Selfies (3 obrigatórias) - de frente, de perfil e outro ângulo
 			</p>
 			<div className="grid max-w-3xl gap-4 sm:grid-cols-3">
 				{[0, 1, 2].map((index) => (

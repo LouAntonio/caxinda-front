@@ -170,8 +170,8 @@ export function Footer() {
 			</div>
 			<div className="border-t border-white/10 py-5">
 				<p className="mx-auto max-w-6xl px-4 text-center font-mono text-xs text-snow/40">
-					© {new Date().getFullYear()} Caxinda Divulga — Feito em
-					Angola 🇦🇴
+					© {new Date().getFullYear()} Caxinda Divulga - Todos os
+					direitos reservados.
 				</p>
 			</div>
 		</footer>

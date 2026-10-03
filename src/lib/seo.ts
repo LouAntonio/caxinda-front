@@ -1,5 +1,5 @@
 const DEFAULT_IMAGE = '/images/og-default.jpg';
-const DEFAULT_TITLE_SUFFIX = ' — Caxinda';
+const DEFAULT_TITLE_SUFFIX = ' - Caxinda';
 const SITE_URL = 'https://caxindadivulga.com';
 
 export interface SeoUtils {
@@ -35,7 +35,7 @@ export function generateSeoTitle(title?: string): string {
 
 export function generateSeoDescription(page?: string, entity?: any): string {
 	const baseDescription =
-		'Caxinda Divulga — a plataforma que leva o seu negócio a outro nível. Divulgue serviços, venda produtos e destaque o seu estabelecimento em Angola.';
+		'Caxinda Divulga - a plataforma que leva o seu negócio a outro nível. Divulgue serviços, venda produtos e destaque o seu estabelecimento em Angola.';
 
 	switch (page) {
 		case 'ad-detail':
@@ -51,7 +51,7 @@ export function generateSeoDescription(page?: string, entity?: any): string {
 		case 'businesses-list':
 			return `Descubra centenas de empresas em Angola. Do artesanato local ao serviços profissionais.`;
 		case 'about':
-			return 'Saiba mais sobre a Caxinda Divulga — a plataforma que aproxima compradores e vendedores em Angola.';
+			return 'Saiba mais sobre a Caxinda Divulga - a plataforma que aproxima compradores e vendedores em Angola.';
 		case 'terms':
 			return 'Termos e condições da Caxinda Divulga. Entenda seus direitos e obrigações ao usar nossa plataforma.';
 		case 'privacy':

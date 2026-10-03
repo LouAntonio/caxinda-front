@@ -30,7 +30,7 @@ export const PROVINCE_LABELS: Record<string, string> = {
 
 export function formatKz(value: number | null | undefined): string {
 	if (value === null || value === undefined) {
-		return '—';
+		return '-';
 	}
 	return `${numberFormat.format(value)} Kz`;
 }
@@ -41,14 +41,14 @@ export function formatNumber(value: number): string {
 
 export function formatDecimal(value: number | null | undefined): string {
 	if (value === null || value === undefined) {
-		return '—';
+		return '-';
 	}
 	return decimalFormat.format(value);
 }
 
 export function formatRating(value: number | null | undefined): string {
 	if (value === null || value === undefined) {
-		return '—';
+		return '-';
 	}
 	return decimalFormat.format(value);
 }
@@ -69,14 +69,14 @@ const dateTimeFormat = new Intl.DateTimeFormat('pt-PT', {
 
 export function formatDate(value?: string | null): string {
 	if (!value) {
-		return '—';
+		return '-';
 	}
 	return dateFormat.format(new Date(value));
 }
 
 export function formatDateTime(value?: string | null): string {
 	if (!value) {
-		return '—';
+		return '-';
 	}
 	return dateTimeFormat.format(new Date(value));
 }
@@ -89,7 +89,7 @@ const shortDateFormat = new Intl.DateTimeFormat('pt-PT', {
 
 export function formatShortDate(value?: string | null): string {
 	if (!value) {
-		return '—';
+		return '-';
 	}
 	return shortDateFormat.format(new Date(value));
 }
@@ -142,7 +142,7 @@ export function fullName(
 	name?: string | null,
 	surname?: string | null,
 ): string {
-	return [name, surname].filter(Boolean).join(' ').trim() || '—';
+	return [name, surname].filter(Boolean).join(' ').trim() || '-';
 }
 
 export function clamp(value: number, min: number, max: number): number {

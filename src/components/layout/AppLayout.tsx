@@ -145,21 +145,21 @@ export function RequireBusiness({ children }: { children: React.ReactNode }) {
 								<span className="mt-0.5 font-black text-blue">
 									★
 								</span>{' '}
-								<strong>As tuas empresas</strong> — cria e gere
+								<strong>As tuas empresas</strong> - cria e gere
 								o teu negócio na Caxinda
 							</li>
 							<li className="flex items-start gap-2">
 								<span className="mt-0.5 font-black text-blue">
 									★
 								</span>{' '}
-								<strong>Planos e subscrições</strong> — ganha
+								<strong>Planos e subscrições</strong> - ganha
 								visibilidade com planos pagos
 							</li>
 							<li className="flex items-start gap-2">
 								<span className="mt-0.5 font-black text-blue">
 									★
 								</span>{' '}
-								<strong>Pagamentos</strong> — acompanha os teus
+								<strong>Pagamentos</strong> - acompanha os teus
 								pagamentos de planos
 							</li>
 						</ul>

@@ -18,7 +18,7 @@ export function AuthLayout() {
 						</h2>
 						<p className="mt-4 text-sm leading-relaxed text-white/50">
 							Publica anúncios, encontra empresas e cresce o teu
-							negócio — tudo num só sítio.
+							negócio - tudo num só sítio.
 						</p>
 					</div>
 

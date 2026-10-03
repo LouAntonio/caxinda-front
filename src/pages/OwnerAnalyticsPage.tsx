@@ -277,7 +277,7 @@ export function OwnerAnalyticsPage() {
 			</nav>
 
 			<h1 className="mb-6 font-display text-2xl font-black text-ink">
-				Estatísticas — {name}
+				Estatísticas - {name}
 			</h1>
 
 			<div className="mb-5 flex flex-wrap items-center gap-2">

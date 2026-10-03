@@ -144,7 +144,7 @@ export function SobrePage() {
 		},
 		{
 			title: 'Tudo em kwanza.',
-			body: 'Preços claros, planos simples e sem taxas escondidas — do primeiro anúncio ao plano de destaque.',
+			body: 'Preços claros, planos simples e sem taxas escondidas - do primeiro anúncio ao plano de destaque.',
 		},
 		{
 			title: 'Uma vitrine para todos.',
@@ -172,8 +172,8 @@ export function SobrePage() {
 							</span>
 						</h1>
 						<p className="mt-5 max-w-xl text-base leading-relaxed text-white/55">
-							A Caxinda Divulga nasceu para que qualquer negócio —
-							do barraco de jeito ao escritório de Luanda — tenha
+							A Caxinda Divulga nasceu para que qualquer negócio -
+							do barraco de jeito ao escritório de Luanda - tenha
 							vitrine, clientes e visibilidade em Angola.
 						</p>
 					</div>
@@ -193,13 +193,13 @@ export function SobrePage() {
 						<p className="text-lg leading-relaxed text-ink/75">
 							Hoje, quem vende publica em segundos. Quem anda à
 							procura encontra por categoria e província, com
-							preços em kwanza e contacto direto com o vendedor —
+							preços em kwanza e contacto direto com o vendedor -
 							sem intermediários e sem jargão.
 						</p>
 						<p className="text-lg leading-relaxed text-ink/75">
 							Começámos com uma ideia simples: se o boca a boca
 							funciona, na internet funciona melhor. Foi assim que
-							a Caxinda Divulga nasceu — feita para o mercado
+							a Caxinda Divulga nasceu - feita para o mercado
 							local, do barraco de jeito ao escritório de Luanda.
 						</p>
 					</div>
@@ -765,7 +765,7 @@ export function ContactosPage() {
 									<path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" />
 									<circle cx="12" cy="10" r="3" />
 								</svg>
-								Luanda, Angola — servindo as 18 províncias.
+								Luanda, Angola - servindo as 18 províncias.
 							</p>
 							<p className="mt-2 flex items-start gap-2 text-sm text-ink/80">
 								<svg

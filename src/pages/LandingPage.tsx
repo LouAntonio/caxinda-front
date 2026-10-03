@@ -7,12 +7,12 @@ import { AdCardSkeletonGrid } from '../components/ads/AdCardSkeleton';
 import { BusinessCard } from '../components/businesses/BusinessCard';
 import { BusinessCardSkeletonGrid } from '../components/businesses/BusinessCardSkeleton';
 import { CategoryMarquee } from '../components/ui/CategoryMarquee';
+import { PartnerMarquee } from '../components/ui/PartnerMarquee';
 
-const HERO_IMAGES = [
-	'https://images.unsplash.com/photo-1611348586804-61bf6c080437?w=1920&q=80',
-	'https://images.unsplash.com/photo-1523805009345-7448845a9e53?w=1920&q=80',
-	'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=1920&q=80',
-];
+const HERO_IMAGES = Array.from(
+	{ length: 9 },
+	(_, i) => `/images/hero/${i + 1}.png`,
+);
 
 const AD_BANNER_TOP = 'https://kuvangana.com/images/ads/3.png';
 const AD_BANNER_MIDDLE = 'https://kuvangana.com/images/ads/2.png';
@@ -29,12 +29,12 @@ function CategoryCardSkeletonGrid({
 			{Array.from({ length: count }).map((_, i) => (
 				<div
 					key={i}
-					className="animate-pulse overflow-hidden rounded-2xl bg-white/5"
+					className="animate-pulse overflow-hidden rounded-2xl bg-ink/5"
 				>
-					<div className="aspect-[4/3] bg-white/5" />
+					<div className="aspect-[4/3] bg-ink/5" />
 					<div className="space-y-2 p-4">
-						<div className="h-4 w-2/3 rounded bg-white/10" />
-						<div className="h-3 w-1/3 rounded bg-white/5" />
+						<div className="h-4 w-2/3 rounded bg-ink/10" />
+						<div className="h-3 w-1/3 rounded bg-ink/5" />
 					</div>
 				</div>
 			))}
@@ -68,8 +68,6 @@ export default function LandingPage() {
 	});
 	const { data: productCategories, isLoading: productCategoriesLoading } =
 		useCategories('AD');
-	const { data: businessCategories, isLoading: businessCategoriesLoading } =
-		useCategories('BUSINESS');
 
 	useEffect(() => {
 		const timer = setInterval(() => {
@@ -122,6 +120,37 @@ export default function LandingPage() {
 			{/* Kwanza strip */}
 			<div className="h-1.5 bg-blue" />
 
+			{/* Categorias de Produtos */}
+			<section className="bg-white py-16">
+				<div className="mx-auto max-w-6xl px-4">
+					<div className="mb-8 flex items-end justify-between">
+						<div>
+							<span className="kicker">Categorias</span>
+							<h2 className="mt-2 font-display text-2xl font-black text-ink">
+								Produtos
+							</h2>
+						</div>
+						<Link
+							to="/produtos"
+							className="text-sm font-bold text-red hover:underline"
+						>
+							Ver tudo →
+						</Link>
+					</div>
+					{productCategoriesLoading ? (
+						<CategoryCardSkeletonGrid
+							count={8}
+							gridClassName="grid grid-cols-2 gap-5 md:grid-cols-3 lg:grid-cols-4"
+						/>
+					) : (productCategories ?? []).length === 0 ? null : (
+						<CategoryMarquee
+							categories={productCategories ?? []}
+							baseTo="/produtos"
+						/>
+					)}
+				</div>
+			</section>
+
 			{/* Produtos em destaque */}
 			<section className="py-16">
 				<div className="mx-auto max-w-6xl px-4">
@@ -155,41 +184,8 @@ export default function LandingPage() {
 			</section>
 
 			{/* Banner superior */}
-			<section className="pb-16">
+			<section className="py-16">
 				<AdBanner src={AD_BANNER_TOP} alt="Publicidade" />
-			</section>
-
-			{/* Categorias de Produtos — dark section */}
-			<section className="bg-ink py-16">
-				<div className="mx-auto max-w-6xl px-4">
-					<div className="mb-8 flex items-end justify-between">
-						<div>
-							<span className="kicker text-red-light">
-								Categorias
-							</span>
-							<h2 className="mt-2 font-display text-2xl font-black text-white">
-								Produtos
-							</h2>
-						</div>
-						<Link
-							to="/produtos"
-							className="text-sm font-bold text-red-light hover:underline"
-						>
-							Ver tudo →
-						</Link>
-					</div>
-					{productCategoriesLoading ? (
-						<CategoryCardSkeletonGrid
-							count={8}
-							gridClassName="grid grid-cols-2 gap-5 md:grid-cols-3 lg:grid-cols-4"
-						/>
-					) : (productCategories ?? []).length === 0 ? null : (
-						<CategoryMarquee
-							categories={productCategories ?? []}
-							baseTo="/produtos"
-						/>
-					)}
-				</div>
 			</section>
 
 			{/* Como funciona */}
@@ -240,39 +236,6 @@ export default function LandingPage() {
 				<AdBanner src={AD_BANNER_MIDDLE} alt="Publicidade" />
 			</section>
 
-			{/* Categorias de Empresas — dark variant */}
-			<section className="bg-ink-soft py-16">
-				<div className="mx-auto max-w-6xl px-4">
-					<div className="mb-8 flex items-end justify-between">
-						<div>
-							<span className="kicker text-red-light">
-								Categorias
-							</span>
-							<h2 className="mt-2 font-display text-2xl font-black text-white">
-								Empresas
-							</h2>
-						</div>
-						<Link
-							to="/empresas"
-							className="text-sm font-bold text-red-light hover:underline"
-						>
-							Ver tudo →
-						</Link>
-					</div>
-					{businessCategoriesLoading ? (
-						<CategoryCardSkeletonGrid
-							count={4}
-							gridClassName="grid grid-cols-2 gap-5 md:grid-cols-3 lg:grid-cols-4"
-						/>
-					) : (businessCategories ?? []).length === 0 ? null : (
-						<CategoryMarquee
-							categories={businessCategories ?? []}
-							baseTo="/empresas"
-						/>
-					)}
-				</div>
-			</section>
-
 			{/* Empresas em destaque */}
 			<section className="py-16">
 				<div className="mx-auto max-w-6xl px-4">
@@ -305,13 +268,23 @@ export default function LandingPage() {
 				</div>
 			</section>
 
+			{/* Parceiros */}
+			<section className="border-t border-ink/5 py-14">
+				<div className="mx-auto max-w-6xl px-4">
+					<div className="mb-8 text-center">
+						<span className="kicker">Parceiros</span>
+						<h2 className="mt-2 font-display text-2xl font-black">
+							Empresas que confiam na Caxinda
+						</h2>
+					</div>
+					<PartnerMarquee />
+				</div>
+			</section>
+
 			{/* CTA final */}
 			<section className="mx-auto max-w-6xl px-4">
 				<div className="overflow-hidden rounded-2xl bg-blue shadow-[0_20px_50px_rgba(14,23,51,0.2)]">
 					<div className="px-6 py-16 text-center sm:px-10">
-						<span className="block kicker text-red-light">
-							Caxinda Divulga
-						</span>
 						<h2 className="mt-3 text-balance font-display text-3xl font-black text-white md:text-4xl">
 							Faça a sua empresa ser vista.
 						</h2>
@@ -322,16 +295,10 @@ export default function LandingPage() {
 						</p>
 						<div className="mt-8 flex flex-wrap justify-center gap-3">
 							<Link
-								to="/auth/registar"
+								to="/area/empresas"
 								className="btn-primary shadow-[0_8px_18px_rgba(14,23,51,0.18)]"
 							>
 								Registar empresa grátis
-							</Link>
-							<Link
-								to="/planos"
-								className="btn-outline !border-white/45 !text-white hover:!border-white/85"
-							>
-								Ver planos
 							</Link>
 						</div>
 					</div>
