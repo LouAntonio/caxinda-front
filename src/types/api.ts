@@ -166,6 +166,11 @@ export interface AdsListResponse extends Paginated<AdListItem> {
 	proximity?: boolean;
 }
 
+/** Anúncio do ranking "Mais vistos", com as views dos últimos 7 dias. */
+export interface TrendingAd extends AdListItem {
+	views7d: number;
+}
+
 export interface AdQueryParams {
 	page?: number;
 	limit?: number;

@@ -7,6 +7,8 @@ import type {
 	AdsListResponse,
 	AdAnalytics,
 	AdListItem,
+	Paginated,
+	TrendingAd,
 	AdminUser,
 	AnalyticsQuery,
 	AnalyticsRange,
@@ -105,6 +107,21 @@ export function useAds(params: AdQueryParams) {
 			return res.data;
 		},
 		placeholderData: (prev) => prev,
+	});
+}
+
+export function useTrendingAds(limit = 8) {
+	return useQuery({
+		queryKey: ['ads', 'trending', limit],
+		queryFn: async () => {
+			const res = await http.get<Paginated<TrendingAd>>('/ads/trending', {
+				params: { limit },
+			});
+			return res.data;
+		},
+		// O servidor guarda em cache 5 min; manter o mesmo TTL evita refetches
+		// inúteis a cada visita à homepage.
+		staleTime: 5 * 60_000,
 	});
 }
 

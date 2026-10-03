@@ -1,13 +1,17 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { usePageTitle } from '../hooks/usePageTitle';
-import { useAds, useBusinesses, useCategories } from '../hooks/queries';
-import { AdCard } from '../components/ads/AdCard';
-import { AdCardSkeletonGrid } from '../components/ads/AdCardSkeleton';
+import {
+	useAds,
+	useBusinesses,
+	useCategories,
+	useTrendingAds,
+} from '../hooks/queries';
 import { BusinessCard } from '../components/businesses/BusinessCard';
 import { BusinessCardSkeletonGrid } from '../components/businesses/BusinessCardSkeleton';
 import { CategoryMarquee } from '../components/ui/CategoryMarquee';
 import { PartnerMarquee } from '../components/ui/PartnerMarquee';
+import { ProductShelf } from '../components/ui/ProductShelf';
 
 const HERO_IMAGES = Array.from(
 	{ length: 9 },
@@ -16,6 +20,8 @@ const HERO_IMAGES = Array.from(
 
 const AD_BANNER_TOP = 'https://kuvangana.com/images/ads/3.png';
 const AD_BANNER_MIDDLE = 'https://kuvangana.com/images/ads/2.png';
+
+const SHELF_COUNT = 8;
 
 function CategoryCardSkeletonGrid({
 	count,
@@ -58,9 +64,15 @@ function AdBanner({ src, alt }: { src: string; alt: string }) {
 export default function LandingPage() {
 	usePageTitle('Caxinda Divulga');
 	const [heroIndex, setHeroIndex] = useState(0);
-	const { data: ads, isLoading: adsLoading } = useAds({
-		limit: 8,
+	const { data: featuredAds, isLoading: featuredAdsLoading } = useAds({
+		limit: SHELF_COUNT,
 		featured: true,
+	});
+	const { data: trendingAds, isLoading: trendingAdsLoading } =
+		useTrendingAds(SHELF_COUNT);
+	const { data: newestAds, isLoading: newestAdsLoading } = useAds({
+		limit: SHELF_COUNT,
+		sortBy: 'newest',
 	});
 	const { data: businesses, isLoading: businessesLoading } = useBusinesses({
 		limit: 4,
@@ -125,9 +137,8 @@ export default function LandingPage() {
 				<div className="mx-auto max-w-6xl px-4">
 					<div className="mb-8 flex items-end justify-between">
 						<div>
-							<span className="kicker">Categorias</span>
 							<h2 className="mt-2 font-display text-2xl font-black text-ink">
-								Produtos
+								Categorias de Produtos
 							</h2>
 						</div>
 						<Link
@@ -152,36 +163,35 @@ export default function LandingPage() {
 			</section>
 
 			{/* Produtos em destaque */}
-			<section className="py-16">
-				<div className="mx-auto max-w-6xl px-4">
-					<div className="mb-8 flex items-end justify-between">
-						<div>
-							<span className="kicker">Produtos</span>
-							<h2 className="mt-2 font-display text-2xl font-black">
-								Em destaque
-							</h2>
-						</div>
-						<Link
-							to="/produtos"
-							className="text-sm font-bold text-red hover:underline"
-						>
-							Ver todos →
-						</Link>
-					</div>
-					{adsLoading ? (
-						<AdCardSkeletonGrid
-							count={4}
-							gridClassName="grid grid-cols-2 gap-5 md:grid-cols-4 lg:items-start"
-						/>
-					) : (
-						<div className="grid grid-cols-2 gap-5 md:grid-cols-4 lg:items-start">
-							{(ads?.items ?? []).map((a) => (
-								<AdCard key={a.id} ad={a} />
-							))}
-						</div>
-					)}
-				</div>
-			</section>
+			<ProductShelf
+				kicker="Produtos"
+				title="Em destaque"
+				to="/produtos"
+				items={featuredAds?.items ?? []}
+				isLoading={featuredAdsLoading}
+				loadingCount={SHELF_COUNT}
+			/>
+
+			{/* Mais vistos nos últimos 7 dias */}
+			<ProductShelf
+				kicker="Produtos"
+				title="Mais vistos"
+				to="/produtos"
+				items={trendingAds?.items ?? []}
+				isLoading={trendingAdsLoading}
+				loadingCount={SHELF_COUNT}
+				sectionClassName="bg-white"
+			/>
+
+			{/* Novidades */}
+			<ProductShelf
+				kicker="Produtos"
+				title="Novidades"
+				to="/produtos"
+				items={newestAds?.items ?? []}
+				isLoading={newestAdsLoading}
+				loadingCount={SHELF_COUNT}
+			/>
 
 			{/* Banner superior */}
 			<section className="py-16">
@@ -241,9 +251,8 @@ export default function LandingPage() {
 				<div className="mx-auto max-w-6xl px-4">
 					<div className="mb-8 flex items-end justify-between">
 						<div>
-							<span className="kicker">Empresas</span>
 							<h2 className="mt-2 font-display text-2xl font-black">
-								Em destaque
+								Empresas Em destaque
 							</h2>
 						</div>
 						<Link
