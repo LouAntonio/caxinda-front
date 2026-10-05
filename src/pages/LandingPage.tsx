@@ -14,7 +14,7 @@ import { PartnerMarquee } from '../components/ui/PartnerMarquee';
 import { ProductShelf } from '../components/ui/ProductShelf';
 
 const HERO_IMAGES = Array.from(
-	{ length: 9 },
+	{ length: 4 },
 	(_, i) => `/images/hero/${i + 1}.png`,
 );
 
@@ -307,7 +307,7 @@ export default function LandingPage() {
 								to="/area/empresas"
 								className="btn-primary shadow-[0_8px_18px_rgba(14,23,51,0.18)]"
 							>
-								Registar empresa grátis
+								Registar Empresa
 							</Link>
 						</div>
 					</div>

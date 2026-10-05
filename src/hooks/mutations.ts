@@ -349,7 +349,8 @@ export interface CreateCategoryDto {
 	name: string;
 	type: CategoryType;
 	slug?: string;
-	imageUrl?: string;
+	/** `null` remove a imagem actual da categoria. */
+	imageUrl?: string | null;
 }
 
 export function useCreateCategory() {

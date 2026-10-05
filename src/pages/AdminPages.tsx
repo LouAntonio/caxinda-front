@@ -1958,7 +1958,7 @@ export function AdminCategoriesPage() {
 						id: editingId,
 						name: name.trim(),
 						type,
-						imageUrl: nextImageUrl ?? undefined,
+						imageUrl: nextImageUrl,
 					}),
 					{
 						loading: 'A guardar categoria…',
@@ -1971,7 +1971,7 @@ export function AdminCategoriesPage() {
 					create.mutateAsync({
 						name: name.trim(),
 						type,
-						imageUrl: nextImageUrl ?? undefined,
+						imageUrl: nextImageUrl,
 					}),
 					{
 						loading: 'A criar categoria…',
