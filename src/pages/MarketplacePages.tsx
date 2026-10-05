@@ -525,7 +525,7 @@ export function AdDetailPage() {
 								}
 							/>
 						) : (
-							<div className="flex aspect-[4/3] w-full items-center justify-center rounded-2xl bg-snow-dark font-display text-5xl font-black text-ink/15">
+							<div className="flex h-64 w-full items-center justify-center rounded-2xl bg-snow-dark font-display text-5xl font-black text-ink/15 sm:h-80 lg:h-[26rem]">
 								CX
 							</div>
 						)}
@@ -1232,11 +1232,15 @@ export function BusinessDetailPage() {
 				<span className="truncate text-ink/80">{business.name}</span>
 			</nav>
 
-			<div className="card overflow-hidden p-3">
+			{/* Banner + barra de identidade. A identidade estava duplicada três
+			    vezes (aqui, no h1 e na secção "Sobre"); agora vive num só
+			    lugar, encostada ao banner e logo abaixo da dobra. */}
+			<div className="card overflow-hidden">
 				{businessImages.length > 0 ? (
 					<Carousel
 						images={businessImages}
 						onImageClick={setLightboxIndex}
+						className="px-3 pb-3"
 						overlay={
 							business.isVerified ? (
 								<span className="absolute left-3 top-3 -rotate-3 rounded-lg bg-red px-2.5 py-1 font-mono text-[10px] font-bold uppercase tracking-wider text-white shadow">
@@ -1252,7 +1256,7 @@ export function BusinessDetailPage() {
 					/>
 				) : (
 					<div
-						className="flex h-64 w-full items-center justify-center rounded-2xl bg-blue lg:h-80"
+						className="flex h-64 w-full items-center justify-center bg-blue sm:h-80 lg:h-[26rem]"
 						style={{
 							backgroundImage:
 								'repeating-linear-gradient(45deg, rgba(255,255,255,0.06) 0 16px, transparent 16px 32px)',
@@ -1263,30 +1267,28 @@ export function BusinessDetailPage() {
 						</span>
 					</div>
 				)}
-			</div>
 
-			<div className="mt-5 rounded-2xl bg-snow px-6 py-5">
-				<div className="flex flex-wrap items-center gap-4">
+				<div className="flex flex-wrap items-center gap-4 bg-ink px-5 py-4">
 					{business.logoUrl ? (
 						<img
 							src={business.logoUrl}
 							alt={business.name}
-							className="h-14 w-14 shrink-0 rounded-2xl border-2 border-white bg-white object-cover shadow-sm"
+							className="h-14 w-14 shrink-0 rounded-2xl border-2 border-white/20 bg-white object-cover"
 						/>
 					) : (
-						<span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-ink font-display text-sm font-black text-white shadow-sm">
+						<span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-white/10 font-display text-sm font-black text-white">
 							{business.name.slice(0, 2).toUpperCase()}
 						</span>
 					)}
 					<div className="min-w-0 flex-1">
-						<h1 className="text-balance font-display text-xl font-black leading-tight">
+						<h1 className="text-balance font-display text-xl font-black leading-tight text-white">
 							{business.name}
 						</h1>
 						<div className="mt-1.5 flex flex-wrap items-center gap-1.5">
-							<span className="chip border-blue/20 bg-blue/5 !text-blue">
+							<span className="chip border-white/25 bg-white/10 text-white/85">
 								{business.category.name}
 							</span>
-							<span className="chip">
+							<span className="chip border-white/25 bg-white/10 text-white/85">
 								{PROVINCE_LABELS[business.province] ??
 									business.province}
 							</span>
@@ -1294,23 +1296,23 @@ export function BusinessDetailPage() {
 					</div>
 					<div className="flex items-center gap-4 text-center">
 						<div>
-							<span className="block font-mono text-sm font-bold text-ink">
+							<span className="block font-mono text-sm font-bold text-white">
 								{business.averageRating !== null
 									? business.averageRating
 											.toFixed(1)
 											.replace('.', ',')
 									: '-'}
 							</span>
-							<span className="text-[10px] font-bold uppercase tracking-widest text-ink/40">
+							<span className="font-mono text-[10px] font-bold uppercase tracking-widest text-white/50">
 								Nota
 							</span>
 						</div>
-						<div className="h-6 w-px bg-ink/10" />
+						<div className="h-6 w-px bg-white/20" />
 						<div>
-							<span className="block font-mono text-sm font-bold text-ink">
+							<span className="block font-mono text-sm font-bold text-white">
 								{business.reviewCount}
 							</span>
-							<span className="text-[10px] font-bold uppercase tracking-widest text-ink/40">
+							<span className="font-mono text-[10px] font-bold uppercase tracking-widest text-white/50">
 								Avaliações
 							</span>
 						</div>
@@ -1336,10 +1338,6 @@ export function BusinessDetailPage() {
 									{business.address}
 								</p>
 							)}
-							<div className="flex items-center gap-1.5 text-sm text-ink/55">
-								<Stars value={business.averageRating} />
-								<span>· {business.reviewCount} avaliações</span>
-							</div>
 						</div>
 					</section>
 

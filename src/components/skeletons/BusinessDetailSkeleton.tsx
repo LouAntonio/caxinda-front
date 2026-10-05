@@ -9,28 +9,25 @@ export function BusinessDetailSkeleton() {
 				<Skeleton className="h-4 w-48 rounded" />
 			</div>
 
-			<div className="card overflow-hidden p-3">
-				<Skeleton className="aspect-[4/3] w-full rounded-xl" />
-			</div>
-
-			<div className="mt-5 rounded-2xl bg-snow px-6 py-5">
-				<div className="flex flex-wrap items-center gap-4">
-					<Skeleton className="h-14 w-14 rounded-2xl" />
+			<div className="card overflow-hidden">
+				<Skeleton className="h-64 w-full sm:h-80 lg:h-[26rem]" />
+				<div className="flex flex-wrap items-center gap-4 bg-ink px-5 py-4">
+					<Skeleton className="h-14 w-14 rounded-2xl bg-white/10" />
 					<div className="min-w-0 flex-1 space-y-2">
-						<Skeleton className="h-6 w-48 rounded" />
+						<Skeleton className="h-6 w-48 rounded bg-white/10" />
 						<div className="flex gap-1.5">
-							<Skeleton className="h-5 w-20 rounded-full" />
-							<Skeleton className="h-5 w-16 rounded-full" />
+							<Skeleton className="h-5 w-20 rounded-full bg-white/10" />
+							<Skeleton className="h-5 w-16 rounded-full bg-white/10" />
 						</div>
 					</div>
 					<div className="flex items-center gap-4">
-						{Array.from({ length: 3 }).map((_, i) => (
+						{Array.from({ length: 2 }).map((_, i) => (
 							<div
 								key={i}
 								className="flex flex-col items-center gap-1"
 							>
-								<Skeleton className="h-4 w-10 rounded" />
-								<Skeleton className="h-2.5 w-14 rounded" />
+								<Skeleton className="h-4 w-10 rounded bg-white/10" />
+								<Skeleton className="h-2.5 w-14 rounded bg-white/10" />
 							</div>
 						))}
 					</div>

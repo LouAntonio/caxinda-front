@@ -30,7 +30,7 @@ export function ProvinceRibbon() {
 	return (
 		<section
 			className="mx-auto max-w-6xl px-4 py-8"
-			aria-label="Lista de províncias presentes no Caxinda Divulga"
+			aria-label="Lista de províncias presentes na Caxinda Divulga"
 		>
 			<div className="province-ribbon relative overflow-hidden">
 				<div

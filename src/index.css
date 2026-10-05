@@ -14,7 +14,11 @@
 
 	--font-display: 'Poppins', system-ui, sans-serif;
 	--font-sans: 'Inter', system-ui, sans-serif;
-	--font-mono: 'Inter', ui-monospace, monospace;
+	/* Monoespaçada real: dá carácter impresso a chips, kickers, etiquetas e
+	   carimbos. Usa fontes do sistema — zero requests. */
+	--font-mono:
+		ui-monospace, 'JetBrains Mono', 'Cascadia Mono', Menlo, Consolas,
+		'Liberation Mono', monospace;
 }
 
 @layer base {
@@ -64,6 +68,11 @@
 	.card {
 		@apply flex h-full flex-col rounded-2xl border border-ink/10 bg-white shadow-sm;
 	}
+	/* Cartão plano, sem sombra: material de etiqueta impressa. Usado nos
+	   produtos, para contrastar com o .card-elevated das empresas. */
+	.card-flat {
+		@apply flex h-full flex-col overflow-hidden rounded-2xl border border-ink/10 bg-white transition;
+	}
 	.card-elevated {
 		@apply flex h-full flex-col rounded-2xl border border-ink/10 bg-white shadow-[0_10px_30px_rgba(14,23,51,0.08)] transition hover:-translate-y-0.5 hover:shadow-[0_16px_40px_rgba(14,23,51,0.12)];
 	}
@@ -75,6 +84,43 @@
 @layer utilities {
 	.price-tag {
 		@apply relative inline-flex items-center rounded-lg bg-red px-3 py-1 font-mono text-sm font-bold text-white shadow-sm;
+	}
+
+	/* Assinatura do cartão de produto: uma faixa de preço de largura total,
+	   encostada à base do cartão, como uma etiqueta de prateleira. O ilhó
+	   à esquerda remete para o furo de uma etiqueta presa. */
+	.price-band {
+		position: relative;
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 0.5rem;
+		border-top: 2px solid var(--color-ink);
+		background: var(--color-ink);
+		padding: 0.6rem 0.85rem;
+		transition: background-color 0.2s ease;
+	}
+
+	.price-band::before {
+		content: '';
+		position: absolute;
+		left: 0.5rem;
+		top: 50%;
+		width: 7px;
+		height: 7px;
+		transform: translateY(-50%);
+		border-radius: 9999px;
+		border: 1px solid rgba(255, 255, 255, 0.35);
+		background: rgba(255, 255, 255, 0.14);
+	}
+
+	/* O preço precisa de folga para não cair em cima do ilhó. */
+	.price-band > :first-child {
+		padding-left: 1rem;
+	}
+
+	.group:hover .price-band {
+		background: var(--color-ink-soft);
 	}
 	.text-balance {
 		text-wrap: balance;
@@ -120,7 +166,7 @@
 	}
 
 	.chip {
-		@apply inline-flex items-center gap-1 rounded-full border border-ink/10 bg-snow px-2.5 py-0.5 font-mono text-[0.6rem] font-bold uppercase tracking-wider text-ink/55;
+		@apply inline-flex max-w-full items-center gap-1 overflow-hidden rounded-full border border-ink/10 bg-snow px-2.5 py-0.5 font-mono text-[0.6rem] font-bold uppercase tracking-wider text-ink/55;
 	}
 
 	.kicker {
@@ -176,5 +222,22 @@
 @media (prefers-reduced-motion: reduce) {
 	.skeleton {
 		animation: none;
+	}
+
+	/* Os cards dependem de transformações subtis no hover; desligá-las
+	   cumpre a preferência sem perder nenhuma informação. */
+	.group:hover img,
+	.group:hover .business-seal {
+		transform: none;
+	}
+	.card-flat,
+	.card,
+	.card-elevated,
+	.price-band {
+		transition: none;
+	}
+	.card:hover,
+	.card-elevated:hover {
+		transform: none;
 	}
 }

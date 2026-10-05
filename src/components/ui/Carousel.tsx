@@ -4,9 +4,23 @@ interface CarouselProps {
 	images: string[];
 	onImageClick?: (index: number) => void;
 	overlay?: ReactNode;
+	/** Classes extra no contentor externo. */
+	className?: string;
 }
 
-export function Carousel({ images, onImageClick, overlay }: CarouselProps) {
+/**
+ * A imagem principal tem altura limitada em vez de `aspect-[4/3]`: numa
+ * galeria à largura total do contentor, a proporção resultava num banner de
+ * ~850px de altura, que ocupava o ecrã inteiro antes de qualquer conteúdo.
+ */
+const MAIN_HEIGHT = 'h-64 sm:h-80 lg:h-[26rem]';
+
+export function Carousel({
+	images,
+	onImageClick,
+	overlay,
+	className = '',
+}: CarouselProps) {
 	const [active, setActive] = useState(0);
 	const stripRef = useRef<HTMLDivElement>(null);
 
@@ -30,12 +44,12 @@ export function Carousel({ images, onImageClick, overlay }: CarouselProps) {
 	const next = () => setActive((i) => (i + 1) % images.length);
 
 	return (
-		<div className="flex flex-col gap-3">
+		<div className={`flex flex-col gap-3 ${className}`}>
 			<div className="relative overflow-hidden rounded-2xl bg-snow-dark">
 				<button
 					type="button"
 					onClick={() => onImageClick?.(active)}
-					className="block aspect-[4/3] w-full cursor-zoom-in"
+					className={`block ${MAIN_HEIGHT} w-full cursor-zoom-in focus-visible:ring-2 focus-visible:ring-blue focus-visible:outline-none`}
 					aria-label="Ampliar fotografia"
 				>
 					<img
