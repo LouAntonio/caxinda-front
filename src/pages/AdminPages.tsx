@@ -19,6 +19,7 @@ import {
 	usePlatformAnalytics,
 	usePlatformAnalyticsOverview,
 	usePlatformAccounts,
+	usePermissionMatrix,
 } from '../hooks/queries';
 import {
 	useBanUser,
@@ -78,6 +79,7 @@ import {
 	fullName,
 	PROVINCE_LABELS,
 } from '../lib/format';
+import { ALL_ROLES, ROLE_DESCRIPTIONS } from '../lib/roles';
 import type {
 	AdListItem,
 	AnalyticsGroupBy,
@@ -1146,13 +1148,11 @@ function UserActions({
 					)
 				}
 			>
-				{(['USER', 'PROMOTER', 'MODERATOR', 'ADMIN'] as Role[]).map(
-					(r) => (
-						<option key={r} value={r}>
-							{r}
-						</option>
-					),
-				)}
+				{ALL_ROLES.map((r) => (
+					<option key={r} value={r}>
+						{r}
+					</option>
+				))}
 			</select>
 			{user.banned ? (
 				<button
@@ -2126,6 +2126,182 @@ export function AdminCategoriesPage() {
 						</div>
 					))}
 				</div>
+			)}
+		</div>
+	);
+}
+
+// ================= Permissões =================
+
+const RESOURCE_LABELS: Record<string, string> = {
+	ad: 'Anúncios',
+	business: 'Empresas',
+	category: 'Categorias',
+	kyc: 'Verificação KYC',
+	upload: 'Uploads',
+	user: 'Utilizadores',
+	review: 'Avaliações',
+	report: 'Denúncias',
+	plan: 'Planos',
+	subscription: 'Subscrições',
+	payment: 'Pagamentos',
+};
+
+function resourceLabel(resource: string): string {
+	return RESOURCE_LABELS[resource] ?? resource;
+}
+
+export function AdminPermissionsPage() {
+	usePageTitle('Permissões');
+	const { data, isLoading } = usePermissionMatrix();
+
+	const roles = data?.roles ?? [];
+	const resources = data?.resources ?? [];
+	const maxTotal = Math.max(1, ...roles.map((r) => data?.totals[r] ?? 0));
+
+	return (
+		<div>
+			<Title>Permissões por role</Title>
+			<p className="-mt-4 mb-6 max-w-2xl text-sm leading-relaxed text-ink/60">
+				Referência rápida do que cada role pode fazer, para escolher a
+				role correcta ao atribuir. As permissões são definidas em código
+				no backend, por esta página é apenas de leitura.
+			</p>
+
+			{isLoading ? (
+				<TableSkeleton rows={8} />
+			) : resources.length === 0 ? (
+				<EmptyState
+					title="Sem permissões definidas"
+					description="O backend não devolveu nenhuma permissão."
+				/>
+			) : (
+				<>
+					{/* Resumo por role */}
+					<div className="mb-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+						{roles.map((role) => {
+							const total = data?.totals[role] ?? 0;
+							return (
+								<div key={role} className="card gap-2 p-4">
+									<StatusPill status={role} />
+									<p className="font-mono text-2xl font-black">
+										{total}
+										<span className="ml-1 text-xs font-bold text-ink/40">
+											{total === 1
+												? 'permissão'
+												: 'permissões'}
+										</span>
+									</p>
+									<div
+										className="h-1.5 overflow-hidden rounded-full bg-ink/10"
+										aria-hidden
+									>
+										<div
+											className="h-full rounded-full bg-blue"
+											style={{
+												width: `${(total / maxTotal) * 100}%`,
+											}}
+										/>
+									</div>
+									<p className="text-xs leading-relaxed text-ink/55">
+										{ROLE_DESCRIPTIONS[role]}
+									</p>
+								</div>
+							);
+						})}
+					</div>
+
+					{/* Matriz */}
+					<div className="overflow-hidden rounded-2xl border border-ink/10 bg-white">
+						<div className="nice-scroll overflow-x-auto">
+							<table className="w-full min-w-[720px] border-collapse text-sm">
+								<thead>
+									<tr className="border-b border-ink/10 bg-snow">
+										<th
+											scope="col"
+											className="sticky left-0 z-10 bg-snow px-4 py-3 text-left font-display text-xs font-black tracking-wide uppercase"
+										>
+											Recurso
+										</th>
+										{roles.map((role) => (
+											<th
+												key={role}
+												scope="col"
+												className="px-4 py-3 text-left"
+											>
+												<StatusPill status={role} />
+											</th>
+										))}
+									</tr>
+								</thead>
+								<tbody className="divide-y divide-ink/5">
+									{resources.map((row) => (
+										<tr
+											key={row.resource}
+											className="align-top"
+										>
+											<th
+												scope="row"
+												className="sticky left-0 z-10 bg-white px-4 py-3 text-left"
+											>
+												<span className="block font-bold">
+													{resourceLabel(
+														row.resource,
+													)}
+												</span>
+												<span className="font-mono text-[0.65rem] text-ink/40">
+													{row.resource}
+												</span>
+											</th>
+											{roles.map((role) => {
+												const granted =
+													row.roles[role] ?? [];
+												return (
+													<td
+														key={role}
+														className="px-4 py-3"
+													>
+														{granted.length ===
+														0 ? (
+															<span className="font-mono text-xs text-ink/25">
+																—
+															</span>
+														) : (
+															<div className="flex flex-wrap gap-1">
+																{granted.map(
+																	(
+																		action,
+																	) => (
+																		<span
+																			key={
+																				action
+																			}
+																			className="chip"
+																		>
+																			{
+																				action
+																			}
+																		</span>
+																	),
+																)}
+															</div>
+														)}
+													</td>
+												);
+											})}
+										</tr>
+									))}
+								</tbody>
+							</table>
+						</div>
+					</div>
+
+					<p className="mt-4 text-xs text-ink/45">
+						Matriz derivada de{' '}
+						<code>back/src/auth/permissions.ts</code> e actualizada
+						automaticamente em cada deploy.
+					</p>
+				</>
 			)}
 		</div>
 	);

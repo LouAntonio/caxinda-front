@@ -64,6 +64,7 @@ import {
 	AdminKycPage,
 	AdminSupportPage,
 	AdminCategoriesPage,
+	AdminPermissionsPage,
 	AdminPlansPage,
 	AdminBankAccountsPage,
 	AdminAnalyticsPage,
@@ -182,6 +183,16 @@ const router = createBrowserRouter([
 					{ path: 'kyc', element: <AdminKycPage /> },
 					{ path: 'suporte', element: <AdminSupportPage /> },
 					{ path: 'categorias', element: <AdminCategoriesPage /> },
+					{
+						// O /admin é ADMIN+MODERATOR, mas a matriz de permissões é
+						// sensível: só o ADMIN a deve ver.
+						path: 'permissoes',
+						element: (
+							<RequireRole roles={['ADMIN']}>
+								<AdminPermissionsPage />
+							</RequireRole>
+						),
+					},
 					{ path: 'planos', element: <AdminPlansPage /> },
 					{
 						path: 'contas-bancarias',

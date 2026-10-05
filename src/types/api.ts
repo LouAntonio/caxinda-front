@@ -116,6 +116,23 @@ export interface UsersListResponse {
 	total: number;
 }
 
+/** Uma linha da matriz de permissões: um recurso e o que cada role pode fazer nele. */
+export interface PermissionMatrixResource {
+	resource: string;
+	/** Todas as acções suportadas pelo recurso. */
+	actions: string[];
+	/** Acções concedidas a cada role; array vazio quando não tem nenhuma. */
+	roles: Record<string, string[]>;
+}
+
+export interface PermissionMatrix {
+	resources: PermissionMatrixResource[];
+	/** Nomes das roles, por ordem crescente de privilégio. */
+	roles: Role[];
+	/** Total de acções concedidas por role. */
+	totals: Record<string, number>;
+}
+
 // ---------------- Categories ----------------
 
 export interface Category {

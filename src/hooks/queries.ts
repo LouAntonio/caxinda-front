@@ -25,6 +25,7 @@ import type {
 	MySubscription,
 	Payment,
 	PaymentStatus,
+	PermissionMatrix,
 	Plan,
 	PlansResponse,
 	PlatformBankAccount,
@@ -242,6 +243,18 @@ export function useAdminUser(id?: string) {
 			return res.data;
 		},
 		enabled: Boolean(id),
+	});
+}
+
+export function usePermissionMatrix() {
+	return useQuery({
+		queryKey: ['users', 'permissions'],
+		queryFn: async () => {
+			const res = await http.get<PermissionMatrix>('/users/permissions');
+			return res.data;
+		},
+		// Derivado de código no backend: só muda com um novo deploy.
+		staleTime: Infinity,
 	});
 }
 

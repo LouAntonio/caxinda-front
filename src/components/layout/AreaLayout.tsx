@@ -12,6 +12,8 @@ type PanelLink = {
 	icon: PanelIconName;
 	end?: boolean;
 	isConversion?: boolean;
+	/** Só visível para ADMIN (o resto do painel é ADMIN+MODERATOR). */
+	adminOnly?: boolean;
 };
 type PanelSection = { title: string; links: PanelLink[] };
 
@@ -39,6 +41,12 @@ const ADMIN_SECTIONS: PanelSection[] = [
 			{ to: '/admin/pagamentos', label: 'Pagamentos', icon: 'card' },
 			{ to: '/admin/suporte', label: 'Suporte', icon: 'lifebuoy' },
 			{ to: '/admin/categorias', label: 'Categorias', icon: 'tag' },
+			{
+				to: '/admin/permissoes',
+				label: 'Permissões',
+				icon: 'shield',
+				adminOnly: true,
+			},
 			{ to: '/admin/planos', label: 'Planos', icon: 'layers' },
 			{
 				to: '/admin/contas-bancarias',
@@ -118,9 +126,22 @@ export function AreaLayout({ admin = false }: { admin?: boolean }) {
 	const location = useLocation();
 
 	const verified = Boolean(user && (user.isVerified || user.role !== 'USER'));
-	const sections = admin
+	const isAdmin = user?.role === 'ADMIN';
+	const baseSections = admin
 		? ADMIN_SECTIONS
 		: buildAreaSections(verified, kyc?.status);
+	// Links marcados como adminOnly não devem aparecer a MODERATOR, para não
+	// o enviar a uma página que o vai redireccionar.
+	const sections = admin
+		? baseSections
+				.map((section) => ({
+					...section,
+					links: section.links.filter(
+						(link) => !link.adminOnly || isAdmin,
+					),
+				}))
+				.filter((section) => section.links.length > 0)
+		: baseSections;
 
 	const allLinks = sections.flatMap((s) => s.links);
 	const accentTile = admin ? 'bg-blue' : 'bg-red';
