@@ -456,8 +456,21 @@ export function CookiesPage() {
 					'Essenciais: manter a sessão iniciada e proteger a tua conta.',
 					'Preferências: lembrar escolhas como província e vista da listagem.',
 					'Analíticos: perceber como a plataforma é usada, de forma agregada e anónima, para melhorarmos.',
+					'Publicidade (Meta Pixel): medir a eficácia dos anúncios no Facebook e Instagram. Depende de cookies da Meta (_fbp e _fbc) e está sujeito à política de cookies da Meta.',
 				]}
 			/>
+			<p className="mt-3 text-sm text-ink/60">
+				A política de cookies da Meta está disponível em{' '}
+				<a
+					href="https://www.facebook.com/policy/cookies/"
+					target="_blank"
+					rel="noreferrer noopener"
+					className="font-bold text-blue underline"
+				>
+					facebook.com/policy/cookies
+				</a>
+				.
+			</p>
 
 			<H2 id="gerir">Gerir cookies</H2>
 			<p>

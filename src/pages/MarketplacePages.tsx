@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { usePageTitle } from '../hooks/usePageTitle';
 import {
 	Link,
@@ -61,6 +61,7 @@ import {
 	PROVINCE_LABELS,
 	timeAgo,
 } from '../lib/format';
+import { pixelTrack } from '../lib/metaPixel';
 import {
 	PROVINCES,
 	REPORT_REASONS,
@@ -439,6 +440,22 @@ export function AdDetailPage() {
 		categorySlugs: ad?.category?.slug ?? undefined,
 		limit: 5,
 	});
+
+	// `ViewContent` só quando o anúncio carrega. O efeito depende do `id`
+	// (não do `slug`) para não re-disparar quando o utilizador navega entre
+	// dois anúncios com o mesmo id — e o `isLoading` evita o disparo em
+	// erro/404.
+	useEffect(() => {
+		if (!ad) return;
+		pixelTrack('ViewContent', {
+			content_ids: [ad.id],
+			content_name: ad.title,
+			content_category: ad.category?.name,
+			content_type: 'product',
+			value: ad.price ?? undefined,
+			currency: ad.price != null ? 'AOA' : undefined,
+		});
+	}, [ad]);
 
 	if (isLoading) {
 		return <AdDetailSkeleton />;
@@ -1156,6 +1173,19 @@ export function BusinessDetailPage() {
 		setLightboxIndex(null);
 	}, [slug]);
 
+	// Ver a ficha de uma empresa é o passo mais próximo de uma intenção de
+	// compra que um visitante anónimo consegue expressar: é o `ViewContent`
+	// mais importante da plataforma, a par do detalhe de anúncio.
+	useEffect(() => {
+		if (!business) return;
+		pixelTrack('ViewContent', {
+			content_ids: [business.id],
+			content_name: business.name,
+			content_category: business.category?.name,
+			content_type: 'business',
+		});
+	}, [business]);
+
 	if (isLoading) return <BusinessDetailSkeleton />;
 	if (!business)
 		return (
@@ -1187,6 +1217,16 @@ export function BusinessDetailPage() {
 
 	const contact = (channel: 'phone' | 'whatsapp' | 'email' | 'website') => {
 		trackClick.mutate({ businessId: business.id, channel });
+		// `Contact` é um evento standard sem parâmetros próprios, por isso o
+		// canal vai em `custom_parameters` — é assim que a Meta documenta
+		// campos extra em eventos standard, e permite comparar WhatsApp vs.
+		// telefone no Events Manager.
+		pixelTrack('Contact', {
+			content_ids: [business.id],
+			content_name: business.name,
+			content_type: 'business',
+			custom_parameters: { channel },
+		});
 		if (channel === 'phone' && business.phone)
 			window.location.href = `tel:${business.phone}`;
 		if (channel === 'whatsapp' && business.whatsapp)
@@ -1757,6 +1797,18 @@ export function SearchPage() {
 	});
 	const draftActiveType =
 		SEARCH_TYPES.find((t) => t.type === draftType)?.id ?? 'todos';
+
+	// `Search` standard. Dispara só com termo não vazio e só uma vez por
+	// termo — a Meta conta repetições do mesmo `search_string` como eventos
+	// distintos, o que distorce o número de pesquisas.
+	const lastSearch = useRef<string | null>(null);
+	useEffect(() => {
+		const term = q.trim();
+		if (!term) return;
+		if (lastSearch.current === term) return;
+		lastSearch.current = term;
+		pixelTrack('Search', { search_string: term });
+	}, [q]);
 
 	const setParam = (key: string, value?: string) => {
 		const next = new URLSearchParams(searchParams);

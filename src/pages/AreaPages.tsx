@@ -21,6 +21,7 @@ import {
 	usePlans,
 	useWishlist,
 } from '../hooks/queries';
+import { useTrackPurchases } from '../hooks/useTrackPurchases';
 import {
 	useCancelPayment,
 	useChangeEmail,
@@ -1444,6 +1445,9 @@ export function PaymentsPage() {
 	const upload = useUpload('payments');
 	const [proof, setProof] = useState<MediaAsset | null>(null);
 	const [pendingProof, setPendingProof] = useState<File | null>(null);
+
+	// `Purchase` ao approved (ver a nota de porquê no hook).
+	useTrackPurchases(payments);
 
 	const sendProof = async (id: string) => {
 		if (!pendingProof && !proof) {

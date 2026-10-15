@@ -1,9 +1,12 @@
 const env = import.meta.env as {
 	VITE_GOOGLE_CLIENT_ID?: string;
 	VITE_API_URL?: string;
+	VITE_META_PIXEL_ID?: string;
 };
 
 export const GOOGLE_CLIENT_ID: string = env.VITE_GOOGLE_CLIENT_ID ?? '';
+
+export const META_PIXEL_ID: string = env.VITE_META_PIXEL_ID ?? '';
 
 export const API_BASE: string = (env.VITE_API_URL ?? '/api').replace(
 	/\/+$/,

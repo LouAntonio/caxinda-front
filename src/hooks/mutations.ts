@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { http, getApiError } from '../lib/api';
+import { pixelReset, pixelTrack } from '../lib/metaPixel';
 import { useAuthStore } from '../store/auth';
 import type {
 	AdStatus,
@@ -78,6 +79,7 @@ export function useSignUpEmail() {
 			);
 			return res.data;
 		},
+		onSuccess: () => pixelTrack('CompleteRegistration'),
 	});
 }
 
@@ -151,6 +153,7 @@ export function useMagicLinkVerify() {
 					.getState()
 					.setSession(data.sessionToken, data.user ?? undefined);
 				void queryClient.invalidateQueries({ queryKey: ['me'] });
+				pixelTrack('CompleteRegistration');
 			}
 		},
 	});
@@ -168,6 +171,7 @@ export function useGoogleSignIn() {
 		onSuccess: (data) => {
 			useAuthStore.getState().setSession(data.sessionToken, null);
 			void queryClient.invalidateQueries({ queryKey: ['me'] });
+			pixelTrack('CompleteRegistration');
 		},
 	});
 }
@@ -180,6 +184,9 @@ export function useLogout() {
 		},
 		onSettled: () => {
 			useAuthStore.getState().logout();
+			// Limpa a atribuição para que o próximo visitante não herde a
+			// sessão do anterior (cookies _fbp/_fbc são partilhados no browser).
+			pixelReset();
 			void queryClient.clear();
 		},
 	});
@@ -567,8 +574,13 @@ export function useCreateBusiness() {
 			const res = await http.post('/businesses', payload);
 			return res.data;
 		},
-		onSuccess: () =>
-			void queryClient.invalidateQueries({ queryKey: ['businesses'] }),
+		onSuccess: (_data, payload) => {
+			void queryClient.invalidateQueries({ queryKey: ['businesses'] });
+			pixelTrack('Lead', {
+				content_name: payload.name,
+				content_category: 'Registo de empresa',
+			});
+		},
 	});
 }
 
@@ -647,8 +659,14 @@ export function useCreateReview() {
 			const res = await http.post<Review>('/reviews', payload);
 			return res.data;
 		},
-		onSuccess: () =>
-			void queryClient.invalidateQueries({ queryKey: ['reviews'] }),
+		onSuccess: (_data, payload) => {
+			void queryClient.invalidateQueries({ queryKey: ['reviews'] });
+			pixelTrack('Review', {
+				content_id: payload.adId ?? payload.businessId,
+				value: payload.rating,
+				content_type: 'product',
+			});
+		},
 	});
 }
 
@@ -728,9 +746,13 @@ export function useAddToWishlist() {
 			const res = await http.post('/wishlist', { adId });
 			return res.data;
 		},
-		onSuccess: () => {
+		onSuccess: (_data, adId) => {
 			void queryClient.invalidateQueries({ queryKey: ['wishlist'] });
 			void queryClient.invalidateQueries({ queryKey: ['ads'] });
+			pixelTrack('AddToWishlist', {
+				content_ids: [adId],
+				content_type: 'product',
+			});
 		},
 	});
 }
@@ -767,8 +789,14 @@ export function useOpenConversation() {
 			);
 			return res.data;
 		},
-		onSuccess: () =>
-			void queryClient.invalidateQueries({ queryKey: ['conversations'] }),
+		onSuccess: (_data, payload) => {
+			void queryClient.invalidateQueries({ queryKey: ['conversations'] });
+			pixelTrack('Contact', {
+				content_id: payload.adId ?? payload.businessId,
+				content_type:
+					payload.type === 'BUSINESS' ? 'business' : 'product',
+			});
+		},
 	});
 }
 
@@ -867,10 +895,19 @@ export function useCreatePayment() {
 			const res = await http.post<Payment>('/payments', payload);
 			return res.data;
 		},
-		onSuccess: () => {
+		onSuccess: (payment) => {
 			void queryClient.invalidateQueries({ queryKey: ['payments'] });
 			void queryClient.invalidateQueries({ queryKey: ['businesses'] });
 			void queryClient.invalidateQueries({ queryKey: ['me'] });
+			// O pedido ainda não é uma compra: o valor só é confirmado quando
+			// o admin aprova, e esse evento dispara em PaymentsPage.
+			pixelTrack('InitiateCheckout', {
+				content_ids: [payment.subscription.plan.id],
+				content_name: payment.subscription.plan.name,
+				content_type: 'product',
+				value: payment.amount,
+				currency: payment.subscription.plan.currency || 'AOA',
+			});
 		},
 	});
 }
@@ -887,8 +924,13 @@ export function useSubmitPaymentProof() {
 			const res = await http.post(`/payments/${id}/proof`, data);
 			return res.data;
 		},
-		onSuccess: () =>
-			void queryClient.invalidateQueries({ queryKey: ['payments'] }),
+		onSuccess: (_data, payload) => {
+			void queryClient.invalidateQueries({ queryKey: ['payments'] });
+			pixelTrack('SubmitPaymentProof', {
+				content_id: payload.id,
+				content_type: 'product',
+			});
+		},
 	});
 }
 
